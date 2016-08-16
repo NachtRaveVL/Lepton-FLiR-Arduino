@@ -44,6 +44,7 @@
 #define LEP_I2C_STATUS_BOOT_MODE_BIT_MASK       (uint16_t)0x0002
 #define LEP_I2C_STATUS_BOOT_STATUS_BIT_MASK     (uint16_t)0x0004
 #define LEP_I2C_STATUS_ERROR_CODE_BIT_MASK      (uint16_t)0xFF00
+#define LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT     8
 
 #define LEP_I2C_REG_BASE_ADDR                   (uint16_t)0x0000
 #define LEP_I2C_POWER_REG                       (uint16_t)(LEP_I2C_REG_BASE_ADDR + 0x0000)

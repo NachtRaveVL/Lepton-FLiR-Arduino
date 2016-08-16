@@ -58,7 +58,11 @@
 #else
 #include <WProgram.h>
 #endif
+#ifndef PCA9685_ENABLE_SOFTWARE_I2C
 #include <Wire.h>
+#endif
+#include <SPI.h>
+#include "LeptonFLiRDefs.h"
 
 // Image storage mode affects the total memory footprint. Memory constrained boards
 // should take notice to the storage requirements. Note that the Lepton FLiR delivers
@@ -112,37 +116,51 @@ public:
     bool getTelemetryEnabled();
     uint16_t *getTelemetryData();
 
+    uint8_t getLastI2CError();
+    int16_t getLastErrorCode();
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    void printModuleInfo();
+#endif
+
 private:
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     TwoWire *_i2cWire;          // Wire class instance to use
 #endif
-    uint8_t _spiCSPin;             // SPI chip select pin
+    uint8_t _spiCSPin;          // SPI chip select pin
     SPISettings _spiSettings;   // SPI port settings to use
     LeptonFLiR_ImageStorageMode _storageMode; // Image data storage mode
-    uint8_t *_imageData;           // Image data (column major)
-    uint8_t *_spiFrameData;        // SPI frame data
-    uint8_t *_telemetryData;       // SPI telemetry frame data
+    uint8_t *_imageData;        // Image data (column major)
+    uint8_t *_spiFrameData;     // SPI frame data
+    uint8_t *_telemetryData;    // SPI telemetry frame data
+    uint8_t _lastI2CError;      // Last i2c error
+    int16_t _lastErrorCode;     // Last error code
 
     int getImageDivFactor();
     uint8_t *getSPIFrameDataRow(int row);
 
-    int receiveStatus(bool *busy, bool *bootMode, bool *bootStatus, int16_t *errorCode);
+    bool isBusy();
+    bool waitBusy(int timeout = 0);
 
-    uint16_t commandCode(int commandID, int commandType);
-    
-    int sendCommand(uint16_t commandCode);
-    int sendCommand(uint16_t commandCode, uint16_t value);
-    int sendCommand(uint16_t commandCode, uint32_t value);
-    int sendCommand(uint16_t commandCode, uint16_t *dataBuffer, int length);
+    void receiveStatus(bool *busy = NULL, bool *bootMode = NULL, bool *bootStatus = NULL);
 
-    int receiveCommand(uint16_t commandCode, uint16_t *value);
-    int receiveCommand(uint16_t commandCode, uint32_t *value);
-    int receiveCommand(uint16_t commandCode, int expectedLength, uint16_t *respBuffer, int maxLength);
+    uint16_t commandCode(uint16_t cmdID, uint16_t cmdType);
     
-    int writeRegister(uint16_t regAddress, uint16_t *dataBuffer, int length);
-    int writeRegister(uint16_t regAddress, uint16_t *dataBuffer1, int length1, uint16_t *dataBuffer2, int length2);
-    int readRegister(uint16_t regAddress, int expectedLength, uint16_t *respBuffer, int maxLength);
-    int readRegister(int expectedLength, uint16_t *respBuffer, int maxLength);
+    void sendCommand(uint16_t cmdCode);
+    void sendCommand(uint16_t cmdCode, uint16_t value);
+    void sendCommand(uint16_t cmdCode, uint32_t value);
+    void sendCommand(uint16_t cmdCode, uint16_t *dataBuffer, int dataLength);
+
+    int receiveCommand(uint16_t cmdCode, uint16_t *value);
+    int receiveCommand(uint16_t cmdCode, uint32_t *value);
+    int receiveCommand(uint16_t cmdCode, uint16_t *respBuffer, int maxLength);
+
+    int sendReceiveCommand(uint16_t cmdCode, uint16_t *dataBuffer, int dataLength, uint16_t *respBuffer, int maxLength);
+
+    int writeRegister(uint16_t regAddress, uint16_t *dataBuffer, int dataLength);
+    int writeRegister(uint16_t regAddress, uint16_t *dataBuffer1, int dataLength1, uint16_t *dataBuffer2, int dataLength2);
+    int readRegister(uint16_t regAddress, uint16_t *respBuffer, int respLength, int maxLength);
+    int readRegister(uint16_t *respBuffer, int respLength, int maxLength);
 
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
     uint8_t _readBytes;
