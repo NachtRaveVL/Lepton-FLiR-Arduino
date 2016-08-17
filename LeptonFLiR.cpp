@@ -79,7 +79,7 @@ void LeptonFLiR::init(LeptonFLiR_ImageStorageMode storageMode) {
     digitalWrite(_spiCSPin, HIGH);
 
     _imageData = roundUpMalloc16(((getImageHeight() - 1) * getImagePitch()) + (getImageWidth() * getImageBpp()));
-    _spiFrameData = roundUpMalloc16(getImageDivFactor() * roundUpVal16(LEP_SPI_FRAME_SIZE));
+    _spiFrameData = roundUpMalloc16(getSPIFrameLines() * roundUpVal16(LEP_SPI_FRAME_SIZE));
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  LeptonFLiR::init ImageData: 0x");
@@ -169,7 +169,15 @@ int LeptonFLiR::getImagePitch() {
     }
 }
 
-int LeptonFLiR::getImageDivFactor() {
+uint8_t *LeptonFLiR::getImageData() {
+    return !_isReadingNextFrame ? roundUpPtr16(_imageData) : NULL;
+}
+
+uint8_t *LeptonFLiR::getImageDataRow(int row) {
+    return !_isReadingNextFrame ? (roundUpPtr16(_imageData) + (getImagePitch() * row)) : NULL;
+}
+
+int LeptonFLiR::getSPIFrameLines() {
     switch (_storageMode) {
         case LeptonFLiR_ImageStorageMode_80x60_16bpp:
         case LeptonFLiR_ImageStorageMode_80x60_8bpp:
@@ -185,20 +193,64 @@ int LeptonFLiR::getImageDivFactor() {
     }
 }
 
-uint8_t *LeptonFLiR::getImageData() {
-    return !_isReadingNextFrame ? roundUpPtr16(_imageData) : NULL;
-}
-
-uint8_t *LeptonFLiR::getImageDataRow(int row) {
-    return !_isReadingNextFrame ? (roundUpPtr16(_imageData) + (getImagePitch() * row)) : NULL;
-}
-
-uint8_t *LeptonFLiR::getImageDataRowCol(int row, int col) {
-    return !_isReadingNextFrame ? (roundUpPtr16(_imageData) + (getImagePitch() * row) + (getImageBpp() * col)) : NULL;
-}
-
 uint8_t *LeptonFLiR::getSPIFrameDataRow(int row) {
     return roundUpSpiFrame16(_spiFrameData) + (roundUpVal16(LEP_SPI_FRAME_SIZE) * row);
+}
+
+void LeptonFLiR::setAGCEnabled(bool enabled) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.print("LeptonFLiR::setAGCEnabled enabled: ");
+    Serial.println(enabled);
+#endif
+
+    sendCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
+}
+
+bool LeptonFLiR::getAGCEnabled() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println("LeptonFLiR::getAGCEnabled");
+#endif
+
+    uint16_t enabled = 0;
+    receiveCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
+    return enabled > 0;
+}
+
+void LeptonFLiR::setTelemetryEnabled(bool enabled) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.print("LeptonFLiR::setTelemetryEnabled enabled: ");
+    Serial.println(enabled);
+#endif
+
+    sendCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
+
+    if (enabled) {
+        if (!_telemetryData) {
+            _telemetryData = (uint8_t *)malloc(LEP_SPI_FRAME_SIZE);
+            _telemetryData[0] = 0x0F; // initialize as discard packet
+        }
+    }
+    else {
+        if (_telemetryData) {
+            free(_telemetryData);
+            _telemetryData = NULL;
+        }
+    }
+}
+
+bool LeptonFLiR::getTelemetryEnabled() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println("LeptonFLiR::getTelemetryEnabled");
+#endif
+
+    uint16_t enabled = 0;
+    receiveCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
+    return enabled > 0;
+}
+
+uint8_t *LeptonFLiR::getTelemetryData() {
+    // Don't let user have access to telemetry data if it hasn't been filled yet (that is, ID is discard packet)
+    return !_isReadingNextFrame && _telemetryData && _telemetryData[0] != 0x0F ? _telemetryData : NULL;
 }
 
 static void delayTimeout(int timeout) {
@@ -297,7 +349,7 @@ bool LeptonFLiR::readNextFrame() {
         uint_fast8_t readLines = 0;
         uint_fast8_t imgRows = getImageHeight();
         uint_fast8_t currImgRow = 0;
-        uint_fast8_t spiRows = getImageDivFactor();
+        uint_fast8_t spiRows = getSPIFrameLines();
         uint_fast8_t currSpiRow = 0;
         uint_fast8_t teleRows = (telemetryEnabled * 3);
         uint_fast8_t currTeleRow = 0;
@@ -462,62 +514,6 @@ bool LeptonFLiR::readNextFrame() {
     }
 
     return true;
-}
-
-void LeptonFLiR::setAGCEnabled(bool enabled) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("LeptonFLiR::setAGCEnabled enabled: ");
-    Serial.println(enabled);
-#endif
-
-    sendCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
-}
-
-bool LeptonFLiR::getAGCEnabled() {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::getAGCEnabled");
-#endif
-
-    uint16_t enabled = 0;
-    receiveCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
-    return enabled > 0;
-}
-
-void LeptonFLiR::setTelemetryEnabled(bool enabled) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("LeptonFLiR::setTelemetryEnabled enabled: ");
-    Serial.println(enabled);
-#endif
-
-    sendCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
-
-    if (enabled) {
-        if (!_telemetryData) {
-            _telemetryData = (uint8_t *)malloc(LEP_SPI_FRAME_SIZE);
-            _telemetryData[0] = 0x0F; // initialize as discard packet
-        }
-    }
-    else {
-        if (_telemetryData) {
-            free(_telemetryData);
-            _telemetryData = NULL;
-        }
-    }
-}
-
-bool LeptonFLiR::getTelemetryEnabled() {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::getTelemetryEnabled");
-#endif
-
-    uint16_t enabled = 0;
-    receiveCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
-    return enabled > 0;
-}
-
-uint8_t *LeptonFLiR::getTelemetryData() {
-    // Don't let user have access to telemetry data if it hasn't been filled yet (that is, ID is discard packet)
-    return !_isReadingNextFrame && _telemetryData && _telemetryData[0] != 0x0F ? _telemetryData : NULL;
 }
 
 uint8_t LeptonFLiR::getLastI2CError() {

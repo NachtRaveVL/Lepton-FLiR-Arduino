@@ -43,18 +43,19 @@
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
 
 // Hookup Instructions
-// Make sure to hookup the module's SPI lines MISO, CLK, and CS correctly (Due, Zero,
-// etc. often use pins 50=MISO, 51=MOSI, 52=CLK, but one can just simply always use the
-// ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=CLK, which are consistent across all
-// boards). The module's MOSI line can just simply be grounded since the module only uses
-// SPI for outbound data writes. The CS pin (chip select) may be any digital output pin
-// (not to be confused with SS, or slave select, which is an input pin) with usage being
-// active-low. The recommended VCC supply and logic level is 3.3v, but 5v also seems to
-// work. The two issolated power pins on the side of the module's breakout can safely be
-// left disconnected. The minimum SPI transfer rate is 2.2MHz, which means one needs at
-// least an 8MHz board, but realistically a 16MHz board is likely required given the
-// processing work involved. The actual SPI transfer rate selected will be the first rate
-// equal to or below 20MHz given the SPI clock divider (proc speed /2, /4, /8, ... /128).
+// Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS)
+// correctly (Due, Zero, ATmega, etc. often use pins 50=MISO, 51=MOSI, 52=SCK, 53=SS, but
+// one can just simply use the ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=SCK,
+// which are consistent across all boards). The module's MOSI line can simply be grounded
+// since the module only uses SPI for slave-out data transfers (slave-in data transfers
+// being ignored). The SS pin may be any digital output pin, with usage being active-low.
+// The recommended VCC power supply and logic level is 3.3v, but 5v also seems to work.
+// The two issolated power pins on the side of the module's breakout can safely be left
+// disconnected. The minimum SPI transfer rate is ~2.2MHz, which means one needs at least
+// an 8MHz processor, but more realistically a 16MHz processor is likely required given
+// the processing work involved to resize/BLIT the final image. The actual SPI transfer
+// rate selected will be the first rate equal to or below 20MHz given the SPI clock
+// divider (processor speed /2, /4, /8, /16, ..., /128).
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
@@ -105,25 +106,29 @@ public:
     // Called in setup()
     void init(LeptonFLiR_ImageStorageMode storageMode = LeptonFLiR_ImageStorageMode_80x60_16bpp);
 
+    // Image descriptors
     LeptonFLiR_ImageStorageMode getImageStorageMode();
     int getImageWidth();
     int getImageHeight();
     int getImageBpp(); // Bytes per pixel
-    int getImagePitch(); // Bytes per row
+    int getImagePitch(); // Bytes per row (may be different than Bpp * Width, in memory aligned mode)
+
+    // Raw image data access (disabled during frame read)
     uint8_t *getImageData();
     uint8_t *getImageDataRow(int row);
-    uint8_t *getImageDataRowCol(int row, int col);
-
-    // This method reads the next image frame, taking up considerable processor time.
-    // Returns a boolean indicating if next frame was successfully retrieved or not.
-    bool readNextFrame();
 
     void setAGCEnabled(bool enabled);
     bool getAGCEnabled();
 
     void setTelemetryEnabled(bool enabled);
     bool getTelemetryEnabled();
+
+    // Raw telemetry data access (disabled during frame read)
     uint8_t *getTelemetryData();
+
+    // This method reads the next image frame, taking up considerable processor time.
+    // Returns a boolean indicating if next frame was successfully retrieved or not.
+    bool readNextFrame();
 
     uint8_t getLastI2CError();
     int16_t getLastErrorCode();
@@ -146,7 +151,7 @@ private:
     uint8_t _lastI2CError;      // Last i2c error
     int16_t _lastErrorCode;     // Last error code
 
-    int getImageDivFactor();
+    int getSPIFrameLines();
     uint8_t *getSPIFrameDataRow(int row);
 
     bool isBusy();
