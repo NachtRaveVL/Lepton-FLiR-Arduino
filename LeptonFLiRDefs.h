@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.2
+    Lepton-FLiR-Arduino - Version 0.5
 */
 
 #ifndef LeptonFLiRDefs_H
@@ -135,6 +135,11 @@
 #define LEP_CID_OEM_CHIP_MASK_REVISION          (uint16_t)(LEP_OEM_MODULE_BASE + 0x0014)
 #define LEP_CID_OEM_PART_NUMBER                 (uint16_t)(LEP_OEM_MODULE_BASE + 0x001C)
 #define LEP_CID_OEM_CAM_SOFTWARE_REVISION       (uint16_t)(LEP_OEM_MODULE_BASE + 0x0020)
+
+typedef enum {
+    LEP_TELEMETRY_LOCATION_HEADER = 0,
+    LEP_TELEMETRY_LOCATION_FOOTER
+} LEP_SYS_TELEMETRY_LOCATION;
 
 typedef enum {
     LEP_OK = 0,     /* Camera ok */

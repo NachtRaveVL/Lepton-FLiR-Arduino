@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.2
+    Lepton-FLiR-Arduino - Version 0.5
 */
 
 #include "LeptonFLiR.h"
@@ -33,16 +33,16 @@
 
 #define LEPFLIR_GEN_CMD_TIMEOUT         5000 // Timeout for commands to be processed
 
-#ifndef LEPFLIR_ENABLE_ALIGNED_MALLOC
-static inline int roundUpVal16(int val) { return val; }
-static inline uint8_t *roundUpPtr16(uint8_t *ptr) { return ptr; }
-static inline uint8_t *roundUpMalloc16(int size) { return (uint8_t *)malloc((size_t)size); }
-static inline uint8_t *roundUpSpiFrame16(uint8_t *spiFrame) { return spiFrame; }
-#else
+#ifndef LEPFLIR_DISABLE_ALIGNED_MALLOC
 static inline int roundUpVal16(int val) { return ((val + 15) & -16); }
 static inline uint8_t *roundUpPtr16(uint8_t *ptr) { return (uint8_t *)(((uintptr_t)ptr + 15) & 0xF); }
 static inline uint8_t *roundUpMalloc16(int size) { return (uint8_t *)malloc((size_t)(size + 15)); }
 static inline uint8_t *roundUpSpiFrame16(uint8_t *spiFrame) { return roundUpPtr16(spiFrame) + 16 - 4; }
+#else
+static inline int roundUpVal16(int val) { return val; }
+static inline uint8_t *roundUpPtr16(uint8_t *ptr) { return ptr; }
+static inline uint8_t *roundUpMalloc16(int size) { return (uint8_t *)malloc((size_t)size); }
+static inline uint8_t *roundUpSpiFrame16(uint8_t *spiFrame) { return spiFrame; }
 #endif
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
@@ -55,6 +55,8 @@ LeptonFLiR::LeptonFLiR(uint8_t spiCSPin) {
     _spiSettings = SPISettings(20000000, MSBFIRST, SPI_MODE3);
     _storageMode = LeptonFLiR_ImageStorageMode_Count;
     _imageData = _spiFrameData = _telemetryData = NULL;
+    _isReadingNextFrame = false;
+    _lastI2CError = _lastErrorCode = 0;
 }
 
 LeptonFLiR::~LeptonFLiR() {
@@ -67,7 +69,9 @@ void LeptonFLiR::init(LeptonFLiR_ImageStorageMode storageMode) {
     _storageMode = (LeptonFLiR_ImageStorageMode)constrain((int)storageMode, 0, (int)LeptonFLiR_ImageStorageMode_Count - 1);
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("LeptonFLiR::init storageMode: ");
+    Serial.print("LeptonFLiR::init spiCSPin: ");
+    Serial.print(_spiCSPin);
+    Serial.print(", storageMode: ");
     Serial.println(storageMode);
 #endif
 
@@ -76,9 +80,6 @@ void LeptonFLiR::init(LeptonFLiR_ImageStorageMode storageMode) {
 
     _imageData = roundUpMalloc16(((getImageHeight() - 1) * getImagePitch()) + (getImageWidth() * getImageBpp()));
     _spiFrameData = roundUpMalloc16(getImageDivFactor() * roundUpVal16(LEP_SPI_FRAME_SIZE));
-
-    for (int row = getImageDivFactor() - 1; row >= 0; --row)
-        getSPIFrameDataRow(row)[0] = 0x0F;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  LeptonFLiR::init ImageData: 0x");
@@ -104,100 +105,363 @@ LeptonFLiR_ImageStorageMode LeptonFLiR::getImageStorageMode() {
 
 int LeptonFLiR::getImageWidth() {
     switch (_storageMode) {
-    case LeptonFLiR_ImageStorageMode_80x60_16bpp:
-    case LeptonFLiR_ImageStorageMode_80x60_8bpp:
-        return 80;
-    case LeptonFLiR_ImageStorageMode_40x30_16bpp:
-    case LeptonFLiR_ImageStorageMode_40x30_8bpp:
-        return 40;
-    case LeptonFLiR_ImageStorageMode_20x15_16bpp:
-    case LeptonFLiR_ImageStorageMode_20x15_8bpp:
-        return 20;
-    default:
-        return 0;
+        case LeptonFLiR_ImageStorageMode_80x60_16bpp:
+        case LeptonFLiR_ImageStorageMode_80x60_8bpp:
+            return 80;
+        case LeptonFLiR_ImageStorageMode_40x30_16bpp:
+        case LeptonFLiR_ImageStorageMode_40x30_8bpp:
+            return 40;
+        case LeptonFLiR_ImageStorageMode_20x15_16bpp:
+        case LeptonFLiR_ImageStorageMode_20x15_8bpp:
+            return 20;
+        default:
+            return 0;
     }
 }
 
 int LeptonFLiR::getImageHeight() {
     switch (_storageMode) {
-    case LeptonFLiR_ImageStorageMode_80x60_16bpp:
-    case LeptonFLiR_ImageStorageMode_80x60_8bpp:
-        return 60;
-    case LeptonFLiR_ImageStorageMode_40x30_16bpp:
-    case LeptonFLiR_ImageStorageMode_40x30_8bpp:
-        return 30;
-    case LeptonFLiR_ImageStorageMode_20x15_16bpp:
-    case LeptonFLiR_ImageStorageMode_20x15_8bpp:
-        return 15;
-    default:
-        return 0;
+        case LeptonFLiR_ImageStorageMode_80x60_16bpp:
+        case LeptonFLiR_ImageStorageMode_80x60_8bpp:
+            return 60;
+        case LeptonFLiR_ImageStorageMode_40x30_16bpp:
+        case LeptonFLiR_ImageStorageMode_40x30_8bpp:
+            return 30;
+        case LeptonFLiR_ImageStorageMode_20x15_16bpp:
+        case LeptonFLiR_ImageStorageMode_20x15_8bpp:
+            return 15;
+        default:
+            return 0;
     }
 }
 
 int LeptonFLiR::getImageBpp() {
     switch (_storageMode) {
-    case LeptonFLiR_ImageStorageMode_80x60_16bpp:
-    case LeptonFLiR_ImageStorageMode_40x30_16bpp:
-    case LeptonFLiR_ImageStorageMode_20x15_16bpp:
-        return 2;
-    case LeptonFLiR_ImageStorageMode_80x60_8bpp:
-    case LeptonFLiR_ImageStorageMode_40x30_8bpp:
-    case LeptonFLiR_ImageStorageMode_20x15_8bpp:
-        return 1;
-    default:
-        return 0;
+        case LeptonFLiR_ImageStorageMode_80x60_16bpp:
+        case LeptonFLiR_ImageStorageMode_40x30_16bpp:
+        case LeptonFLiR_ImageStorageMode_20x15_16bpp:
+            return 2;
+        case LeptonFLiR_ImageStorageMode_80x60_8bpp:
+        case LeptonFLiR_ImageStorageMode_40x30_8bpp:
+        case LeptonFLiR_ImageStorageMode_20x15_8bpp:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 int LeptonFLiR::getImagePitch() {
     switch (_storageMode) {
-    case LeptonFLiR_ImageStorageMode_80x60_16bpp:
-        return roundUpVal16(80 * 2);
-    case LeptonFLiR_ImageStorageMode_80x60_8bpp:
-        return roundUpVal16(80 * 1);
-    case LeptonFLiR_ImageStorageMode_40x30_16bpp:
-        return roundUpVal16(40 * 2);
-    case LeptonFLiR_ImageStorageMode_40x30_8bpp:
-        return roundUpVal16(40 * 1);
-    case LeptonFLiR_ImageStorageMode_20x15_16bpp:
-        return roundUpVal16(20 * 2);
-    case LeptonFLiR_ImageStorageMode_20x15_8bpp:
-        return roundUpVal16(20 * 1);
-    default:
-        return 0;
+        case LeptonFLiR_ImageStorageMode_80x60_16bpp:
+            return roundUpVal16(80 * 2);
+        case LeptonFLiR_ImageStorageMode_80x60_8bpp:
+            return roundUpVal16(80 * 1);
+        case LeptonFLiR_ImageStorageMode_40x30_16bpp:
+            return roundUpVal16(40 * 2);
+        case LeptonFLiR_ImageStorageMode_40x30_8bpp:
+            return roundUpVal16(40 * 1);
+        case LeptonFLiR_ImageStorageMode_20x15_16bpp:
+            return roundUpVal16(20 * 2);
+        case LeptonFLiR_ImageStorageMode_20x15_8bpp:
+            return roundUpVal16(20 * 1);
+        default:
+            return 0;
     }
 }
 
 int LeptonFLiR::getImageDivFactor() {
     switch (_storageMode) {
-    case LeptonFLiR_ImageStorageMode_80x60_16bpp:
-    case LeptonFLiR_ImageStorageMode_80x60_8bpp:
-        return 1;
-    case LeptonFLiR_ImageStorageMode_40x30_16bpp:
-    case LeptonFLiR_ImageStorageMode_40x30_8bpp:
-        return 2;
-    case LeptonFLiR_ImageStorageMode_20x15_16bpp:
-    case LeptonFLiR_ImageStorageMode_20x15_8bpp:
-        return 4;
-    default:
-        return 0;
+        case LeptonFLiR_ImageStorageMode_80x60_16bpp:
+        case LeptonFLiR_ImageStorageMode_80x60_8bpp:
+            return 1;
+        case LeptonFLiR_ImageStorageMode_40x30_16bpp:
+        case LeptonFLiR_ImageStorageMode_40x30_8bpp:
+            return 2;
+        case LeptonFLiR_ImageStorageMode_20x15_16bpp:
+        case LeptonFLiR_ImageStorageMode_20x15_8bpp:
+            return 4;
+        default:
+            return 0;
     }
 }
 
 uint8_t *LeptonFLiR::getImageData() {
-    return roundUpPtr16(_imageData);
+    return !_isReadingNextFrame ? roundUpPtr16(_imageData) : NULL;
 }
 
 uint8_t *LeptonFLiR::getImageDataRow(int row) {
-    return roundUpPtr16(_imageData) + (getImagePitch() * row);
+    return !_isReadingNextFrame ? (roundUpPtr16(_imageData) + (getImagePitch() * row)) : NULL;
 }
 
 uint8_t *LeptonFLiR::getImageDataRowCol(int row, int col) {
-    return roundUpPtr16(_imageData) + (getImagePitch() * row) + (getImageBpp() * col);
+    return !_isReadingNextFrame ? (roundUpPtr16(_imageData) + (getImagePitch() * row) + (getImageBpp() * col)) : NULL;
 }
 
 uint8_t *LeptonFLiR::getSPIFrameDataRow(int row) {
     return roundUpSpiFrame16(_spiFrameData) + (roundUpVal16(LEP_SPI_FRAME_SIZE) * row);
+}
+
+static void delayTimeout(int timeout) {
+    unsigned long endTime = millis() + (unsigned long)timeout;
+
+    while (millis() < endTime) {
+#ifdef LEPFLIR_USE_SCHEDULER
+        Scheduler.yield();
+#else
+        delay(1);
+#endif
+    }
+}
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+
+static void printSPIFrame(uint8_t *spiFrame, uint8_t *pxlData) {
+    if (spiFrame) {
+        Serial.print("ID: 0x");
+        Serial.print(((uint16_t *)spiFrame)[0], HEX);
+        Serial.print(" CRC: 0x");
+        Serial.print(((uint16_t *)spiFrame)[1], HEX);
+        if (!pxlData) Serial.println("");
+    }
+    
+    if (pxlData) {
+        if (spiFrame) Serial.print(" ");
+        Serial.print("Data: ");
+        for (int i = 0; i < 5; ++i) {
+            Serial.print(i > 0 ? "-0x" : "0x");
+            Serial.print(((uint16_t *)pxlData)[i], HEX);
+        }
+        Serial.print("...");
+        for (int i = 75; i < 80; ++i) {
+            Serial.print(i > 75 ? "-0x" : "0x");
+            Serial.print(((uint16_t *)pxlData)[i], HEX);
+        }
+        Serial.println("");
+    }
+}
+
+#endif
+
+bool LeptonFLiR::readNextFrame() {
+    if (!_isReadingNextFrame) {
+        _isReadingNextFrame = true;
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+        Serial.println("LeptonFLiR::readNextFrame");
+#endif
+
+        bool agcEnabled, telemetryEnabled, cameraBooted; LEP_SYS_TELEMETRY_LOCATION telemetryLocation;
+        {   uint16_t value = 0;
+            receiveCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &value);
+            agcEnabled = value > 0;
+
+            value = 0; receiveCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &value);
+            telemetryEnabled = value > 0;
+            
+            value = 0; receiveCommand(commandCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_GET), &value);
+            telemetryLocation = (value != (uint32_t)LEP_TELEMETRY_LOCATION_FOOTER ? LEP_TELEMETRY_LOCATION_HEADER : LEP_TELEMETRY_LOCATION_FOOTER);
+
+            value = 0; readRegister(LEP_I2C_STATUS_REG, &value, 1, 1);
+            cameraBooted = (value & LEP_I2C_STATUS_BOOT_MODE_BIT_MASK) > 0 && (value & LEP_I2C_STATUS_BOOT_STATUS_BIT_MASK) > 0;
+        }
+
+        if (!cameraBooted) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+            Serial.println("  LeptonFLiR::readNextFrame Camera has not yet booted. Aborting.");
+#endif
+            _isReadingNextFrame = false;
+            return false;
+        }
+
+        if (telemetryEnabled && !_telemetryData) {
+            _telemetryData = (uint8_t *)malloc(LEP_SPI_FRAME_SIZE);
+            _telemetryData[0] = 0x0F; // initialize as discard packet
+        }
+        else if (!telemetryEnabled && _telemetryData) {
+            free(_telemetryData);
+            _telemetryData = NULL;
+        }
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+        Serial.print("  LeptonFLiR::readNextFrame AGC: ");
+        Serial.print(agcEnabled ? "enabled" : "disabled");
+        Serial.print(", Telemetry: ");
+        if (telemetryEnabled) {
+            Serial.print("enabled, Location: ");
+            Serial.println(telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER ? "header" : "footer");
+        }
+        else
+            Serial.println("disabled");
+#endif
+
+        uint_fast8_t readLines = 0;
+        uint_fast8_t imgRows = getImageHeight();
+        uint_fast8_t currImgRow = 0;
+        uint_fast8_t spiRows = getImageDivFactor();
+        uint_fast8_t currSpiRow = 0;
+        uint_fast8_t teleRows = (telemetryEnabled * 3);
+        uint_fast8_t currTeleRow = 0;
+        uint_fast8_t framesSkipped = 0;
+        uint_fast16_t packetsRead = -1;
+        bool packetHeaderRead = false;
+        //bool wroteTeleData = false;
+
+        SPI.beginTransaction(_spiSettings);
+        digitalWrite(_spiCSPin, LOW);
+
+        while (currImgRow < imgRows || currTeleRow < teleRows) {
+            uint8_t *spiFrame = getSPIFrameDataRow(currSpiRow);
+            
+            if (!packetHeaderRead) {
+                ++packetsRead;
+                SPI.transfer(spiFrame, 4);
+                spiFrame[0] &= 0x0F;
+            }
+            else
+                packetHeaderRead = false;
+
+            if (spiFrame[0] == 0x00 && spiFrame[1] == readLines) { // Image packet
+                uint8_t *pxlData = (_storageMode == LeptonFLiR_ImageStorageMode_80x60_16bpp ? roundUpPtr16(_imageData) + (getImagePitch() * readLines) : &spiFrame[4]);
+
+                SPI.transfer(pxlData, LEP_SPI_FRAME_SIZE - 4);
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+                Serial.println("    LeptonFLiR::readNextFrame VoSPI Image Packet:");
+                Serial.print("      ");  printSPIFrame(spiFrame, pxlData);
+#endif
+
+                ++readLines; ++currSpiRow;
+
+                if (currSpiRow == spiRows) {
+                    if (_storageMode != LeptonFLiR_ImageStorageMode_80x60_16bpp) {
+                        spiFrame = getSPIFrameDataRow(0) + 4;
+                        pxlData = roundUpPtr16(_imageData) + (getImagePitch() * currImgRow);
+
+                        uint_fast8_t imgWidth = getImageWidth();
+                        uint_fast8_t imgBpp = getImageBpp();
+
+                        uint_fast32_t divisor = (spiRows * spiRows) * (!agcEnabled && imgBpp == 1 ? 64 : 1);
+                        uint_fast32_t clamp = (!agcEnabled && imgBpp == 2 ? 0x3FFF : 0x00FF);
+
+                        while (imgWidth-- > 0) {
+                            uint_fast32_t total = 0;
+
+                            uint_fast8_t y = spiRows;
+                            uint8_t *spiYFrame = spiFrame;
+                            while (y-- > 0) {
+
+                                uint_fast8_t x = spiRows;
+                                uint16_t *spiXFrame = (uint16_t *)spiYFrame;
+                                while (x-- > 0)
+                                    total += *spiXFrame++;
+
+                                spiYFrame += roundUpVal16(LEP_SPI_FRAME_SIZE);
+                            }
+
+                            if (imgBpp == 2)
+                                *((uint16_t *)pxlData) = (uint16_t)constrain(total / divisor, 0, clamp);
+                            else
+                                *((uint8_t *)pxlData) = (uint8_t)constrain(total / divisor, 0, clamp);
+                            pxlData += imgBpp;
+                            spiFrame += 2 * spiRows;
+                        }
+                    }
+
+                    ++currImgRow; currSpiRow = 0;
+                }
+            }
+            else if (spiFrame[0] != 0x0F && teleRows && currTeleRow < 3 &&
+                ((telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER && readLines == 0) ||
+                (telemetryLocation == LEP_TELEMETRY_LOCATION_FOOTER && readLines == 60))) { // Telemetry packet
+                if (currTeleRow == 0) {
+                    memcpy(_telemetryData, spiFrame, 4);
+                    SPI.transfer(&_telemetryData[4], LEP_SPI_FRAME_SIZE - 4);
+                    //wroteTeleData = true;
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+                    Serial.println("    LeptonFLiR::readNextFrame VoSPI Telemetry(A) Packet:");
+                    Serial.print("      ");  printSPIFrame(_telemetryData, &_telemetryData[4]);
+#endif
+                }
+                else {
+                    SPI.transfer(&spiFrame[4], LEP_SPI_FRAME_SIZE - 4);
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+                    Serial.print("    LeptonFLiR::readNextFrame VoSPI Telemetry(");
+                    Serial.print(currTeleRow == 1 ? "B" : "C");
+                    Serial.println(") Packet:");
+                    Serial.print("      ");  printSPIFrame(spiFrame, NULL);
+#endif
+                }
+
+                ++currTeleRow;
+            }
+            else { // Discard packet
+                SPI.transfer(&spiFrame[4], LEP_SPI_FRAME_SIZE - 4);
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+                Serial.println("    LeptonFLiR::readNextFrame VoSPI Discard Packet:");
+                Serial.print("      ");  printSPIFrame(spiFrame, &spiFrame[4]);
+#endif
+
+                if (packetsRead > 0) {
+                    if (++framesSkipped >= 5) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+                        Serial.println("  LeptonFLiR::readNextFrame Maximum frame skip reached. Aborting.");
+#endif
+                        digitalWrite(_spiCSPin, HIGH);
+                        SPI.endTransaction();
+                        _isReadingNextFrame = false;
+                        return false;
+                    }
+
+                    if (spiFrame[0] == 0x0F) {
+                        digitalWrite(_spiCSPin, HIGH);
+                        delayTimeout(185);
+                        digitalWrite(_spiCSPin, LOW);
+                    }
+                }
+
+                readLines = currImgRow = currSpiRow = currTeleRow = 0;
+                //if (wroteTeleData) { wroteTeleData = false; _telemetryData[0] = 0x0F; } // mark as invalid
+
+                spiFrame = getSPIFrameDataRow(currSpiRow);
+                packetHeaderRead = true;
+                uint_fast8_t triesLeft = 120;
+                
+                while (triesLeft > 0) {
+                    ++packetsRead;
+                    SPI.transfer(spiFrame, 4);
+                    spiFrame[0] &= 0x0F;
+
+                    if (spiFrame[0] != 0x0F &&
+                        ((spiFrame[0] == 0x00 && spiFrame[1] == 0) ||
+                        (spiFrame[0] > 0x00 && teleRows && telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER)))
+                        break;
+
+                    --triesLeft;
+                    SPI.transfer(&spiFrame[4], LEP_SPI_FRAME_SIZE - 4);
+                }
+
+                if (triesLeft == 0) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+                    Serial.println("  LeptonFLiR::readNextFrame Maximum resync retries reached. Aborting.");
+#endif
+                    digitalWrite(_spiCSPin, HIGH);
+                    SPI.endTransaction();
+                    _isReadingNextFrame = false;
+                    return false;
+                }
+            }
+        }
+        
+        digitalWrite(_spiCSPin, HIGH);
+        SPI.endTransaction();
+
+        _isReadingNextFrame = false;
+    }
+
+    return true;
 }
 
 void LeptonFLiR::setAGCEnabled(bool enabled) {
@@ -214,9 +478,9 @@ bool LeptonFLiR::getAGCEnabled() {
     Serial.println("LeptonFLiR::getAGCEnabled");
 #endif
 
-    uint32_t enabled = 0;
+    uint16_t enabled = 0;
     receiveCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
-    return enabled;
+    return enabled > 0;
 }
 
 void LeptonFLiR::setTelemetryEnabled(bool enabled) {
@@ -230,12 +494,13 @@ void LeptonFLiR::setTelemetryEnabled(bool enabled) {
     if (enabled) {
         if (!_telemetryData) {
             _telemetryData = (uint8_t *)malloc(LEP_SPI_FRAME_SIZE);
-            _telemetryData[0] = 0x0F;
+            _telemetryData[0] = 0x0F; // initialize as discard packet
         }
     }
     else {
         if (_telemetryData) {
-            free(_telemetryData); _telemetryData = NULL;
+            free(_telemetryData);
+            _telemetryData = NULL;
         }
     }
 }
@@ -245,13 +510,14 @@ bool LeptonFLiR::getTelemetryEnabled() {
     Serial.println("LeptonFLiR::getTelemetryEnabled");
 #endif
 
-    uint32_t enabled = 0;
+    uint16_t enabled = 0;
     receiveCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
-    return enabled;
+    return enabled > 0;
 }
 
-uint16_t *LeptonFLiR::getTelemetryData() {
-    return (uint16_t *)_telemetryData;
+uint8_t *LeptonFLiR::getTelemetryData() {
+    // Don't let user have access to telemetry data if it hasn't been filled yet (that is, ID is discard packet)
+    return !_isReadingNextFrame && _telemetryData && _telemetryData[0] != 0x0F ? _telemetryData : NULL;
 }
 
 uint8_t LeptonFLiR::getLastI2CError() {
@@ -267,28 +533,28 @@ int16_t LeptonFLiR::getLastErrorCode() {
 void LeptonFLiR::printModuleInfo() {
     uint16_t data[16];
 
-    Serial.println("\r\nSYS Camera Status:");
+    Serial.println("SYS Camera Status:");
     receiveCommand(commandCode(LEP_CID_SYS_CAM_STATUS, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 
-    Serial.println("\r\nSYS Customer Serial Number:");
+    Serial.println("SYS Customer Serial Number:");
     receiveCommand(commandCode(LEP_CID_SYS_CUST_SERIAL_NUMBER, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 
-    Serial.println("\r\nSYS FLiR Serial Number:");
+    Serial.println("SYS FLiR Serial Number:");
     receiveCommand(commandCode(LEP_CID_SYS_FLIR_SERIAL_NUMBER, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 
-    Serial.println("\r\nSYS Camera Uptime:");
+    Serial.println("SYS Camera Uptime:");
     receiveCommand(commandCode(LEP_CID_SYS_CAM_UPTIME, LEP_I2C_COMMAND_TYPE_GET), data, 16);
     
-    Serial.println("\r\nSYS Aux Temperature Kelvin:");
+    Serial.println("SYS Aux Temperature Kelvin:");
     receiveCommand(commandCode(LEP_CID_SYS_AUX_TEMPERATURE_KELVIN, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 
-    Serial.println("\r\nSYS Fpa Temperature Kelvin:");
+    Serial.println("SYS FPA Temperature Kelvin:");
     receiveCommand(commandCode(LEP_CID_SYS_FPA_TEMPERATURE_KELVIN, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 
-    Serial.println("\r\nAGC Enable State:");
+    Serial.println("AGC Enable State:");
     receiveCommand(commandCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 
-    Serial.println("\r\nSYS Telemetry Enable State:");
+    Serial.println("SYS Telemetry Enable State:");
     receiveCommand(commandCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), data, 16);
 }
 
@@ -690,60 +956,3 @@ int LeptonFLiR::i2cWire_read(void) {
     }
 #endif
 }
-
-
-
-
-
-
-// Old stuff beyond this point
-/*
-
-void flirReadLeptonFrame(int fillRow) {
-    SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE3));
-
-    if (fillRow >= 0 && fillRow < 60) {
-        uint8_t packetID;
-        uint8_t packetRow;
-        uint16_t packetCRC;
-
-        //REG_PIOB_ODSR &= ~0x01;
-        digitalWrite(flirCSEnablePin, LOW);
-
-        do {
-            packetID = SPI.transfer(0x00);
-            packetRow = SPI.transfer(0x00);
-            packetCRC = SPI.transfer(0x00) << 8;
-            packetCRC |= SPI.transfer(0x00);
-
-            if (packetID & 0x0f == 0x0f)
-                delay(200); // spec says 185, doing 200 to ensure timeout
-        } while (packetID & 0x0f == 0x0f);
-
-        // CRC check polynominal: x^16 + x^12 + x^5 + x^0
-        // The CRC is calculated over the entire packet, including the ID and CRC fields.
-        // However, the four most-significant bits of the ID and all sixteen bits of the
-        // CRC are set to zero for calculation of the CRC. There is no requirement for the
-        // host to verify the CRC. However, if the host does find a CRC mismatch, it is
-        // recommended to re-synchronize the VoSPI stream to prevent potential misalignment.
-
-        Serial.print("{ packetID=");
-        Serial.print(packetID, HEX);
-        Serial.print(", packetRow=");
-        Serial.print(packetRow, HEX);
-        Serial.print(", packetCRC=");
-        Serial.print(packetCRC, HEX);
-        Serial.println(" }");
-
-        for (int i = 0; i < 80; ++i) {
-            flirImage[fillRow][i] = SPI.transfer(0x00) << 8;
-            flirImage[fillRow][i] |= SPI.transfer(0x00);
-        }
-
-        digitalWrite(flirCSEnablePin, HIGH);
-        //REG_PIOB_ODSR |= 0x01;
-    }
-
-    SPI.endTransaction();
-}
-*/
