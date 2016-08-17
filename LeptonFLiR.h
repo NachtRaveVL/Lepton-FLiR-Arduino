@@ -68,6 +68,7 @@
 #include <SPI.h>
 #include "LeptonFLiRDefs.h"
 
+// Memory Footprint Note
 // Image storage mode affects the total memory footprint. Memory constrained boards
 // should take notice to the storage requirements. Note that the Lepton FLiR delivers
 // 14bpp thermal image data with AGC mode disabled and 8bpp thermal image data with AGC
@@ -75,14 +76,23 @@
 // to use an 8bpp mode to begin with. Note that with telemetry enabled, memory cost
 // incurs an additional 164 bytes for telemetry data storage. Lastly note that using
 // the 80x60 16bpp mode is the most speed efficient since data transfers write directly
-// to the image memory space without needing a software BLIT or OTF image resizing.
+// to the image memory space without needing to perform software resizes/BLITs.
 typedef enum {
-    LeptonFLiR_ImageStorageMode_80x60_16bpp,    // Full 16bpp image mode, 9600 bytes for image data, 164 bytes for read frame (9604 bytes total, 9806 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_80x60_8bpp,     // Full 8bpp image mode, 4800 bytes for image data, 164 bytes for read frame (4964 bytes total, 5006 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_40x30_16bpp,    // Halved 16bpp image mode, 2400 bytes for image data, 328 bytes for read frame (2728 bytes total, 2782 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_40x30_8bpp,     // Halved 8bpp image mode, 1200 bytes for image data, 328 bytes for read frame (1528 bytes total, 1814 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_20x15_16bpp,    // Quartered 16bpp image mode, 600 bytes for image data, 656 bytes for read frame (1256 bytes total, 1446 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_20x15_8bpp,     // Quartered 8bpp image mode, 300 bytes for image data, 656 bytes for read frame (956 bytes total, 1202 bytes if aligned)
+    // Full 16bpp image mode, 9600 bytes for image data, 164 bytes for read frame (9604 bytes total, 9806 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_80x60_16bpp,
+    // Full 8bpp image mode, 4800 bytes for image data, 164 bytes for read frame (4964 bytes total, 5006 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_80x60_8bpp,
+
+    // Halved 16bpp image mode, 2400 bytes for image data, 328 bytes for read frame (2728 bytes total, 2782 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_40x30_16bpp,
+    // Halved 8bpp image mode, 1200 bytes for image data, 328 bytes for read frame (1528 bytes total, 1814 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_40x30_8bpp,
+
+    // Quartered 16bpp image mode, 600 bytes for image data, 656 bytes for read frame (1256 bytes total, 1446 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_20x15_16bpp,
+    // Quartered 8bpp image mode, 300 bytes for image data, 656 bytes for read frame (956 bytes total, 1202 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_20x15_8bpp,
+
     LeptonFLiR_ImageStorageMode_Count
 } LeptonFLiR_ImageStorageMode;
 
