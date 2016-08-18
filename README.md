@@ -1,7 +1,7 @@
 # Lepton-FLiR-Arduino
 Arduino Library for the Lepton FLiR Thermal Camera Module.
 
-**Lepton-FLiR-Arduino v0.5**
+**Lepton-FLiR-Arduino v0.7**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino board (Due, Zero, etc. recommended).  
 Licensed under the non-restrictive MIT license.
@@ -23,6 +23,9 @@ There are several defines inside of the library's header file that allows for mo
 
 // Uncomment this define to disable 16-byte aligned memory allocations (may hinder performance).
 //#define LEPFLIR_DISABLE_ALIGNED_MALLOC  1
+
+// Uncomment this define if wanting to exclude extended i2c functions from compilation.
+//#define PCA9685_EXCLUDE_EXT_I2C_FUNCS   1
 
 // Uncomment this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1

@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.5
+    Lepton-FLiR-Arduino - Version 0.7
 */
 
 #ifndef LeptonFLiRDefs_H
@@ -78,6 +78,7 @@
 #define LEP_I2C_DATA_BUFFER_1                   (uint16_t)(LEP_I2C_DATA_BUFFER_1_BASE_ADDR)
 #define LEP_I2C_DATA_BUFFER_1_END               (uint16_t)(LEP_I2C_DATA_BUFFER_1_BASE_ADDR + 0x03FF)
 
+
 #define LEP_AGC_MODULE_BASE                     (uint16_t)0x0100
 #define LEP_CID_AGC_ENABLE_STATE                (uint16_t)(LEP_AGC_MODULE_BASE + 0x0000)
 #define LEP_CID_AGC_POLICY                      (uint16_t)(LEP_AGC_MODULE_BASE + 0x0004)
@@ -99,6 +100,31 @@
 #define LEP_CID_AGC_HEQ_SCALE_FACTOR            (uint16_t)(LEP_AGC_MODULE_BASE + 0x0044)
 #define LEP_CID_AGC_CALC_ENABLE_STATE           (uint16_t)(LEP_AGC_MODULE_BASE + 0x0048)
 
+typedef enum {
+    LEP_AGC_LINEAR = 0,
+    LEP_AGC_HEQ,
+} LEP_AGC_POLICY;
+
+typedef struct {
+    uint16_t startCol;
+    uint16_t startRow;
+    uint16_t endCol;
+    uint16_t endRow;
+} LEP_AGC_HISTOGRAM_ROI;
+
+typedef struct {
+    uint16_t minIntensity;
+    uint16_t maxIntensity;
+    uint16_t meanIntensity;
+    uint16_t numPixels;
+} LEP_AGC_HISTOGRAM_STATISTICS;
+
+typedef enum {
+    LEP_AGC_SCALE_TO_8_BITS = 0,
+    LEP_AGC_SCALE_TO_14_BITS
+} LEP_AGC_HEQ_SCALE_FACTOR;
+
+
 #define LEP_SYS_MODULE_BASE                     (uint16_t)0x0200
 #define LEP_CID_SYS_PING                        (uint16_t)(LEP_SYS_MODULE_BASE + 0x0000)
 #define LEP_CID_SYS_CAM_STATUS                  (uint16_t)(LEP_SYS_MODULE_BASE + 0x0004)
@@ -115,9 +141,93 @@
 #define LEP_CID_SYS_SCENE_ROI                   (uint16_t)(LEP_SYS_MODULE_BASE + 0x0030)
 #define LEP_CID_SYS_THERMAL_SHUTDOWN_COUNT      (uint16_t)(LEP_SYS_MODULE_BASE + 0x0034)
 #define LEP_CID_SYS_SHUTTER_POSITION            (uint16_t)(LEP_SYS_MODULE_BASE + 0x0038)
-#define LEP_CID_SYS_FFC_SHUTTER_MODE_OBJ        (uint16_t)(LEP_SYS_MODULE_BASE + 0x003C)
-#define FLR_CID_SYS_RUN_FFC                     (uint16_t)(LEP_SYS_MODULE_BASE + 0x0042)
+#define LEP_CID_SYS_FFC_SHUTTER_MODE            (uint16_t)(LEP_SYS_MODULE_BASE + 0x003C)
+#define LEP_CID_SYS_RUN_FFC                     (uint16_t)(LEP_SYS_MODULE_BASE + 0x0042)
 #define LEP_CID_SYS_FFC_STATUS                  (uint16_t)(LEP_SYS_MODULE_BASE + 0x0044)
+
+typedef enum {
+    LEP_SYSTEM_READY = 0,
+    LEP_SYSTEM_INITIALIZING,
+    LEP_SYSTEM_IN_LOW_POWER_MODE,
+    LEP_SYSTEM_GOING_INTO_STANDBY,
+    LEP_SYSTEM_FLAT_FIELD_IN_PROCESS
+} LEP_SYS_CAM_STATUS_STATES;
+
+typedef struct {
+    uint32_t camStatus; // LEP_SYS_CAM_STATUS_STATES
+    uint16_t commandCount;
+    uint16_t reserved;
+} LEP_SYS_CAM_STATUS;
+
+typedef enum {
+    LEP_TELEMETRY_LOCATION_HEADER = 0,
+    LEP_TELEMETRY_LOCATION_FOOTER
+} LEP_SYS_TELEMETRY_LOCATION;
+
+typedef enum {
+    LEP_SYS_FA_DIV_1 = 0,
+    LEP_SYS_FA_DIV_2,
+    LEP_SYS_FA_DIV_4,
+    LEP_SYS_FA_DIV_8,
+    LEP_SYS_FA_DIV_16,
+    LEP_SYS_FA_DIV_32,
+    LEP_SYS_FA_DIV_64,
+    LEP_SYS_FA_DIV_128
+} LEP_SYS_FRAME_AVERAGE;
+
+typedef struct {
+    uint16_t meanIntensity;
+    uint16_t maxIntensity;
+    uint16_t minIntensity;
+    uint16_t numPixels;
+} LEP_SYS_SCENE_STATISTICS;
+
+typedef struct {
+    uint16_t startCol;
+    uint16_t startRow;
+    uint16_t endCol;
+    uint16_t endRow;
+} LEP_SYS_SCENE_ROI;
+
+typedef enum {
+    LEP_SYS_SHUTTER_POSITION_UNKNOWN = -1,
+    LEP_SYS_SHUTTER_POSITION_IDLE = 0,
+    LEP_SYS_SHUTTER_POSITION_OPEN,
+    LEP_SYS_SHUTTER_POSITION_CLOSED,
+    LEP_SYS_SHUTTER_POSITION_BRAKE_ON
+} LEP_SYS_SHUTTER_POSITION;
+
+typedef enum {
+    LEP_SYS_FFC_SHUTTER_MODE_MANUAL = 0,
+    LEP_SYS_FFC_SHUTTER_MODE_AUTO,
+    LEP_SYS_FFC_SHUTTER_MODE_EXTERNAL
+} LEP_SYS_FFC_SHUTTER_MODE_STATE;
+
+typedef enum {
+    LEP_SYS_SHUTTER_LOCKOUT_INACTIVE = 0,
+    LEP_SYS_SHUTTER_LOCKOUT_HIGH,
+    LEP_SYS_SHUTTER_LOCKOUT_LOW
+} LEP_SYS_SHUTTER_TEMP_LOCKOUT_STATE;
+
+typedef struct {
+    uint32_t shutterMode;               // LEP_SYS_FFC_SHUTTER_MODE_STATE def:LEP_SYS_FFC_SHUTTER_MODE_EXTERNAL
+    uint32_t tempLockoutState;          // LEP_SYS_SHUTTER_TEMP_LOCKOUT_STATE def:LEP_SYS_SHUTTER_LOCKOUT_INACTIVE
+    uint32_t videoFreezeDuringFFC;      // def:enabled
+    uint32_t ffcDesired;                // def:disabled
+    uint32_t elapsedTimeSinceLastFfc;   // (ms)
+    uint32_t desiredFfcPeriod;          // def:300000 (ms)
+    uint8_t explicitCmdToOpen;          // (bool)
+    uint16_t desiredFfcTempDelta;       // def:300 (kelvins*100)
+    uint16_t imminentDelay;             // def:52 (frame counts)
+} LEP_SYS_FFC_SHUTTER_MODE;
+
+typedef enum {
+    LEP_SYS_FFC_STATUS_WRITE_ERROR = -2,
+    LEP_SYS_FFC_STATUS_ERROR = -1,
+    LEP_SYS_FFC_STATUS_READY = 0,
+    LEP_SYS_FFC_STATUS_BUSY,
+    LEP_SYS_FRAME_AVERAGE_COLLECTING_FRAMES,
+} LEP_SYS_FFC_STATUS;
 
 #define LEP_VID_MODULE_BASE                     (uint16_t)0x0300
 #define LEP_CID_VID_POLARITY_SELECT             (uint16_t)(LEP_VID_MODULE_BASE + 0x0000)
@@ -131,15 +241,47 @@
 #define LEP_CID_VID_GAMMA_SELECT                (uint16_t)(LEP_VID_MODULE_BASE + 0x0020)
 #define LEP_CID_VID_FREEZE_ENABLE               (uint16_t)(LEP_VID_MODULE_BASE + 0x0024)
 
-#define LEP_OEM_MODULE_BASE                     (uint16_t)0x0800
-#define LEP_CID_OEM_CHIP_MASK_REVISION          (uint16_t)(LEP_OEM_MODULE_BASE + 0x0014)
-#define LEP_CID_OEM_PART_NUMBER                 (uint16_t)(LEP_OEM_MODULE_BASE + 0x001C)
-#define LEP_CID_OEM_CAM_SOFTWARE_REVISION       (uint16_t)(LEP_OEM_MODULE_BASE + 0x0020)
+typedef enum {
+    LEP_VID_WHITE_HOT = 0,
+    LEP_VID_BLACK_HOT
+} LEP_VID_POLARITY;
 
 typedef enum {
-    LEP_TELEMETRY_LOCATION_HEADER = 0,
-    LEP_TELEMETRY_LOCATION_FOOTER
-} LEP_SYS_TELEMETRY_LOCATION;
+    LEP_VID_WHEEL6_LUT = 0,
+    LEP_VID_FUSION_LUT,
+    LEP_VID_RAINBOW_LUT,
+    LEP_VID_GLOBOW_LUT,
+    LEP_VID_SEPIA_LUT,
+    LEP_VID_COLOR_LUT,
+    LEP_VID_ICE_FIRE_LUT,
+    LEP_VID_RAIN_LUT,
+    LEP_VID_USER_LUT,
+} LEP_VID_PCOLOR_LUT;
+
+typedef struct {
+    uint8_t reserved;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} LEP_VID_LUT_PIXEL;
+
+typedef struct {
+    LEP_VID_LUT_PIXEL bin[256];
+} LEP_VID_LUT_BUFFER;
+
+typedef struct {
+    uint16_t startCol;
+    uint16_t startRow;
+    uint16_t endCol;
+    uint16_t endRow;
+} LEP_VID_FOCUS_ROI;
+
+
+//#define LEP_OEM_MODULE_BASE                     (uint16_t)0x4800
+//#define LEP_CID_OEM_CHIP_MASK_REVISION          (uint16_t)(LEP_OEM_MODULE_BASE + 0x0014)
+//#define LEP_CID_OEM_PART_NUMBER                 (uint16_t)(LEP_OEM_MODULE_BASE + 0x001C)
+//#define LEP_CID_OEM_CAM_SOFTWARE_REVISION       (uint16_t)(LEP_OEM_MODULE_BASE + 0x0020)
+
 
 typedef enum {
     LEP_OK = 0,     /* Camera ok */

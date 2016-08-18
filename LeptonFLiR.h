@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.5
+    Lepton-FLiR-Arduino - Version 0.7
 */
 
 #ifndef LeptonFLiR_H
@@ -38,6 +38,9 @@
 
 // Uncomment this define to disable 16-byte aligned memory allocations (may hinder performance).
 //#define LEPFLIR_DISABLE_ALIGNED_MALLOC  1
+
+// Uncomment this define if wanting to exclude extended i2c functions from compilation.
+//#define PCA9685_EXCLUDE_EXT_I2C_FUNCS   1
 
 // Uncomment this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
@@ -127,12 +130,6 @@ public:
     uint8_t *getImageData();
     uint8_t *getImageDataRow(int row);
 
-    void setAGCEnabled(bool enabled);
-    bool getAGCEnabled();
-
-    void setTelemetryEnabled(bool enabled);
-    bool getTelemetryEnabled();
-
     // Raw telemetry data access (disabled during frame read)
     uint8_t *getTelemetryData();
 
@@ -140,8 +137,149 @@ public:
     // Returns a boolean indicating if next frame was successfully retrieved or not.
     bool readNextFrame();
 
+    // AGC
+
+    void setAGCEnabled(bool enabled); // def:disabled
+    bool getAGCEnabled();
+
+    void setAGCPolicy(LEP_AGC_POLICY policy); // ???
+    LEP_AGC_POLICY getAGCPolicy();
+
+    void setAGCCalcEnabled(bool enabled); // def:disabled
+    bool getAGCCalcEnabled();
+
+    // SYS
+
+    LEP_SYS_CAM_STATUS getSysCameraStatus();
+
+    void getSysFlirSerialNumber(char *buffer, int maxLength); // maxLength must at least be 16
+    void getSysCustomerSerialNumber(char *buffer, int maxLength); // maxLength must at least be 32
+
+    uint32_t getSysCameraUptime(); // (milliseconds)
+
+    uint16_t getSysAuxTemperature(); // min:0 max:16383 (kelvins*100), use the lepK100ToCelsius/lepK100ToFarenheit functions to convert
+    uint16_t getSysFPATemperature(); // min:0 max:65535 (kelvins*100)
+
+    void setSysTelemetryEnabled(bool enabled); // def:disabled
+    bool getSysTelemetryEnabled();
+
+    // VID
+
+    void setVidPolarity(LEP_VID_POLARITY polarity); // def:LEP_VID_WHITE_HOT
+    LEP_VID_POLARITY getVidPolarity();
+
+    void setVidPseudoColorLUT(LEP_VID_PCOLOR_LUT lut); // ???
+    LEP_VID_PCOLOR_LUT getVidPseudoColorLUT(); 
+    
+    void setVidFocusCalcEnabled(bool enabled); // def:disabled
+    bool getVidFocusCalcEnabled();
+
+    void setVidFreezeEnabled(bool enabled); // def:disabled
+    bool getVidFreezeEnabled();
+
+#ifndef PCA9685_EXCLUDE_EXT_I2C_FUNCS
+
+    // AGC (extended)
+
+    void setAGCHistogramRegion(LEP_AGC_HISTOGRAM_ROI region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    LEP_AGC_HISTOGRAM_ROI getAGCHistogramRegion();
+
+    LEP_AGC_HISTOGRAM_STATISTICS getAGCHistogramStatistics(); // min:{0,0,0,0} max:{0x3FFF,0x3FFF,0x3FFF,4800} (pixels)
+
+    void setAGCHistogramClipPercent(uint16_t value); // ???
+    uint16_t getAGCHistogramClipPercent();
+
+    void setAGCHistogramTailSize(uint16_t value); // ???
+    uint16_t getAGCHistogramTailSize();
+
+    void setAGCLinearMaxGain(uint16_t value); // ???
+    uint16_t getAGCLinearMaxGain();
+
+    void setAGCLinearMidpoint(uint16_t value); // ???
+    uint16_t getAGCLinearMidpoint();
+
+    void setAGCLinearDampeningFactor(uint16_t value); // ???
+    uint16_t getAGCLinearDampeningFactor();
+
+    void setAGCHEQDampeningFactor(uint16_t value); // min:0 max:256 def:64
+    uint16_t getAGCHEQDampeningFactor();
+
+    void setAGCHEQMaxGain(uint16_t value); // ???
+    uint16_t getAGCHEQMaxGain();
+
+    void setAGCHEQClipLimitHigh(uint16_t value); // min:0 max:4800 def:4800 (pixels)
+    uint16_t getAGCHEQClipLimitHigh();
+
+    void setAGCHEQClipLimitLow(uint16_t value); // min:0 max:1024 def:512 (pixels)
+    uint16_t getAGCHEQClipLimitLow();
+
+    void setAGCHEQBinExtension(uint16_t value); // ???
+    uint16_t getAGCHEQBinExtension();
+
+    void setAGCHEQMidpoint(uint16_t value); // ???
+    uint16_t getAGCHEQMidpoint();
+
+    void setAGCHEQEmptyCounts(uint16_t value); // min:0 max:0x3FFF def:2
+    uint16_t getAGCHEQEmptyCounts();
+
+    void setAGCHEQNormalizationFactor(uint16_t value); // ???
+    uint16_t getAGCHEQNormalizationFactor();
+
+    void setAGCHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor); // def:LEP_AGC_SCALE_TO_8_BITS
+    LEP_AGC_HEQ_SCALE_FACTOR getAGCHEQScaleFactor();
+
+    // SYS (extended)
+
+    void runSysPingCamera(); // return put into lastErrorCode
+
+    void setSysTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location); // def:LEP_TELEMETRY_LOCATION_HEADER
+    LEP_SYS_TELEMETRY_LOCATION getSysTelemetryLocation();
+
+    void runSysExecuteFrameAverage(); // ??? (maybe get or set?)
+
+    void setSysNumFramesToAverage(LEP_SYS_FRAME_AVERAGE average); // def:LEP_SYS_FA_DIV_8
+    LEP_SYS_FRAME_AVERAGE getSysNumFramesToAverage();
+
+    LEP_SYS_SCENE_STATISTICS getSysSceneStatistics();
+
+    void setSysSceneRegion(LEP_SYS_SCENE_ROI region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    LEP_SYS_SCENE_ROI getSysSceneRegion();
+
+    uint16_t getSysThermalShutdownCount(); // min:0 max:65535 default:270 (pixels)
+
+    void setSysShutterPosition(LEP_SYS_SHUTTER_POSITION position); // def:LEP_SYS_SHUTTER_POSITION_UNKNOWN
+    LEP_SYS_SHUTTER_POSITION getSysShutterPosition();
+
+    void setSysFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE mode); // see LEP_SYS_FFC_SHUTTER_MODE for defs
+    LEP_SYS_FFC_SHUTTER_MODE getSysFFCShutterMode();
+
+    void runSysFlatFieldCorrection();
+
+    LEP_SYS_FFC_STATUS getSysFlatFieldCorrectionStatus(); // def:LEP_SYS_FFC_STATUS_READY
+
+    // VID (extended)
+
+    void setVidUserColorLUT(LEP_VID_LUT_BUFFER *table);
+    void getVidUserColorLUT(LEP_VID_LUT_BUFFER *table);
+
+    void setVidFocusRegion(LEP_VID_FOCUS_ROI region); // min:1,1/end>beg+1, max:78,58/beg<end-1 def:{1,1,78,58} (pixels)
+    LEP_VID_FOCUS_ROI getVidFocusRegion();
+
+    void setVidFocusThreshold(uint32_t threshold); // def:30
+    uint32_t getVidFocusThreshold();
+
+    uint32_t getVidFocusMetric();
+
+    void setVidSBNUCEnabled(bool enabled); // ???
+    bool getVidSBNUSEnabled();
+
+    void setVidGamma(uint32_t value); // ???
+    uint32_t getVidGamma();
+
+#endif
+    
     uint8_t getLastI2CError();
-    int16_t getLastErrorCode();
+    LEP_RESULT getLastErrorCode();
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     void printModuleInfo();
@@ -159,15 +297,15 @@ private:
     uint8_t *_telemetryData;    // SPI telemetry frame data
     bool _isReadingNextFrame;   // Tracks if next frame is being read
     uint8_t _lastI2CError;      // Last i2c error
-    int16_t _lastErrorCode;     // Last error code
+    uint8_t _lastErrorCode;     // Last lep result
+
+    uint8_t *_getImageDataRow(int row);
 
     int getSPIFrameLines();
     uint8_t *getSPIFrameDataRow(int row);
 
-    bool isBusy();
-    bool waitBusy(int timeout = 0);
-
-    void receiveStatus(bool *busy = NULL, bool *bootMode = NULL, bool *bootStatus = NULL);
+    bool waitCommandBegin(int timeout = 0);
+    bool waitCommandFinish(int timeout = 0);
 
     uint16_t commandCode(uint16_t cmdID, uint16_t cmdType);
     
@@ -196,5 +334,10 @@ private:
     size_t i2cWire_write(uint8_t);
     int i2cWire_read(void);
 };
+
+extern float lepK100ToCelsius(uint16_t lepK100);
+extern float lepK100ToFarenheit(uint16_t lepK100);
+extern uint16_t celsiusToLepK100(float celsius);
+extern uint16_t farenheitToLepK100(float farenheit);
 
 #endif
