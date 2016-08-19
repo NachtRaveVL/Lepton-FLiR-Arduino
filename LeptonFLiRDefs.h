@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9
+    Lepton-FLiR-Arduino - Version 0.9.5
 */
 
 #ifndef LeptonFLiRDefs_H
@@ -210,12 +210,12 @@ typedef enum {
 typedef struct {
     uint32_t shutterMode;               // LEP_SYS_FFC_SHUTTER_MODE_STATE def:LEP_SYS_FFC_SHUTTER_MODE_EXTERNAL
     uint32_t tempLockoutState;          // LEP_SYS_SHUTTER_TEMP_LOCKOUT_STATE def:LEP_SYS_SHUTTER_LOCKOUT_INACTIVE
-    uint32_t videoFreezeDuringFFC;      // def:enabled
-    uint32_t ffcDesired;                // def:disabled
-    uint32_t elapsedTimeSinceLastFfc;   // (ms)
+    uint32_t videoFreezeDuringFFC;      // bool def:enabled
+    uint32_t ffcDesired;                // bool def:disabled
+    uint32_t elapsedTimeSinceLastFFC;   // (ms)
     uint32_t desiredFFCPeriod;          // def:300000 (ms)
-    uint32_t explicitCmdToOpen;         // (bool)
-    uint16_t desiredFfcTempDelta;       // def:300 (kelvins*100)
+    uint32_t explicitCmdToOpen;         // bool def:disabled
+    uint16_t desiredFFCTempDelta;       // def:300 (kelvins*100)
     uint16_t imminentDelay;             // def:52 (frame counts)
 } LEP_SYS_FFC_SHUTTER_MODE;
 

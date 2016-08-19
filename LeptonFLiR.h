@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9
+    Lepton-FLiR-Arduino - Version 0.9.5
 */
 
 #ifndef LeptonFLiR_H
@@ -156,6 +156,11 @@ public:
     // Called in setup()
     void init(LeptonFLiR_ImageStorageMode storageMode = LeptonFLiR_ImageStorageMode_80x60_16bpp, LeptonFLiR_TemperatureMode tempMode = LeptonFLiR_TemperatureMode_Celsius);
 
+    uint8_t getChipSelectPin();
+    LeptonFLiR_ImageStorageMode getImageStorageMode();
+    LeptonFLiR_TemperatureMode getTemperatureMode();
+    const char *getTemperatureSymbol();
+
     // Image descriptors
     int getImageWidth();
     int getImageHeight();
@@ -192,9 +197,10 @@ public:
     // SYS module commands
 
     void getSysCameraStatus(LEP_SYS_CAM_STATUS *status);
+    LEP_SYS_CAM_STATUS_STATES getSysCameraStatus();
 
-    void getSysFlirSerialNumber(char *buffer, int maxLength); // maxLength must at least be 16, recommended 20
-    void getSysCustomerSerialNumber(char *buffer, int maxLength); // maxLength must at least be 64, recommended 80
+    void getSysFlirSerialNumber(char *buffer, int maxLength = 16); // maxLength must at least be 16, recommended 20
+    void getSysCustomerSerialNumber(char *buffer, int maxLength = 64); // maxLength must at least be 64, recommended 80
 
     uint32_t getSysCameraUptime(); // (milliseconds)
 
@@ -209,7 +215,7 @@ public:
     void setVidPolarity(LEP_VID_POLARITY polarity); // def:LEP_VID_WHITE_HOT
     LEP_VID_POLARITY getVidPolarity();
 
-    void setVidPseudoColorLUT(LEP_VID_PCOLOR_LUT table); // ???
+    void setVidPseudoColorLUT(LEP_VID_PCOLOR_LUT table); // def:LEP_VID_FUSION_LUT
     LEP_VID_PCOLOR_LUT getVidPseudoColorLUT(); 
     
     void setVidFocusCalcEnabled(bool enabled); // def:disabled
@@ -268,7 +274,7 @@ public:
 
     // SYS extended module commands
 
-    void runSysPingCamera(); // return put into lastErrorCode
+    void runSysPingCamera(); // return put into lastLepResult
 
     void setSysTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location); // def:LEP_TELEMETRY_LOCATION_HEADER
     LEP_SYS_TELEMETRY_LOCATION getSysTelemetryLocation();
@@ -322,10 +328,11 @@ public:
     uint16_t temperatureToKelvin100(float temperature);
     
     uint8_t getLastI2CError();
-    LEP_RESULT getLastErrorCode();
+    LEP_RESULT getLastLepResult();
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     void printModuleInfo();
+    void checkForErrors();
 #endif
 
 private:
@@ -341,7 +348,7 @@ private:
     uint8_t *_telemetryData;    // SPI telemetry frame data
     bool _isReadingNextFrame;   // Tracks if next frame is being read
     uint8_t _lastI2CError;      // Last i2c error
-    uint8_t _lastErrorCode;     // Last lep result
+    uint8_t _lastLepResult;     // Last lep result
 
     uint8_t *_getImageDataRow(int row);
 
