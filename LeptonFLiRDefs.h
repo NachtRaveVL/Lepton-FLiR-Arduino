@@ -22,13 +22,11 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.7
+    Lepton-FLiR-Arduino - Version 0.9
 */
 
 #ifndef LeptonFLiRDefs_H
 #define LeptonFLiRDefs_H
-
-#define LEP_SPI_FRAME_SIZE                      164 // 1B ID + 1B R# + 2B CRC + 160B for 80x1 14bpp/8bppAGC thermal image data
 
 #define LEP_I2C_DEVICE_ADDRESS                  (uint8_t)0x2A
 
@@ -215,8 +213,8 @@ typedef struct {
     uint32_t videoFreezeDuringFFC;      // def:enabled
     uint32_t ffcDesired;                // def:disabled
     uint32_t elapsedTimeSinceLastFfc;   // (ms)
-    uint32_t desiredFfcPeriod;          // def:300000 (ms)
-    uint8_t explicitCmdToOpen;          // (bool)
+    uint32_t desiredFFCPeriod;          // def:300000 (ms)
+    uint32_t explicitCmdToOpen;         // (bool)
     uint16_t desiredFfcTempDelta;       // def:300 (kelvins*100)
     uint16_t imminentDelay;             // def:52 (frame counts)
 } LEP_SYS_FFC_SHUTTER_MODE;
@@ -228,6 +226,7 @@ typedef enum {
     LEP_SYS_FFC_STATUS_BUSY,
     LEP_SYS_FRAME_AVERAGE_COLLECTING_FRAMES,
 } LEP_SYS_FFC_STATUS;
+
 
 #define LEP_VID_MODULE_BASE                     (uint16_t)0x0300
 #define LEP_CID_VID_POLARITY_SELECT             (uint16_t)(LEP_VID_MODULE_BASE + 0x0000)
