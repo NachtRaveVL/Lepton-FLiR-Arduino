@@ -78,7 +78,9 @@ void LeptonFLiR::init(LeptonFLiR_ImageStorageMode storageMode, LeptonFLiR_Temper
     Serial.print("LeptonFLiR::init spiCSPin: ");
     Serial.print(_spiCSPin);
     Serial.print(", storageMode: ");
-    Serial.println(storageMode);
+    Serial.print(_storageMode);
+    Serial.print(", tempMode: ");
+    Serial.println(_tempMode);
 #endif
 
     pinMode(_spiCSPin, OUTPUT);
