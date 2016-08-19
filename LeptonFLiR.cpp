@@ -1798,7 +1798,7 @@ int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t *dataWords1, int dat
 int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *respBuffer, int respLength, int maxLength) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("    LeptonFLiR::readRegister regAddress: 0x");
-    Serial.print(regAddress, HEX);
+    Serial.println(regAddress, HEX);
 #endif
 
     i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
