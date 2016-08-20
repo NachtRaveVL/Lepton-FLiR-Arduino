@@ -88,7 +88,7 @@ void LeptonFLiR::init(LeptonFLiR_ImageStorageMode storageMode, LeptonFLiR_Temper
 #endif
 
     pinMode(_spiCSPin, OUTPUT);
-    digitalWrite(_spiCSPin, HIGH);
+    _csDisableFunc(_spiCSPin);
 
     _imageData = roundUpMalloc16(getImageTotalBytes());
     _spiFrameData = roundUpMalloc16(getSPIFrameTotalBytes());
@@ -368,9 +368,11 @@ bool LeptonFLiR::readNextFrame() {
             telemetryEnabled = value;
             stateErrors = stateErrors || _lastI2CError || _lastLepResult;
 
-            receiveCommand(cmdCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_GET), &value);
-            telemetryLocation = (LEP_SYS_TELEMETRY_LOCATION)value;
-            stateErrors = stateErrors || _lastI2CError || _lastLepResult;
+            if (telemetryEnabled) {
+                receiveCommand(cmdCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_GET), &value);
+                telemetryLocation = (LEP_SYS_TELEMETRY_LOCATION)value;
+                stateErrors = stateErrors || _lastI2CError || _lastLepResult;
+            }
 
             uint16_t status; readRegister(LEP_I2C_STATUS_REG, &status, 1, 1);
             cameraBooted = (status & LEP_I2C_STATUS_BOOT_MODE_BIT_MASK) && (status & LEP_I2C_STATUS_BOOT_STATUS_BIT_MASK);
@@ -380,17 +382,17 @@ bool LeptonFLiR::readNextFrame() {
             checkForErrors();
 #endif
 
-            if (!cameraBooted) {
+            if (stateErrors) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-                Serial.println("  LeptonFLiR::readNextFrame Camera has not yet booted. Aborting.");
+                Serial.println("  LeptonFLiR::readNextFrame Errors reading state encountered. Aborting.");
 #endif
                 _isReadingNextFrame = false;
                 return false;
             }
 
-            if (stateErrors) {
+            if (!cameraBooted) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-                Serial.println("  LeptonFLiR::readNextFrame Errors reading state encountered. Aborting.");
+                Serial.println("  LeptonFLiR::readNextFrame Camera has not yet booted. Aborting.");
 #endif
                 _isReadingNextFrame = false;
                 return false;

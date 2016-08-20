@@ -80,23 +80,23 @@ typedef enum {
 typedef struct {
     byte revisionMajor;
     byte revisionMinor;
-    uint32_t cameraUptime;
+    uint32_t cameraUptime;          // (milliseconds)
     bool ffcDesired;
     TelemetryData_FFCState ffcState;
-    bool agcEnabled;
+    bool agcEnabled;                // def:disabled
     bool shutdownImminent;
     char serialNumber[24];
     char softwareRevision[12];
-    uint32_t frameCounter;
+    uint32_t frameCounter;          // increments every 3rd frame, useful for determining new unique frame
     uint16_t frameMean;
-    float fpaTemperature;
-    float housingTemperature;
-    uint32_t lastFFCTime;
-    float fpaTempAtLastFFC;
-    float housingTempAtLastFFC;
-    LEP_AGC_HISTOGRAM_ROI agcRegion;
-    uint16_t agcClipHigh;
-    uint16_t agcClipLow;
+    float fpaTemperature;           // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    float housingTemperature;       // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    uint32_t lastFFCTime;           // (milliseconds)
+    float fpaTempAtLastFFC;         // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    float housingTempAtLastFFC;     // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    LEP_AGC_HISTOGRAM_ROI agcRegion;// min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    uint16_t agcClipHigh;           // min:0 max:4800 def:4800 (pixels)
+    uint16_t agcClipLow;            // min:0 max:1024 def:512 (pixels)
     uint16_t log2FFCFrames;
 } TelemetryData;
 
@@ -177,7 +177,8 @@ public:
 
     // Sets fast enable/disable methods to call when enabling and disabling the SPI chip
     // select pin (e.g. PORTB |= 0x01, PORTB &= ~0x01, etc.). The function itself depends
-    // on the board and pin used (see also digitalWriteFast library).
+    // on the board and pin used (see also digitalWriteFast library). Enable should set
+    // the pin LOW, and disable should set the pin HIGH (aka active-low).
     typedef void(*digitalWriteFunc)(byte); // Passes pin number in
     void setFastCSFuncs(digitalWriteFunc csEnableFunc, digitalWriteFunc csDisableFunc);
 
@@ -209,8 +210,8 @@ public:
 
     uint32_t getSysCameraUptime(); // (milliseconds)
 
-    float getSysAuxTemperature(); // min:-273.15C/-459.67f max:382.20C/719.96f (celsius/fahrenheit)
-    float getSysFPATemperature(); // min:-273.15C/-459.67f max:382.20C/719.96f (celsius/fahrenheit)
+    float getSysAuxTemperature(); // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    float getSysFPATemperature(); // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
 
     void setSysTelemetryEnabled(bool enabled); // def:enabled
     bool getSysTelemetryEnabled();
