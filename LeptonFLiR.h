@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.5
+    Lepton-FLiR-Arduino - Version 0.9.7
 */
 
 #ifndef LeptonFLiR_H
@@ -78,8 +78,8 @@ typedef enum {
 } TelemetryData_FFCState;
 
 typedef struct {
-    uint8_t revisionMajor;
-    uint8_t revisionMinor;
+    byte revisionMajor;
+    byte revisionMinor;
     uint32_t cameraUptime;
     bool ffcDesired;
     TelemetryData_FFCState ffcState;
@@ -143,23 +143,22 @@ public:
     // have a Wire1 class instance that uses the SDA1/SCL1 lines instead.
     // Supported i2c baud rates are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI baud rates are 2.2MHz to 20MHz.
-    LeptonFLiR(TwoWire& i2cWire = Wire, uint8_t spiCSPin = 53);
+    LeptonFLiR(TwoWire& i2cWire = Wire, byte spiCSPin = 53);
 #else
     // Minimum supported i2c baud rate is 100kHz, which means minimum supported processor
     // speed is 4MHz+ while running i2c standard mode. For 400kHz i2c baud rate, minimum
     // supported processor speed is 16MHz+ while running i2c fast mode.
     // Supported SPI baud rates are 2.2MHz to 20MHz.
-    LeptonFLiR(uint8_t spiCSPin = 53);
+    LeptonFLiR(byte spiCSPin = 53);
 #endif
     ~LeptonFLiR();
 
     // Called in setup()
     void init(LeptonFLiR_ImageStorageMode storageMode = LeptonFLiR_ImageStorageMode_80x60_16bpp, LeptonFLiR_TemperatureMode tempMode = LeptonFLiR_TemperatureMode_Celsius);
 
-    uint8_t getChipSelectPin();
+    byte getChipSelectPin();
     LeptonFLiR_ImageStorageMode getImageStorageMode();
     LeptonFLiR_TemperatureMode getTemperatureMode();
-    const char *getTemperatureSymbol();
 
     // Image descriptors
     int getImageWidth();
@@ -169,12 +168,18 @@ public:
     int getImageTotalBytes();
 
     // Image data access (disabled during frame read)
-    uint8_t *getImageData();
-    uint8_t *getImageDataRow(int row);
+    byte *getImageData();
+    byte *getImageDataRow(int row);
 
     // Telemetry data access (disabled during frame read)
-    uint8_t *getTelemetryData(); // raw
+    byte *getTelemetryData(); // raw
     void getTelemetryData(TelemetryData *telemetry);
+
+    // Sets fast enable/disable methods to call when enabling and disabling the SPI chip
+    // select pin (e.g. PORTB |= 0x01, PORTB &= ~0x01, etc.). The function itself depends
+    // on the board and pin used (see also digitalWriteFast library).
+    typedef void(*digitalWriteFunc)(byte); // Passes pin number in
+    void setFastCSFuncs(digitalWriteFunc csEnableFunc, digitalWriteFunc csDisableFunc);
 
     // This method reads the next image frame, taking up considerable processor time.
     // Returns a boolean indicating if next frame was successfully retrieved or not.
@@ -185,7 +190,7 @@ public:
     void setAGCEnabled(bool enabled); // def:disabled
     bool getAGCEnabled();
 
-    void setAGCPolicy(LEP_AGC_POLICY policy); // ???
+    void setAGCPolicy(LEP_AGC_POLICY policy); // def:LEP_AGC_HEQ
     LEP_AGC_POLICY getAGCPolicy();
 
     void setAGCHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor); // def:LEP_AGC_SCALE_TO_8_BITS
@@ -207,7 +212,7 @@ public:
     float getSysAuxTemperature(); // min:-273.15C/-459.67f max:382.20C/719.96f (celsius/fahrenheit)
     float getSysFPATemperature(); // min:-273.15C/-459.67f max:382.20C/719.96f (celsius/fahrenheit)
 
-    void setSysTelemetryEnabled(bool enabled); // def:disabled
+    void setSysTelemetryEnabled(bool enabled); // def:enabled
     bool getSysTelemetryEnabled();
 
     // VID module commands
@@ -217,7 +222,7 @@ public:
 
     void setVidPseudoColorLUT(LEP_VID_PCOLOR_LUT table); // def:LEP_VID_FUSION_LUT
     LEP_VID_PCOLOR_LUT getVidPseudoColorLUT(); 
-    
+
     void setVidFocusCalcEnabled(bool enabled); // def:disabled
     bool getVidFocusCalcEnabled();
 
@@ -233,25 +238,25 @@ public:
 
     void getAGCHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statistics); // min:{0,0,0,0} max:{0x3FFF,0x3FFF,0x3FFF,4800} (pixels)
 
-    void setAGCHistogramClipPercent(uint16_t percent); // ???
+    void setAGCHistogramClipPercent(uint16_t percent); // def:0
     uint16_t getAGCHistogramClipPercent();
 
-    void setAGCHistogramTailSize(uint16_t size); // ???
+    void setAGCHistogramTailSize(uint16_t size); // def:0
     uint16_t getAGCHistogramTailSize();
 
-    void setAGCLinearMaxGain(uint16_t gain); // ???
+    void setAGCLinearMaxGain(uint16_t gain); // def:1
     uint16_t getAGCLinearMaxGain();
 
-    void setAGCLinearMidpoint(uint16_t midpoint); // ???
+    void setAGCLinearMidpoint(uint16_t midpoint); // min:0 max:256 def:128
     uint16_t getAGCLinearMidpoint();
 
-    void setAGCLinearDampeningFactor(uint16_t factor); // ???
+    void setAGCLinearDampeningFactor(uint16_t factor); // def:1
     uint16_t getAGCLinearDampeningFactor();
 
     void setAGCHEQDampeningFactor(uint16_t factor); // min:0 max:256 def:64
     uint16_t getAGCHEQDampeningFactor();
 
-    void setAGCHEQMaxGain(uint16_t gain); // ???
+    void setAGCHEQMaxGain(uint16_t gain); // def:1
     uint16_t getAGCHEQMaxGain();
 
     void setAGCHEQClipLimitHigh(uint16_t limit); // min:0 max:4800 def:4800 (pixels)
@@ -260,23 +265,23 @@ public:
     void setAGCHEQClipLimitLow(uint16_t limit); // min:0 max:1024 def:512 (pixels)
     uint16_t getAGCHEQClipLimitLow();
 
-    void setAGCHEQBinExtension(uint16_t extension); // ???
+    void setAGCHEQBinExtension(uint16_t extension); // def:0
     uint16_t getAGCHEQBinExtension();
 
-    void setAGCHEQMidpoint(uint16_t midpoint); // ???
+    void setAGCHEQMidpoint(uint16_t midpoint); // min:0 max:256 def:128
     uint16_t getAGCHEQMidpoint();
 
     void setAGCHEQEmptyCounts(uint16_t counts); // min:0 max:0x3FFF def:2
     uint16_t getAGCHEQEmptyCounts();
 
-    void setAGCHEQNormalizationFactor(uint16_t factor); // ???
+    void setAGCHEQNormalizationFactor(uint16_t factor); // def:1
     uint16_t getAGCHEQNormalizationFactor();
 
     // SYS extended module commands
 
     void runSysPingCamera(); // return put into lastLepResult
 
-    void setSysTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location); // def:LEP_TELEMETRY_LOCATION_HEADER
+    void setSysTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location); // def:LEP_TELEMETRY_LOCATION_FOOTER
     LEP_SYS_TELEMETRY_LOCATION getSysTelemetryLocation();
 
     void runSysFrameAveraging();
@@ -314,10 +319,10 @@ public:
 
     uint32_t getVidFocusMetric();
 
-    void setVidSceneBasedNUCEnabled(bool enabled); // ???
+    void setVidSceneBasedNUCEnabled(bool enabled); // def:enabled
     bool getVidSceneBasedNUCEnabled();
 
-    void setVidGamma(uint32_t gamma); // ???
+    void setVidGamma(uint32_t gamma); // def:58
     uint32_t getVidGamma();
 
 #endif
@@ -326,8 +331,9 @@ public:
     // convert to and from the selected temperature mode.
     float kelvin100ToTemperature(uint16_t kelvin100);
     uint16_t temperatureToKelvin100(float temperature);
-    
-    uint8_t getLastI2CError();
+    const char *getTemperatureSymbol();
+
+    byte getLastI2CError();
     LEP_RESULT getLastLepResult();
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -339,28 +345,30 @@ private:
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     TwoWire *_i2cWire;          // Wire class instance to use
 #endif
-    uint8_t _spiCSPin;          // SPI chip select pin
+    byte _spiCSPin;             // SPI chip select pin
     SPISettings _spiSettings;   // SPI port settings to use
     LeptonFLiR_ImageStorageMode _storageMode; // Image data storage mode
     LeptonFLiR_TemperatureMode _tempMode; // Temperature display mode
-    uint8_t *_imageData;        // Image data (column major)
-    uint8_t *_spiFrameData;     // SPI frame data
-    uint8_t *_telemetryData;    // SPI telemetry frame data
+    digitalWriteFunc _csEnableFunc; // Chip select enable function
+    digitalWriteFunc _csDisableFunc; // Chip select disable function
+    byte *_imageData;           // Image data (column major)
+    byte *_spiFrameData;        // SPI frame data
+    byte *_telemetryData;       // SPI telemetry frame data
     bool _isReadingNextFrame;   // Tracks if next frame is being read
-    uint8_t _lastI2CError;      // Last i2c error
-    uint8_t _lastLepResult;     // Last lep result
+    byte _lastI2CError;         // Last i2c error
+    byte _lastLepResult;        // Last lep result
 
-    uint8_t *_getImageDataRow(int row);
+    byte *_getImageDataRow(int row);
 
     int getSPIFrameLines();
     int getSPIFrameTotalBytes();
-    uint8_t *getSPIFrameDataRow(int row);
+    byte *getSPIFrameDataRow(int row);
 
     bool waitCommandBegin(int timeout = 0);
     bool waitCommandFinish(int timeout = 0);
 
-    uint16_t commandCode(uint16_t cmdID, uint16_t cmdType);
-    
+    uint16_t cmdCode(uint16_t cmdID, uint16_t cmdType);
+
     void sendCommand(uint16_t cmdCode);
     void sendCommand(uint16_t cmdCode, uint16_t value);
     void sendCommand(uint16_t cmdCode, uint32_t value);
@@ -368,14 +376,12 @@ private:
 
     int receiveCommand(uint16_t cmdCode, uint16_t *value);
     int receiveCommand(uint16_t cmdCode, uint32_t *value);
-    int receiveCommand(uint16_t cmdCode, uint16_t *respBuffer, int maxLength);
-
-    int sendReceiveCommand(uint16_t cmdCode, uint16_t *dataWords, int dataLength, uint16_t *respBuffer, int maxLength);
+    int receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength);
 
     int writeRegister(uint16_t regAddress, uint16_t *dataWords, int dataLength);
     int writeRegister(uint16_t regAddress, uint16_t *dataWords1, int dataLength1, uint16_t *dataWords2, int dataLength2);
-    int readRegister(uint16_t regAddress, uint16_t *respBuffer, int respLength, int maxLength);
-    int readRegister(uint16_t *respBuffer, int respLength, int maxLength);
+    int readRegister(uint16_t regAddress, uint16_t *readWords, int readLength, int maxLength);
+    int readRegister(uint16_t *readWords, int readLength, int maxLength);
 
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
     uint8_t _readBytes;
@@ -384,6 +390,7 @@ private:
     uint8_t i2cWire_endTransmission(void);
     uint8_t i2cWire_requestFrom(uint8_t, uint8_t);
     size_t i2cWire_write(uint8_t);
+    size_t i2cWire_write16(uint16_t);
     int i2cWire_read(void);
 };
 

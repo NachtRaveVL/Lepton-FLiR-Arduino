@@ -22,13 +22,68 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.5
+    Lepton-FLiR-Arduino - Version 0.9.7
 */
+
+// The majority of this file has been cherry picked from the Lepton FLiR
+// development SDK to maintain consistency with the software interface
+// description document.The following copyright notice is hearby included:
+/*******************************************************************************
+**
+**      Copyright 2011,2012,2013,2014 FLIR Systems - Commercial
+**      Vision Systems.  All rights reserved.
+**
+**      Proprietary - PROPRIETARY - FLIR Systems Inc..
+**
+**      This document is controlled to FLIR Technology Level 2.
+**      The information contained in this document pertains to a
+**      dual use product Controlled for export by the Export
+**      Administration Regulations (EAR). Diversion contrary to
+**      US law is prohibited.  US Department of Commerce
+**      authorization is not required prior to export or
+**      transfer to foreign persons or parties unless otherwise
+**      prohibited.
+**
+**      Redistribution and use in source and binary forms, with
+**      or without modification, are permitted provided that the
+**      following conditions are met:
+**
+**      Redistributions of source code must retain the above
+**      copyright notice, this list of conditions and the
+**      following disclaimer.
+**
+**      Redistributions in binary form must reproduce the above
+**      copyright notice, this list of conditions and the
+**      following disclaimer in the documentation and/or other
+**      materials provided with the distribution.
+**
+**      Neither the name of the FLIR Systems Corporation nor the
+**      names of its contributors may be used to endorse or
+**      promote products derived from this software without
+**      specific prior written permission.
+**
+**      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+**      CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+**      WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+**      WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+**      PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+**      COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
+**      DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**      CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+**      PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+**      USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+**      CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**      CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+**      NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+**      USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+**      OF SUCH DAMAGE.
+**
+*******************************************************************************/
 
 #ifndef LeptonFLiRDefs_H
 #define LeptonFLiRDefs_H
 
-#define LEP_I2C_DEVICE_ADDRESS                  (uint8_t)0x2A
+#define LEP_I2C_DEVICE_ADDRESS                  (byte)0x2A
 
 #define LEP_I2C_COMMAND_MODULE_ID_BIT_MASK      (uint16_t)0x0F00
 #define LEP_I2C_COMMAND_ID_BIT_MASK             (uint16_t)0x00FC
@@ -67,15 +122,8 @@
 #define LEP_I2C_DATA_15_REG                     (uint16_t)(LEP_I2C_REG_BASE_ADDR + 0x0026)
 #define LEP_I2C_DATA_CRC_REG                    (uint16_t)(LEP_I2C_REG_BASE_ADDR + 0x0028)
 
-#define LEP_I2C_DATA_BUFFER_0_BASE_ADDR         (uint16_t)0xF800
-#define LEP_I2C_DATA_BUFFER_0_LENGTH            (uint16_t)0x0400
-#define LEP_I2C_DATA_BUFFER_0                   (uint16_t)(LEP_I2C_DATA_BUFFER_0_BASE_ADDR)
-#define LEP_I2C_DATA_BUFFER_0_END               (uint16_t)(LEP_I2C_DATA_BUFFER_0_BASE_ADDR + 0x03FF)
-#define LEP_I2C_DATA_BUFFER_1_BASE_ADDR         (uint16_t)0xFC00
-#define LEP_I2C_DATA_BUFFER_1_LENGTH            (uint16_t)0x0400
-#define LEP_I2C_DATA_BUFFER_1                   (uint16_t)(LEP_I2C_DATA_BUFFER_1_BASE_ADDR)
-#define LEP_I2C_DATA_BUFFER_1_END               (uint16_t)(LEP_I2C_DATA_BUFFER_1_BASE_ADDR + 0x03FF)
-
+#define LEP_I2C_DATA_BUFFER                     (uint16_t)0xF800
+#define LEP_I2C_DATA_BUFFER_LENGTH              (uint16_t)0x0800
 
 #define LEP_AGC_MODULE_BASE                     (uint16_t)0x0100
 #define LEP_CID_AGC_ENABLE_STATE                (uint16_t)(LEP_AGC_MODULE_BASE + 0x0000)
@@ -114,7 +162,7 @@ typedef struct {
     uint16_t minIntensity;
     uint16_t maxIntensity;
     uint16_t meanIntensity;
-    uint16_t numPixels;
+    uint16_t numPixels; // def: 4800
 } LEP_AGC_HISTOGRAM_STATISTICS;
 
 typedef enum {
@@ -274,12 +322,6 @@ typedef struct {
     uint16_t endCol;
     uint16_t endRow;
 } LEP_VID_FOCUS_ROI;
-
-
-//#define LEP_OEM_MODULE_BASE                     (uint16_t)0x4800
-//#define LEP_CID_OEM_CHIP_MASK_REVISION          (uint16_t)(LEP_OEM_MODULE_BASE + 0x0014)
-//#define LEP_CID_OEM_PART_NUMBER                 (uint16_t)(LEP_OEM_MODULE_BASE + 0x001C)
-//#define LEP_CID_OEM_CAM_SOFTWARE_REVISION       (uint16_t)(LEP_OEM_MODULE_BASE + 0x0020)
 
 
 typedef enum {
