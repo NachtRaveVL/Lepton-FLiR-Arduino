@@ -167,9 +167,6 @@ void setup() {
     // Using memory allocation mode 80x60 8bpp and fahrenheit temperature mode
     flirController.init(LeptonFLiR_ImageStorageMode_80x60_8bpp, LeptonFLiR_TemperatureMode_Fahrenheit);
 
-    // Setting use of fast enable/disable methods for chip select
-    flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
-
     // Setting use of AGC for histogram equalization (since we only have 8-bit per pixel data anyways)
     flirController.setAGCEnabled(ENABLED);
 
