@@ -79,7 +79,8 @@ void setup() {
     Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
     SPI.begin();                        // SPI must be started first as well
 
-    flirController.init(LeptonFLiR_ImageStorageMode_40x30_8bpp); // Using 40x30 8bpp memory allocation mode and default celsius temperature mode
+    // Using 40x30 8bpp memory allocation mode and default celsius temperature mode
+    flirController.init(LeptonFLiR_ImageStorageMode_40x30_8bpp);
 }
 
 void loop() {
@@ -108,7 +109,8 @@ void setup() {
     Wire1.setClock(400000);             // Supported baud rates are 100kHz, 400kHz, and 1000kHz
     SPI.begin();                        // SPI must be started first as well
 
-    flirController.init();              // Using default memory allocation mode 80x60 16bpp and default celsius temperature mode
+    // Using default memory allocation mode 80x60 16bpp and default celsius temperature mode
+    flirController.init();
 
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
@@ -144,7 +146,7 @@ void loop() {
 
 ### Image Capture Example
 
-In this example, we will copy out thermal image frames to a BMP file located on a MicroSD card using the SD library. Note that you will need a MicroSD card reader module for this example to work. Both the FLiR module and MicroSD card reader module will be on the same SPI lines, just using different chip enable pins/wires.
+In this example, we will copy out thermal image frames to individual BMP files located on a MicroSD card using the SD library. Note that you will need a MicroSD card reader module for this example to work. Both the FLiR module and MicroSD card reader module will be on the same SPI lines, just using different chip enable pins/wires.
 
 ```Arduino
 #include "LeptonFLiR.h"
