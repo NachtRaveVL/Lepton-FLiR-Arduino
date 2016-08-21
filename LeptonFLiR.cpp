@@ -433,7 +433,7 @@ bool LeptonFLiR::readNextFrame() {
         Serial.print("  LeptonFLiR::readNextFrame AGC-8bit: ");
         Serial.print(agc8Enabled ? "enabled" : "disabled");
         Serial.print(", Telemetry: ");
-        if (telemetryEnabled) {
+        if (_telemetryData) {
             Serial.print("enabled, Location: ");
             Serial.println(telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER ? "header" : "footer");
         }
