@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.7
+    Lepton-FLiR-Arduino - Version 0.9.8
 */
 
 #ifndef LeptonFLiR_H
@@ -71,6 +71,13 @@
 #endif
 #include <SPI.h>
 #include "LeptonFLiRDefs.h"
+
+#ifndef ENABLED
+#define ENABLED  0x1
+#endif
+#ifndef DISABLED
+#define DISABLED 0x0
+#endif
 
 typedef enum {
     TelemetryData_FFCState_NeverCommanded,
@@ -171,10 +178,15 @@ public:
     // Image data access (disabled during frame read)
     byte *getImageData();
     byte *getImageDataRow(int row);
+    uint16_t getImageDataRowCol(int row, int col);
 
     // Telemetry data access (disabled during frame read)
     byte *getTelemetryData(); // raw
     void getTelemetryData(TelemetryData *telemetry);
+
+    // Commonly used properties from telemetry data
+    uint32_t getTelemetryFrameCounter();
+    bool getShouldRunFFCNormalization();
 
     // Sets fast enable/disable methods to call when enabling and disabling the SPI chip
     // select pin (e.g. PORTB |= 0x01, PORTB &= ~0x01, etc.). The function itself depends
@@ -216,6 +228,8 @@ public:
 
     void setSysTelemetryEnabled(bool enabled); // def:enabled
     bool getSysTelemetryEnabled();
+
+    void runSysFFCNormalization();
 
     // VID module commands
 
@@ -303,8 +317,6 @@ public:
 
     void setSysFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode); // see LEP_SYS_FFC_SHUTTER_MODE for defs
     void getSysFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode);
-
-    void runSysFFCNormalization();
 
     LEP_SYS_FFC_STATUS getSysFFCNormalizationStatus(); // def:LEP_SYS_FFC_STATUS_READY
 

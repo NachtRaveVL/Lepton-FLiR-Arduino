@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.7
+    Lepton-FLiR-Arduino - Version 0.9.8
 */
 
 #include "LeptonFLiR.h"
@@ -40,7 +40,7 @@
 
 #ifndef LEPFLIR_DISABLE_ALIGNED_MALLOC
 static inline int roundUpVal16(int val) { return ((val + 15) & -16); }
-static inline byte *roundUpPtr16(byte *ptr) { return ptr ? (byte *)(((uintptr_t)ptr + 15) & 0xF) : NULL; }
+static inline byte *roundUpPtr16(byte *ptr) { return ptr ? (byte *)(((uintptr_t)ptr + 15) & -16) : NULL; }
 static inline byte *roundUpMalloc16(int size) { return (byte *)malloc((size_t)(size + 15)); }
 static inline byte *roundUpSpiFrame16(byte *spiFrame) { return spiFrame ? roundUpPtr16(spiFrame) + 16 - 4 : NULL; }
 #else
@@ -227,15 +227,21 @@ int LeptonFLiR::getImageTotalBytes() {
 }
 
 byte *LeptonFLiR::getImageData() {
-    return !_isReadingNextFrame ? roundUpPtr16(_imageData) : NULL;
+    return !_isReadingNextFrame && _imageData ? roundUpPtr16(_imageData) : NULL;
 }
 
 byte *LeptonFLiR::getImageDataRow(int row) {
-    return !_isReadingNextFrame ? (roundUpPtr16(_imageData) + (getImagePitch() * row)) : NULL;
+    return !_isReadingNextFrame && _imageData ? (roundUpPtr16(_imageData) + (row * getImagePitch())) : NULL;
 }
 
 byte *LeptonFLiR::_getImageDataRow(int row) {
-    return roundUpPtr16(_imageData) + (getImagePitch() * row);
+    return _imageData ? roundUpPtr16(_imageData) + (getImagePitch() * row) : NULL;
+}
+
+uint16_t LeptonFLiR::getImageDataRowCol(int row, int col) {
+    if (_isReadingNextFrame || !_imageData) return 0;
+    byte *imageData = roundUpPtr16(_imageData) + (row * getImagePitch()) + (col * getImageBpp());
+    return (getImageBpp() == 2 ? *((uint16_t *)imageData) : (uint16_t)(*imageData);
 }
 
 byte *LeptonFLiR::getTelemetryData() {
@@ -249,7 +255,7 @@ void LeptonFLiR::getTelemetryData(TelemetryData *telemetry) {
     telemetry->revisionMajor = lowByte(telemetryData[0]);
     telemetry->revisionMinor = highByte(telemetryData[0]);
 
-    telemetry->cameraUptime = (uint32_t)telemetryData[1] << 16 | (uint32_t)telemetryData[2];
+    telemetry->cameraUptime = ((uint32_t)telemetryData[1] << 16) | (uint32_t)telemetryData[2];
 
     telemetry->ffcDesired = telemetryData[4] & 0x0004;
     uint_fast8_t ffcState = (telemetryData[4] & 0x0018) >> 3;
@@ -262,13 +268,13 @@ void LeptonFLiR::getTelemetryData(TelemetryData *telemetry) {
     wordsToHexString(&telemetryData[5], 8, telemetry->serialNumber, 24);
     wordsToHexString(&telemetryData[13], 4, telemetry->softwareRevision, 12);
 
-    telemetry->frameCounter = (uint32_t)telemetryData[20] << 16 | (uint32_t)telemetryData[21];
+    telemetry->frameCounter = ((uint32_t)telemetryData[20] << 16) | (uint32_t)telemetryData[21];
     telemetry->frameMean = telemetryData[22];
 
     telemetry->fpaTemperature = kelvin100ToTemperature(telemetryData[24]);
     telemetry->housingTemperature = kelvin100ToTemperature(telemetryData[26]);
 
-    telemetry->lastFFCTime = (uint32_t)telemetryData[30] << 16 | (uint32_t)telemetryData[31];
+    telemetry->lastFFCTime = ((uint32_t)telemetryData[30] << 16) | (uint32_t)telemetryData[31];
     telemetry->fpaTempAtLastFFC = kelvin100ToTemperature(telemetryData[29]);
     telemetry->housingTempAtLastFFC = kelvin100ToTemperature(telemetryData[32]);
 
@@ -281,6 +287,24 @@ void LeptonFLiR::getTelemetryData(TelemetryData *telemetry) {
     telemetry->agcClipLow = telemetryData[39];
 
     telemetry->log2FFCFrames = telemetryData[74];
+}
+
+uint32_t LeptonFLiR::getTelemetryFrameCounter() {
+    if (_isReadingNextFrame || !_telemetryData) return 0;
+    uint16_t *telemetryData = (uint16_t *)_telemetryData;
+
+    return ((uint32_t)telemetryData[20] << 16) | (uint32_t)telemetryData[21];
+}
+
+bool LeptonFLiR::getShouldRunFFCNormalization() {
+    if (_isReadingNextFrame || !_telemetryData) return false;
+    uint16_t *telemetryData = (uint16_t *)_telemetryData;
+
+    uint_fast8_t ffcState = (telemetryData[4] & 0x0018) >> 3;
+    if (lowByte(telemetryData[0]) >= 9 && ffcState >= 1)
+        ffcState -= 1;
+
+    return (telemetryData[4] & 0x0004) && ffcState != (uint_fast8_t)TelemetryData_FFCState_InProgress;
 }
 
 int LeptonFLiR::getSPIFrameLines() {
@@ -304,7 +328,7 @@ int LeptonFLiR::getSPIFrameTotalBytes() {
 }
 
 byte *LeptonFLiR::getSPIFrameDataRow(int row) {
-    return roundUpSpiFrame16(_spiFrameData) + (roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE) * row);
+    return roundUpSpiFrame16(_spiFrameData) + (row * roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE));
 }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -824,6 +848,14 @@ bool LeptonFLiR::getSysTelemetryEnabled() {
     return enabled;
 }
 
+void LeptonFLiR::runSysFFCNormalization() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println("LeptonFLiR::runSysFFCNormalization");
+#endif
+
+    sendCommand(cmdCode(LEP_CID_SYS_RUN_FFC, LEP_I2C_COMMAND_TYPE_RUN));
+}
+
 void LeptonFLiR::setVidPolarity(LEP_VID_POLARITY polarity) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.println("LeptonFLiR::setVidPolarity");
@@ -1290,14 +1322,6 @@ void LeptonFLiR::getSysFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode) {
 #endif
 
     receiveCommand(cmdCode(LEP_CID_SYS_FFC_SHUTTER_MODE, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)mode, sizeof(LEP_SYS_FFC_SHUTTER_MODE) / 2);
-}
-
-void LeptonFLiR::runSysFFCNormalization() {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::runSysFFCNormalization");
-#endif
-
-    sendCommand(cmdCode(LEP_CID_SYS_RUN_FFC, LEP_I2C_COMMAND_TYPE_RUN));
 }
 
 LEP_SYS_FFC_STATUS LeptonFLiR::getSysFFCNormalizationStatus() {
