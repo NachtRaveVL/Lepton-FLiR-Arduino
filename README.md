@@ -185,7 +185,7 @@ void loop() {
             lastFrameNumber = frameNumber;
 
             char fileName[] = "FLIR/IMG0000.BMP";
-            uint16_t fileNumber = (uint16_t)frameNumber;
+            uint16_t fileNumber = (uint16_t)(frameNumber / 3);
             wordsToHexString((uint16_t *)&fileNumber, 1, &fileName[8], 4);
 
             File bmpFile = SD.open(fileName, FILE_WRITE);
