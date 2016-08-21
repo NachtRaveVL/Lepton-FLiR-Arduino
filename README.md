@@ -8,7 +8,7 @@ Licensed under the non-restrictive MIT license.
 
 Created by NachtRaveVL, August 1st, 2016.
 
-This library is currently under development.
+This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable memory footprint size, adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
 ## Library Setup
 
@@ -33,7 +33,7 @@ There are several defines inside of the library's header file that allows for mo
 
 ## Hookup Instructions
 
-Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly (Due, Zero, ATmega, etc. often use pins 50=MISO, 51=MOSI, 52=SCK, 53=SS, but one can just simply use the ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=SCK, which are consistent across all boards). The module's MOSI line can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored). The SS pin may be any digital output pin, with usage being active-low. The recommended VCC power supply and logic level is 3.3v, but 5v also seems to work. The two issolated power pins on the side of the module's breakout can safely be left disconnected. The minimum SPI transfer rate is ~2.2MHz, which means one needs at least an 8MHz processor, but more realistically a 16MHz processor is likely required given the processing work involved to resize/BLIT the final image. The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (processor speed /2, /4, /8, /16, ..., /128).
+Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly (Due, Zero, ATmega, etc. often use pins 50=MISO, 51=MOSI, 52=SCK, 53=SS, but one can just simply use the ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=SCK, which are consistent across all boards - Due boards also have a SPI header, which is set up exactly like the ICSP header). The module's MOSI line can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored). The SS pin may be any digital output pin, with usage being active-low. The recommended VCC power supply and logic level is 3.3v, but 5v is also supported. The two issolated power pins on the side of the module's breakout can safely be left disconnected. The minimum SPI transfer rate is ~2.2MHz, which means one needs at least an 8MHz processor, but a 16MHz processor is the recommended minimum given the actual processing work involved to resize/BLIT the final image. The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, /16, ..., /128).
 
 ## Memory Footprint Note
 
