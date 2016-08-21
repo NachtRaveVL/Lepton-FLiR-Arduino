@@ -25,7 +25,7 @@ There are several defines inside of the library's header file that allows for mo
 // Uncomment this define to disable usage of the Scheduler library on SAM/SAMD architecures.
 //#define LEPFLIR_DISABLE_SCHEDULER       1   // https://github.com/arduino-libraries/Scheduler
 
-// Uncomment this define to disable 16-byte aligned memory allocations (may hinder performance).
+// Uncomment this define to disable 16 byte aligned memory allocations (may hinder performance).
 //#define LEPFLIR_DISABLE_ALIGNED_MALLOC  1
 
 // Uncomment this define if wanting to exclude extended i2c functions from compilation.
