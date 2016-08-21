@@ -241,7 +241,7 @@ byte *LeptonFLiR::_getImageDataRow(int row) {
 uint16_t LeptonFLiR::getImageDataRowCol(int row, int col) {
     if (_isReadingNextFrame || !_imageData) return 0;
     byte *imageData = roundUpPtr16(_imageData) + (row * getImagePitch()) + (col * getImageBpp());
-    return (getImageBpp() == 2 ? *((uint16_t *)imageData) : (uint16_t)(*imageData);
+    return getImageBpp() == 2 ? *((uint16_t *)imageData) : (uint16_t)(*imageData);
 }
 
 byte *LeptonFLiR::getTelemetryData() {
