@@ -2240,7 +2240,7 @@ void LeptonFLiR::printModuleInfo() {
     Serial.println("B");
 
     Serial.println(""); Serial.println("AGC Enabled:");
-    Serial.println(getAGCEnabled());
+    Serial.println(getAGCEnabled() ? "enabled" : "disabled");
 
     Serial.println(""); Serial.println("AGC Policy:");
     LEP_AGC_POLICY policy = getAGCPolicy();

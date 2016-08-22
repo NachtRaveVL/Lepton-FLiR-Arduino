@@ -372,7 +372,7 @@ LeptonFLiR::getAGCEnabled
     LeptonFLiR::readRegister regAddress: 0x6
       LeptonFLiR::readRegister readWords[1]: 0x4
       LeptonFLiR::readRegister readWords[2]: 0x0-0x0
-0
+disabled
 
 AGC Policy:
 LeptonFLiR::getAGCPolicy
