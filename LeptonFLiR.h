@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.8
+    Lepton-FLiR-Arduino - Version 0.9.9
 */
 
 #ifndef LeptonFLiR_H
@@ -201,143 +201,143 @@ public:
 
     // AGC module commands
 
-    void setAGCEnabled(bool enabled); // def:disabled
-    bool getAGCEnabled();
+    void agc_setAGCEnabled(bool enabled); // def:disabled
+    bool agc_getAGCEnabled();
 
-    void setAGCPolicy(LEP_AGC_POLICY policy); // def:LEP_AGC_HEQ
-    LEP_AGC_POLICY getAGCPolicy();
+    void agc_setAGCPolicy(LEP_AGC_POLICY policy); // def:LEP_AGC_HEQ
+    LEP_AGC_POLICY agc_getAGCPolicy();
 
-    void setAGCHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor); // def:LEP_AGC_SCALE_TO_8_BITS
-    LEP_AGC_HEQ_SCALE_FACTOR getAGCHEQScaleFactor();
+    void agc_setHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor); // def:LEP_AGC_SCALE_TO_8_BITS
+    LEP_AGC_HEQ_SCALE_FACTOR agc_getHEQScaleFactor();
 
-    void setAGCCalcEnabled(bool enabled); // def:disabled
-    bool getAGCCalcEnabled();
+    void agc_setAGCCalcEnabled(bool enabled); // def:disabled
+    bool agc_getAGCCalcEnabled();
 
     // SYS module commands
 
-    void getSysCameraStatus(LEP_SYS_CAM_STATUS *status);
-    LEP_SYS_CAM_STATUS_STATES getSysCameraStatus();
+    void sys_getCameraStatus(LEP_SYS_CAM_STATUS *status);
+    LEP_SYS_CAM_STATUS_STATES sys_getCameraStatus();
 
-    void getSysFlirSerialNumber(char *buffer, int maxLength = 16); // maxLength must at least be 16, recommended 20
-    void getSysCustomerSerialNumber(char *buffer, int maxLength = 64); // maxLength must at least be 64, recommended 80
+    void sys_getFlirSerialNumber(char *buffer, int maxLength = 16); // maxLength must at least be 16, recommended 20
+    void sys_getCustomerSerialNumber(char *buffer, int maxLength = 64); // maxLength must at least be 64, recommended 80
 
-    uint32_t getSysCameraUptime(); // (milliseconds)
+    uint32_t sys_getCameraUptime(); // (milliseconds)
 
-    float getSysAuxTemperature(); // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
-    float getSysFPATemperature(); // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    float sys_getAuxTemperature(); // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
+    float sys_getFPATemperature(); // min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
 
-    void setSysTelemetryEnabled(bool enabled); // def:enabled
-    bool getSysTelemetryEnabled();
+    void sys_setTelemetryEnabled(bool enabled); // def:enabled
+    bool sys_getTelemetryEnabled();
 
-    void runSysFFCNormalization();
+    void sys_runFFCNormalization();
 
     // VID module commands
 
-    void setVidPolarity(LEP_VID_POLARITY polarity); // def:LEP_VID_WHITE_HOT
-    LEP_VID_POLARITY getVidPolarity();
+    void vid_setPolarity(LEP_VID_POLARITY polarity); // def:LEP_VID_WHITE_HOT
+    LEP_VID_POLARITY vid_getPolarity();
 
-    void setVidPseudoColorLUT(LEP_VID_PCOLOR_LUT table); // def:LEP_VID_FUSION_LUT
-    LEP_VID_PCOLOR_LUT getVidPseudoColorLUT(); 
+    void vid_setPseudoColorLUT(LEP_VID_PCOLOR_LUT table); // def:LEP_VID_FUSION_LUT
+    LEP_VID_PCOLOR_LUT vid_getPseudoColorLUT(); 
 
-    void setVidFocusCalcEnabled(bool enabled); // def:disabled
-    bool getVidFocusCalcEnabled();
+    void vid_setFocusCalcEnabled(bool enabled); // def:disabled
+    bool vid_getFocusCalcEnabled();
 
-    void setVidFreezeEnabled(bool enabled); // def:disabled
-    bool getVidFreezeEnabled();
+    void vid_setFreezeEnabled(bool enabled); // def:disabled
+    bool vid_getFreezeEnabled();
 
 #ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
 
     // AGC extended module commands
 
-    void setAGCHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
-    void getAGCHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region);
+    void agc_setHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    void agc_getHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region);
 
-    void getAGCHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statistics); // min:{0,0,0,0} max:{0x3FFF,0x3FFF,0x3FFF,4800} (pixels)
+    void agc_getHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statistics); // min:{0,0,0,0} max:{0x3FFF,0x3FFF,0x3FFF,4800} (pixels)
 
-    void setAGCHistogramClipPercent(uint16_t percent); // def:0
-    uint16_t getAGCHistogramClipPercent();
+    void agc_setHistogramClipPercent(uint16_t percent); // def:0
+    uint16_t agc_getHistogramClipPercent();
 
-    void setAGCHistogramTailSize(uint16_t size); // def:0
-    uint16_t getAGCHistogramTailSize();
+    void agc_setHistogramTailSize(uint16_t size); // def:0
+    uint16_t agc_getHistogramTailSize();
 
-    void setAGCLinearMaxGain(uint16_t gain); // def:1
-    uint16_t getAGCLinearMaxGain();
+    void agc_setLinearMaxGain(uint16_t gain); // def:1
+    uint16_t agc_getLinearMaxGain();
 
-    void setAGCLinearMidpoint(uint16_t midpoint); // min:0 max:256 def:128
-    uint16_t getAGCLinearMidpoint();
+    void agc_setLinearMidpoint(uint16_t midpoint); // min:0 max:256 def:128
+    uint16_t agc_getLinearMidpoint();
 
-    void setAGCLinearDampeningFactor(uint16_t factor); // def:1
-    uint16_t getAGCLinearDampeningFactor();
+    void agc_setLinearDampeningFactor(uint16_t factor); // def:1
+    uint16_t agc_getLinearDampeningFactor();
 
-    void setAGCHEQDampeningFactor(uint16_t factor); // min:0 max:256 def:64
-    uint16_t getAGCHEQDampeningFactor();
+    void agc_setHEQDampeningFactor(uint16_t factor); // min:0 max:256 def:64
+    uint16_t agc_getHEQDampeningFactor();
 
-    void setAGCHEQMaxGain(uint16_t gain); // def:1
-    uint16_t getAGCHEQMaxGain();
+    void agc_setHEQMaxGain(uint16_t gain); // def:1
+    uint16_t agc_getHEQMaxGain();
 
-    void setAGCHEQClipLimitHigh(uint16_t limit); // min:0 max:4800 def:4800 (pixels)
-    uint16_t getAGCHEQClipLimitHigh();
+    void agc_setHEQClipLimitHigh(uint16_t limit); // min:0 max:4800 def:4800 (pixels)
+    uint16_t agc_getHEQClipLimitHigh();
 
-    void setAGCHEQClipLimitLow(uint16_t limit); // min:0 max:1024 def:512 (pixels)
-    uint16_t getAGCHEQClipLimitLow();
+    void agc_setHEQClipLimitLow(uint16_t limit); // min:0 max:1024 def:512 (pixels)
+    uint16_t agc_getHEQClipLimitLow();
 
-    void setAGCHEQBinExtension(uint16_t extension); // def:0
-    uint16_t getAGCHEQBinExtension();
+    void agc_setHEQBinExtension(uint16_t extension); // def:0
+    uint16_t agc_getHEQBinExtension();
 
-    void setAGCHEQMidpoint(uint16_t midpoint); // min:0 max:256 def:128
-    uint16_t getAGCHEQMidpoint();
+    void agc_setHEQMidpoint(uint16_t midpoint); // min:0 max:256 def:128
+    uint16_t agc_getHEQMidpoint();
 
-    void setAGCHEQEmptyCounts(uint16_t counts); // min:0 max:0x3FFF def:2
-    uint16_t getAGCHEQEmptyCounts();
+    void agc_setHEQEmptyCounts(uint16_t counts); // min:0 max:0x3FFF def:2
+    uint16_t agc_getHEQEmptyCounts();
 
-    void setAGCHEQNormalizationFactor(uint16_t factor); // def:1
-    uint16_t getAGCHEQNormalizationFactor();
+    void agc_setHEQNormalizationFactor(uint16_t factor); // def:1
+    uint16_t agc_getHEQNormalizationFactor();
 
     // SYS extended module commands
 
-    void runSysPingCamera(); // return put into lastLepResult
+    void sys_runPingCamera(); // return put into lastLepResult
 
-    void setSysTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location); // def:LEP_TELEMETRY_LOCATION_FOOTER
-    LEP_SYS_TELEMETRY_LOCATION getSysTelemetryLocation();
+    void sys_setTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location); // def:LEP_TELEMETRY_LOCATION_FOOTER
+    LEP_SYS_TELEMETRY_LOCATION sys_getTelemetryLocation();
 
-    void runSysFrameAveraging();
+    void sys_runFrameAveraging();
 
-    void setSysNumFramesToAverage(LEP_SYS_FRAME_AVERAGE average); // def:LEP_SYS_FA_DIV_8
-    LEP_SYS_FRAME_AVERAGE getSysNumFramesToAverage();
+    void sys_setNumFramesToAverage(LEP_SYS_FRAME_AVERAGE average); // def:LEP_SYS_FA_DIV_8
+    LEP_SYS_FRAME_AVERAGE sys_getNumFramesToAverage();
 
-    void getSysSceneStatistics(LEP_SYS_SCENE_STATISTICS *statistics);
+    void sys_getSceneStatistics(LEP_SYS_SCENE_STATISTICS *statistics);
 
-    void setSysSceneRegion(LEP_SYS_SCENE_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
-    void getSysSceneRegion(LEP_SYS_SCENE_ROI *region);
+    void sys_setSceneRegion(LEP_SYS_SCENE_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    void sys_getSceneRegion(LEP_SYS_SCENE_ROI *region);
 
-    uint16_t getSysThermalShutdownCount(); // min:0 max:65535 default:270 (pixels)
+    uint16_t sys_getThermalShutdownCount(); // min:0 max:65535 default:270 (pixels)
 
-    void setSysShutterPosition(LEP_SYS_SHUTTER_POSITION position); // def:LEP_SYS_SHUTTER_POSITION_UNKNOWN
-    LEP_SYS_SHUTTER_POSITION getSysShutterPosition();
+    void sys_setShutterPosition(LEP_SYS_SHUTTER_POSITION position); // def:LEP_SYS_SHUTTER_POSITION_UNKNOWN
+    LEP_SYS_SHUTTER_POSITION sys_getShutterPosition();
 
-    void setSysFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode); // see LEP_SYS_FFC_SHUTTER_MODE for defs
-    void getSysFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode);
+    void sys_setFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode); // see LEP_SYS_FFC_SHUTTER_MODE for defs
+    void sys_getFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode);
 
-    LEP_SYS_FFC_STATUS getSysFFCNormalizationStatus(); // def:LEP_SYS_FFC_STATUS_READY
+    LEP_SYS_FFC_STATUS sys_getFFCNormalizationStatus(); // def:LEP_SYS_FFC_STATUS_READY
 
     // VID extended module commands
 
-    void setVidUserColorLUT(LEP_VID_LUT_BUFFER *table); // These two methods may not work as intended, possibly leaving the I2C bus on the
-    void getVidUserColorLUT(LEP_VID_LUT_BUFFER *table); // FLiR in a non-responding state. A full power cycle may be needed to reset.
+    void vid_setUserColorLUT(LEP_VID_LUT_BUFFER *table); // These two methods may not work as intended, possibly leaving the I2C bus on the
+    void vid_getUserColorLUT(LEP_VID_LUT_BUFFER *table); // FLiR in a non-responding state. A full power cycle may be needed to reset.
 
-    void setVidFocusRegion(LEP_VID_FOCUS_ROI *region); // min:1,1/end>beg+1, max:78,58/beg<end-1 def:{1,1,78,58} (pixels)
-    void getVidFocusRegion(LEP_VID_FOCUS_ROI *region);
+    void vid_setFocusRegion(LEP_VID_FOCUS_ROI *region); // min:1,1/end>beg+1, max:78,58/beg<end-1 def:{1,1,78,58} (pixels)
+    void vid_getFocusRegion(LEP_VID_FOCUS_ROI *region);
 
-    void setVidFocusThreshold(uint32_t threshold); // def:30
-    uint32_t getVidFocusThreshold();
+    void vid_setFocusThreshold(uint32_t threshold); // def:30
+    uint32_t vid_getFocusThreshold();
 
-    uint32_t getVidFocusMetric();
+    uint32_t vid_getFocusMetric();
 
-    void setVidSceneBasedNUCEnabled(bool enabled); // def:enabled
-    bool getVidSceneBasedNUCEnabled();
+    void vid_setSceneBasedNUCEnabled(bool enabled); // def:enabled
+    bool vid_getSceneBasedNUCEnabled();
 
-    void setVidGamma(uint32_t gamma); // def:58
-    uint32_t getVidGamma();
+    void vid_setGamma(uint32_t gamma); // def:58
+    uint32_t vid_getGamma();
 
 #endif
 
@@ -392,6 +392,9 @@ private:
     int receiveCommand(uint16_t cmdCode, uint32_t *value);
     int receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength);
 
+    void writeRegister(uint16_t regAddress, uint16_t value);
+    uint16_t readRegister(uint16_t regAddress);
+
     int writeRegister(uint16_t regAddress, uint16_t *dataWords, int dataLength);
     int writeRegister(uint16_t regAddress, uint16_t *dataWords1, int dataLength1, uint16_t *dataWords2, int dataLength2);
     int readRegister(uint16_t regAddress, uint16_t *readWords, int readLength, int maxLength);
@@ -405,7 +408,8 @@ private:
     uint8_t i2cWire_requestFrom(uint8_t, uint8_t);
     size_t i2cWire_write(uint8_t);
     size_t i2cWire_write16(uint16_t);
-    int i2cWire_read(void);
+    uint8_t i2cWire_read(void);
+    uint16_t i2cWire_read16(void);
 };
 
 extern void wordsToHexString(uint16_t *dataWords, int dataLength, char *buffer, int maxLength);
