@@ -1751,8 +1751,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        uint16_t dataWords[2] = { cmdCode, 0 };
-        if (writeRegister(LEP_I2C_COMMAND_REG, dataWords, 2) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
 
             waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT);
         }
@@ -1845,8 +1844,7 @@ int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        uint16_t cmdData[2] = { cmdCode, (uint16_t)0 };
-        if (writeRegister(LEP_I2C_COMMAND_REG, cmdData, 2) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
@@ -1882,8 +1880,7 @@ int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        uint16_t cmdData[2] = { cmdCode, (uint16_t)0 };
-        if (writeRegister(LEP_I2C_COMMAND_REG, cmdData, 2) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
@@ -1919,8 +1916,7 @@ int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLen
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        uint16_t cmdData[2] = { cmdCode, (uint16_t)0 };
-        if (writeRegister(LEP_I2C_COMMAND_REG, cmdData, 2) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
@@ -2025,7 +2021,7 @@ int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t *dataWords, int data
 
         i2cWire_write16(regAddress + (dataIndex * 0x02));
 
-        for (int i = dataIndex; i <= dataLength; ++i)
+        for (int i = dataIndex; i < dataLength; ++i)
             i2cWire_write16(dataWords[i]);
 
         if (i2cWire_endTransmission())
@@ -2065,7 +2061,7 @@ int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t *dataWords1, int dat
 
         i2cWire_write16(regAddress + (dataIndex * 0x02));
 
-        for (int i = dataIndex; i <= dataLength; ++i) {
+        for (int i = dataIndex; i < dataLength; ++i) {
             if (i >= dataLength1)
                 i2cWire_write16(dataWords2[i - dataLength1]);
             else
