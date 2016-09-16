@@ -1,7 +1,9 @@
 # Lepton-FLiR-Arduino
 Arduino Library for the Lepton FLiR Thermal Camera Module.
 
-**Lepton-FLiR-Arduino v0.9.9**
+**NOTE: SPI data transfer mechanism is still being ironed out. Check back later when v1.0 releases.**
+
+**Lepton-FLiR-Arduino v0.9.91**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino board (Due, Zero, etc. recommended).  
 Licensed under the non-restrictive MIT license.

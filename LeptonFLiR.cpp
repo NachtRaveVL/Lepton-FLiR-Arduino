@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.9
+    Lepton-FLiR-Arduino - Version 0.9.91
 */
 
 #include "LeptonFLiR.h"
