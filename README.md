@@ -347,19 +347,19 @@ In serial monitor:
  ~~~ LeptonFLiR Module Info ~~~
 
 Chip Select Pin:
-D53 (active-low)
+D34 (active-low)
 
 SPI Port Speed:
 10.50MHz (SPI_CLOCK_DIV8)
 
 Image Storage Mode:
-0: LeptonFLiR_ImageStorageMode_80x60_16bpp
+1: LeptonFLiR_ImageStorageMode_80x60_8bpp
 
 Temperature Mode:
-0: LeptonFLiR_TemperatureMode_Celsius
+1: LeptonFLiR_TemperatureMode_Fahrenheit
 
 Memory Footprint:
-Image Data: 9615B, SPI Frame Data: 191B, Telemetry Data: 164B, Total: 9970B
+Image Data: 4815B, SPI Frame Data: 191B, Telemetry Data: 164B, Total: 5170B
 
 Power Register:
     LeptonFLiR::readRegister regAddress: 0x0
@@ -369,21 +369,20 @@ Power Register:
 Status Register:
     LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-0x6
+0x6
+
 AGC Enabled:
 LeptonFLiR::agc_getAGCEnabled
   LeptonFLiR::receiveCommand cmdCode: 0x100
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x100-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x100
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x0-0x0
-disabled
+      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
+enabled
 
 AGC Policy:
 LeptonFLiR::agc_getAGCPolicy
@@ -391,13 +390,11 @@ LeptonFLiR::agc_getAGCPolicy
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x104-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x104
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x1-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
 1: LEP_AGC_HEQ
 
 AGC HEQ Scale Factor:
@@ -406,13 +403,11 @@ LeptonFLiR::agc_getHEQScaleFactor
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x144-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x144
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x0-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
 0: LEP_AGC_SCALE_TO_8_BITS
 
 AGC Calculation Enabled:
@@ -421,13 +416,11 @@ LeptonFLiR::agc_getAGCCalcEnabled
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x148-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x148
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x1-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
 enabled
 
 SYS Camera Status:
@@ -436,13 +429,11 @@ LeptonFLiR::sys_getCameraStatus
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x204-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x204
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x8
-      LeptonFLiR::readRegister readWords[4]: 0x0-0x0-0x0-0x0
+      LeptonFLiR::readDataRegister readWords[4]: 0x0-0x0-0x0-0x0
 0: LEP_SYSTEM_READY
 
 FLiR Serial Number:
@@ -451,14 +442,12 @@ LeptonFLiR::sys_getFlirSerialNumber
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x208-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x208
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x8
-      LeptonFLiR::readRegister readWords[4]: 0x1-0x2-0x3-0x4
-0001:0002:0003:0004
+      LeptonFLiR::readDataRegister readWords[4]: 0x1111-0x2222-0x3333-0x4444
+1111:2222:3333:4444
 
 Customer Serial Number:
 LeptonFLiR::sys_getCustomerSerialNumber
@@ -466,14 +455,12 @@ LeptonFLiR::sys_getCustomerSerialNumber
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x228-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x228
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x20
-      LeptonFLiR::readRegister readWords[16]: 0x1-0x2-0x3-0x4-x05-0x6-0x7-0x8-0x9-0xA-0xB-0xC-0xD-0xE-0xF-0x10
-0001:0002:0003:0004:0005:0006:0007:0008:0009:000A:000B:000C:000D:000E:000F:0010
+      LeptonFLiR::readDataRegister readWords[16]: 0x1111-0x2222-0x3333-0x4444-0x5555-0x6666-0x7777-0x8888-0x9999-0xAAAA-0xBBBB-0xCCCC-0xDDDD-0xEEEE-0xFFFF-0xABCD
+1111:2222:3333:4444:5555:6666:7777:8888:9999:AAAA:BBBB:CCCC:DDDD:EEEE:FFFF:ABCD
 
 Camera Uptime:
 LeptonFLiR::sys_getCameraUptime
@@ -481,14 +468,12 @@ LeptonFLiR::sys_getCameraUptime
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x20C-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x20C
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x1B-0x0
-27 ms
+      LeptonFLiR::readDataRegister readWords[2]: 0x6FE4-0x64
+6582244 ms
 
 Sys Aux Temperature:
 LeptonFLiR::sys_getAuxTemperature
@@ -496,14 +481,12 @@ LeptonFLiR::sys_getAuxTemperature
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x210-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x210
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x2
-      LeptonFLiR::readRegister readWords[1]: 0x7477
-25.00°C
+      LeptonFLiR::readDataRegister readWords[1]: 0x778B
+91.18°F
 
 Sys FPA Temperature:
 LeptonFLiR::sys_getFPATemperature
@@ -511,14 +494,12 @@ LeptonFLiR::sys_getFPATemperature
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x214-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x214
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x2
-      LeptonFLiR::readRegister readWords[1]: 0x7477
-25.00°C
+      LeptonFLiR::readDataRegister readWords[1]: 0x788D
+95.83°F
 
 Telemetry Enabled:
 LeptonFLiR::sys_getTelemetryEnabled
@@ -526,13 +507,11 @@ LeptonFLiR::sys_getTelemetryEnabled
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x218-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x218
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x1-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
 enabled
 
 Vid Polarity:
@@ -541,13 +520,11 @@ LeptonFLiR::vid_getPolarity
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x300-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x300
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x0-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
 0: LEP_VID_WHITE_HOT
 
 Vid Pseudo Color Lookup Table:
@@ -556,13 +533,11 @@ LeptonFLiR::vid_getPseudoColorLUT
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x304-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x304
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x1-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
 1: LEP_VID_FUSION_LUT
 
 Vid Focus Calculation Enabled:
@@ -571,13 +546,11 @@ LeptonFLiR::vid_getFocusCalcEnabled
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x30C-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x30C
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x0-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
 disabled
 
 Vid Freeze Enabled:
@@ -586,12 +559,10 @@ LeptonFLiR::vid_getFreezeEnabled
     LeptonFLiR::waitCommandBegin
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, dataWords[2]: 0x324-0x0
+    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x324
     LeptonFLiR::waitCommandFinish
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::readRegister regAddress: 0x6
-      LeptonFLiR::readRegister readWords[1]: 0x4
-      LeptonFLiR::readRegister readWords[2]: 0x0-0x0
+      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
 disabled
 ```
