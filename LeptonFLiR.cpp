@@ -34,9 +34,8 @@
 #define LEPFLIR_GEN_CMD_TIMEOUT         5000        // Timeout for commands to be processed
 #define LEPFLIR_SPI_MAX_SPEED           20000000    // Maximum SPI speed for FLiR module
 #define LEPFLIR_SPI_MIN_SPEED           2200000     // Minimum SPI speed for FLiR module
-#define LEPFLIR_SPI_FRAME_PACKET_SIZE           164 // 2B ID + 2B CRC + 160B for 80x1 14bpp/8bppAGC thermal image data, else if telemetry row 2B revision + 162B telemetry data
-#define LEPFLIR_SPI_FRAME_PACKET_HEADER_SIZE16  2
-#define LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16    80
+#define LEPFLIR_SPI_FRAME_PACKET_SIZE           164 // 2B ID + 2B CRC + 160B for 80x1 14bpp/8bppAGC thermal image data or telemetry data
+#define LEPFLIR_SPI_FRAME_PACKET_SIZE16         82
 
 #ifndef LEPFLIR_DISABLE_ALIGNED_MALLOC
 static inline int roundUpVal16(int val) { return ((val + 15) & -16); }
@@ -245,12 +244,12 @@ uint16_t LeptonFLiR::getImageDataRowCol(int row, int col) {
 }
 
 byte *LeptonFLiR::getTelemetryData() {
-    return !_isReadingNextFrame && _telemetryData && _telemetryData[0] != 0x0F ? _telemetryData : NULL;
+    return !_isReadingNextFrame && _telemetryData && !(*((uint16_t *)_telemetryData) & 0x0F00 == 0x0F00) ? _telemetryData : NULL;
 }
 
 void LeptonFLiR::getTelemetryData(TelemetryData *telemetry) {
     if (_isReadingNextFrame || !_telemetryData || !telemetry) return;
-    uint16_t *telemetryData = (uint16_t *)_telemetryData;
+    uint16_t *telemetryData = (uint16_t *)&_telemetryData[4];
 
     telemetry->revisionMajor = lowByte(telemetryData[0]);
     telemetry->revisionMinor = highByte(telemetryData[0]);
@@ -291,14 +290,14 @@ void LeptonFLiR::getTelemetryData(TelemetryData *telemetry) {
 
 uint32_t LeptonFLiR::getTelemetryFrameCounter() {
     if (_isReadingNextFrame || !_telemetryData) return 0;
-    uint16_t *telemetryData = (uint16_t *)_telemetryData;
+    uint16_t *telemetryData = (uint16_t *)&_telemetryData[4];
 
     return ((uint32_t)telemetryData[20] << 16) | (uint32_t)telemetryData[21];
 }
 
 bool LeptonFLiR::getShouldRunFFCNormalization() {
     if (_isReadingNextFrame || !_telemetryData) return false;
-    uint16_t *telemetryData = (uint16_t *)_telemetryData;
+    uint16_t *telemetryData = (uint16_t *)&_telemetryData[4];
 
     uint_fast8_t ffcState = (telemetryData[4] & 0x0018) >> 3;
     if (lowByte(telemetryData[0]) >= 9 && ffcState >= 1)
@@ -327,35 +326,28 @@ int LeptonFLiR::getSPIFrameTotalBytes() {
     return getSPIFrameLines() * roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE);
 }
 
-byte *LeptonFLiR::getSPIFrameDataRow(int row) {
-    return roundUpSpiFrame16(_spiFrameData) + (row * roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE));
+uint16_t *LeptonFLiR::getSPIFrameDataRow(int row) {
+    return (uint16_t *)(roundUpSpiFrame16(_spiFrameData) + (row * roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE)));
 }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
-static void printSPIFrame(byte *spiFrame, byte *pxlData) {
-    if (spiFrame) {
-        Serial.print("ID: 0x");
-        Serial.print(((uint16_t *)spiFrame)[0], HEX);
-        Serial.print(" CRC: 0x");
-        Serial.print(((uint16_t *)spiFrame)[1], HEX);
-        if (!pxlData) Serial.println("");
+static void printSPIFrame(uint16_t *spiFrame) {
+    Serial.print("ID: 0x");
+    Serial.print(spiFrame[0], HEX);
+    Serial.print(" CRC: 0x");
+    Serial.print(spiFrame[1], HEX);
+    Serial.print(" Data: ");
+    for (int i = 0; i < 5; ++i) {
+        Serial.print(i > 0 ? "-0x" : "0x");
+        Serial.print(spiFrame[i + 2], HEX);
     }
-
-    if (pxlData) {
-        if (spiFrame) Serial.print(" ");
-        Serial.print("Data: ");
-        for (int i = 0; i < 5; ++i) {
-            Serial.print(i > 0 ? "-0x" : "0x");
-            Serial.print(((uint16_t *)pxlData)[i], HEX);
-        }
-        Serial.print("...");
-        for (int i = 75; i < 80; ++i) {
-            Serial.print(i > 75 ? "-0x" : "0x");
-            Serial.print(((uint16_t *)pxlData)[i], HEX);
-        }
-        Serial.println("");
+    Serial.print("...");
+    for (int i = 75; i < 80; ++i) {
+        Serial.print(i > 75 ? "-0x" : "0x");
+        Serial.print(spiFrame[i + 2], HEX);
     }
+    Serial.println("");
 }
 
 #endif
@@ -372,9 +364,14 @@ static void delayTimeout(int timeout) {
     }
 }
 
-static inline void SPI_transfer16(uint16_t *buffer, int count) {
+static void SPI_transfer16(uint16_t *buffer, int count) {
     while (count-- > 0)
         *buffer++ = SPI.transfer16(0x0000);
+}
+
+static void SPI_ignore16(int count) {
+    while (count-- > 0)
+        SPI.transfer16(0x0000);
 }
 
 //#define LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT    1
@@ -413,13 +410,12 @@ bool LeptonFLiR::readNextFrame() {
                 stateErrors = stateErrors || _lastI2CError || _lastLepResult;
             }
 
-            uint16_t status = readRegister(LEP_I2C_STATUS_REG);
-            cameraBooted = (status & LEP_I2C_STATUS_BOOT_MODE_BIT_MASK) && (status & LEP_I2C_STATUS_BOOT_STATUS_BIT_MASK);
-            stateErrors = stateErrors || _lastI2CError || _lastLepResult;
-
+            uint16_t status; readRegister(LEP_I2C_STATUS_REG, &status);
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
             checkForErrors();
 #endif
+            cameraBooted = (status & LEP_I2C_STATUS_BOOT_MODE_BIT_MASK) && (status & LEP_I2C_STATUS_BOOT_STATUS_BIT_MASK);
+            stateErrors = stateErrors || _lastI2CError || _lastLepResult;
             
             if (stateErrors) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -436,12 +432,12 @@ bool LeptonFLiR::readNextFrame() {
                 _isReadingNextFrame = false;
                 return false;
             }
-            
+
             if (telemetryEnabled && !_telemetryData) {
                 _telemetryData = (byte *)malloc(LEPFLIR_SPI_FRAME_PACKET_SIZE);
 
                 if (_telemetryData)
-                    _telemetryData[0] = 0x0F; // initialize as discard packet
+                    _telemetryData[0] = _telemetryData[1] = 0xFF; // initialize as discard packet
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
                 if (!_telemetryData)
                     Serial.println("  LeptonFLiR::readNextFrame Failure allocating telemetryData.");
@@ -465,140 +461,133 @@ bool LeptonFLiR::readNextFrame() {
             Serial.println("disabled");
 #endif
 
-        byte *spiFrame = getSPIFrameDataRow(0);
-        uint_fast8_t readLines = 0;
+        uint16_t *spiFrame = NULL;
         uint_fast8_t imgRows = getImageHeight();
         uint_fast8_t currImgRow = 0;
         uint_fast8_t spiRows = getSPIFrameLines();
         uint_fast8_t currSpiRow = 0;
-        uint_fast8_t teleRows = (_telemetryData ? 3 : 0);
+        uint_fast8_t teleRows = (_telemetryData ? 4 : 0);
         uint_fast8_t currTeleRow = 0;
+        uint_fast8_t currReadRow = 0;        
         uint_fast8_t framesSkipped = 0;
-        bool packetHeaderRead = true;
+        uint_fast8_t currRow = 0;
+        bool skipFrame = false;
+        bool spiPacketRead = false;
 
         SPI.beginTransaction(_spiSettings);
 
         _csEnableFunc(_spiCSPin);
         _csDisableFunc(_spiCSPin);
         delayTimeout(185);
-        _csEnableFunc(_spiCSPin);
-        SPI_transfer16((uint16_t *)spiFrame, LEPFLIR_SPI_FRAME_PACKET_HEADER_SIZE16);
 
+        _csEnableFunc(_spiCSPin);
+        
         while (currImgRow < imgRows || currTeleRow < teleRows) {
-            if (!packetHeaderRead) {
+            if (!spiPacketRead) {
                 spiFrame = getSPIFrameDataRow(currSpiRow);
-                _csEnableFunc(_spiCSPin);
-                SPI_transfer16((uint16_t *)spiFrame, LEPFLIR_SPI_FRAME_PACKET_HEADER_SIZE16);
+
+                SPI_transfer16(spiFrame, LEPFLIR_SPI_FRAME_PACKET_SIZE16);
+                
+                skipFrame = ((spiFrame[0] & 0x0F00) == 0x0F00);
+                currRow = (spiFrame[0] & 0x00FF);
             }
             else
-                packetHeaderRead = false;
+                spiPacketRead = false;
 
-            if (spiFrame[0] == 0x00 && spiFrame[1] == readLines) { // Image packet
-                byte *pxlData = (_storageMode == LeptonFLiR_ImageStorageMode_80x60_16bpp ? _getImageDataRow(readLines) : &spiFrame[4]);
-
-                SPI_transfer16((uint16_t *)pxlData, LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16);
-                _csDisableFunc(_spiCSPin);
-
+            if (!skipFrame && currRow == currReadRow && (
+                ((!teleRows || telemetryLocation == LEP_TELEMETRY_LOCATION_FOOTER) && currRow < 60) ||
+                (telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER && currReadRow >= teleRows))) { // Image packet
 #if defined(LEPFLIR_ENABLE_DEBUG_OUTPUT) && defined(LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT)
                 Serial.println("    LeptonFLiR::readNextFrame VoSPI Image Packet:");
-                Serial.print("      ");  printSPIFrame(spiFrame, pxlData);
+                Serial.print("      ");  printSPIFrame(spiFrame);
 #endif
 
-                ++readLines; ++currSpiRow;
+                ++currReadRow; ++currSpiRow;
             }
-            else if ((spiFrame[0] & 0x0F != 0x0F) && teleRows && currTeleRow < 3 &&
-                ((telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER && readLines == 0) ||
-                (telemetryLocation == LEP_TELEMETRY_LOCATION_FOOTER && readLines == 60))) { // Telemetry packet
-                if (currTeleRow == 0) {
-                    SPI_transfer16((uint16_t *)&_telemetryData[4], LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16);
-                    _csDisableFunc(_spiCSPin);
-                    memcpy(_telemetryData, spiFrame, 4);
+            else if (!skipFrame && currRow == currReadRow && teleRows &&
+                ((telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER && currReadRow < teleRows) ||
+                 (telemetryLocation == LEP_TELEMETRY_LOCATION_FOOTER && currReadRow >= 60))) { // Telemetry packet
+                if (currTeleRow == 0)
+                    memcpy(_telemetryData, spiFrame, LEPFLIR_SPI_FRAME_PACKET_SIZE);
 
 #if defined(LEPFLIR_ENABLE_DEBUG_OUTPUT) && defined(LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT)
-                    Serial.println("    LeptonFLiR::readNextFrame VoSPI Telemetry(A) Packet:");
-                    Serial.print("      ");  printSPIFrame(_telemetryData, &_telemetryData[4]);
+                Serial.print("    LeptonFLiR::readNextFrame VoSPI Telemetry(");
+                Serial.print((char)('A' + currTeleRow));
+                Serial.println(") Packet:");
+                Serial.print("      ");  printSPIFrame(spiFrame);
 #endif
-                }
-                else {
-                    SPI_transfer16((uint16_t *)&spiFrame[4], LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16);
-                    _csDisableFunc(_spiCSPin);
 
+                ++currReadRow; ++currTeleRow;
+            }
+            else if (!skipFrame && currRow < currReadRow) { // Ignore packet
 #if defined(LEPFLIR_ENABLE_DEBUG_OUTPUT) && defined(LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT)
-                    Serial.print("    LeptonFLiR::readNextFrame VoSPI Telemetry(");
-                    Serial.print(currTeleRow == 1 ? "B" : "C");
-                    Serial.println(") Packet:");
-                    Serial.print("      ");  printSPIFrame(spiFrame, &spiFrame[4]);
+                Serial.println("    LeptonFLiR::readNextFrame VoSPI Ignore Packet:");
+                Serial.print("      ");  printSPIFrame(spiFrame);
 #endif
-                }
-
-                ++currTeleRow;
             }
             else { // Discard packet
-                SPI_transfer16((uint16_t *)&spiFrame[4], LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16);
-                _csDisableFunc(_spiCSPin);
-
 #if defined(LEPFLIR_ENABLE_DEBUG_OUTPUT) && defined(LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT)
                 Serial.println("    LeptonFLiR::readNextFrame VoSPI Discard Packet:");
-                Serial.print("      ");  printSPIFrame(spiFrame, &spiFrame[4]);
+                Serial.print("      ");  printSPIFrame(spiFrame);
 #endif
 
-                if ((readLines || currTeleRow || framesSkipped) && (spiFrame[0] & 0x0F) == 0x0F)
+                if (skipFrame && (currReadRow || framesSkipped)) {
+                    _csDisableFunc(_spiCSPin);
                     delayTimeout(185);
+                    _csEnableFunc(_spiCSPin);
+                }
 
                 uint_fast8_t triesLeft = 120;
-
+                spiPacketRead = true;
+                
                 while (triesLeft > 0) {
-                    _csEnableFunc(_spiCSPin);
-                    SPI_transfer16((uint16_t *)spiFrame, LEPFLIR_SPI_FRAME_PACKET_HEADER_SIZE16);
+                    SPI_transfer16(spiFrame, LEPFLIR_SPI_FRAME_PACKET_SIZE16);
+                    
+                    skipFrame = ((spiFrame[0] & 0x0F00) == 0x0F00);
+                    currRow = (spiFrame[0] & 0x00FF);
 
-                    if ((spiFrame[0] & 0x0F) != 0x0F) {
-                        if ((spiFrame[0] == 0x00 && spiFrame[1] == readLines) ||
-                            (teleRows && readLines == 60 && spiFrame[0] > 0x00 && telemetryLocation == LEP_TELEMETRY_LOCATION_FOOTER)) {
-                            // Reestablished sync at position we're next expecting
+                    if (!skipFrame) {
+                        if (currRow == currReadRow) { // Reestablished sync at position we're next expecting
                             break;
                         }
-                        else if ((spiFrame[0] == 0x00 && spiFrame[1] == 0) ||
-                            (teleRows && spiFrame[0] > 0x00 && telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER)) {
-                            // Reestablished sync at next frame position
-
-                            if ((readLines || currTeleRow || framesSkipped) && ++framesSkipped >= 5) {
-                                SPI_transfer16((uint16_t *)&spiFrame[4], LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16);
-                                _csDisableFunc(_spiCSPin);
+                        else if (currRow == 0) { // Reestablished sync at next frame position
+                            if ((currReadRow || framesSkipped) && ++framesSkipped >= 5) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
                                 Serial.println("  LeptonFLiR::readNextFrame Maximum frame skip reached. Aborting.");
 #endif
+
+                                _csDisableFunc(_spiCSPin);
                                 SPI.endTransaction();
                                 _isReadingNextFrame = false;
                                 return false;
                             }
                             else {
-                                packetHeaderRead = true;
-                                readLines = currImgRow = currSpiRow = currTeleRow = 0;
+                                currReadRow = currImgRow = currSpiRow = currTeleRow = 0;
 
-                                byte* prevSPIFrame = spiFrame;
+                                uint16_t* prevSPIFrame = spiFrame;
                                 spiFrame = getSPIFrameDataRow(currSpiRow);
                                 if (spiFrame != prevSPIFrame)
-                                    memcpy(spiFrame, prevSPIFrame, LEPFLIR_SPI_FRAME_PACKET_HEADER_SIZE16 * 2);
+                                    memcpy(spiFrame, prevSPIFrame, LEPFLIR_SPI_FRAME_PACKET_SIZE);
 
                                 break;
                             }
                         }
                     }
 
-                    SPI_transfer16((uint16_t *)&spiFrame[4], LEPFLIR_SPI_FRAME_PACKET_DATA_SIZE16);
-                    _csDisableFunc(_spiCSPin);
-                    --triesLeft;
-
 #if defined(LEPFLIR_ENABLE_DEBUG_OUTPUT) && defined(LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT)
                     Serial.println("    LeptonFLiR::readNextFrame VoSPI Discard Retry Packet:");
-                    Serial.print("      ");  printSPIFrame(spiFrame, &spiFrame[4]);
+                    Serial.print("      ");  printSPIFrame(spiFrame);
 #endif
+
+                    --triesLeft;
                 }
 
                 if (triesLeft == 0) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
                     Serial.println("  LeptonFLiR::readNextFrame Maximum resync retries reached. Aborting.");
 #endif
+
+                    _csDisableFunc(_spiCSPin);
                     SPI.endTransaction();
                     _isReadingNextFrame = false;
                     return false;
@@ -606,13 +595,24 @@ bool LeptonFLiR::readNextFrame() {
             }
 
             // Write out to frame
-            if (currSpiRow == spiRows && (!teleRows || currTeleRow > 1)) {
-                if (_storageMode != LeptonFLiR_ImageStorageMode_80x60_16bpp) {
-                    spiFrame = getSPIFrameDataRow(0) + 4;
+            if (currSpiRow == spiRows) {
+                if (_storageMode == LeptonFLiR_ImageStorageMode_80x60_16bpp) {
+                    memcpy(_getImageDataRow(currImgRow), getSPIFrameDataRow(0) + 2, LEPFLIR_SPI_FRAME_PACKET_SIZE - 4);
+                }
+                else if (_storageMode == LeptonFLiR_ImageStorageMode_80x60_8bpp && agc8Enabled) {
+                    byte *pxlData = _getImageDataRow(currImgRow);
+                    spiFrame = getSPIFrameDataRow(0) + 2;
+                    uint_fast8_t size = LEPFLIR_SPI_FRAME_PACKET_SIZE16 - 2;
+                    while (size--)
+                        *pxlData++ = (byte)constrain(*spiFrame++, 0, 0x00FF);
+                }
+                else {
+                    spiFrame = getSPIFrameDataRow(0) + 2;
                     byte *pxlData = _getImageDataRow(currImgRow);
 
                     uint_fast8_t imgWidth = getImageWidth();
                     uint_fast8_t imgBpp = getImageBpp();
+                    uint_fast8_t spiPitch16 = roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE) / 2;
 
                     uint_fast32_t divisor = (spiRows * spiRows) * (!agc8Enabled && imgBpp == 1 ? 64 : 1);
                     uint_fast32_t clamp = (!agc8Enabled && imgBpp == 2 ? 0x3FFF : 0x00FF);
@@ -621,15 +621,15 @@ bool LeptonFLiR::readNextFrame() {
                         uint_fast32_t total = 0;
 
                         uint_fast8_t y = spiRows;
-                        byte *spiYFrame = spiFrame;
+                        uint16_t *spiYFrame = spiFrame;
                         while (y-- > 0) {
 
                             uint_fast8_t x = spiRows;
-                            uint16_t *spiXFrame = (uint16_t *)spiYFrame;
+                            uint16_t *spiXFrame = spiYFrame;
                             while (x-- > 0)
                                 total += *spiXFrame++;
 
-                            spiYFrame += roundUpVal16(LEPFLIR_SPI_FRAME_PACKET_SIZE);
+                            spiYFrame += spiPitch16;
                         }
 
                         total /= divisor;
@@ -639,7 +639,7 @@ bool LeptonFLiR::readNextFrame() {
                         else
                             *((byte *)pxlData) = (byte)constrain(total, 0, clamp);
                         pxlData += imgBpp;
-                        spiFrame += 2 * spiRows;
+                        spiFrame += spiRows;
                     }
                 }
 
@@ -807,7 +807,7 @@ void LeptonFLiR::sys_setTelemetryEnabled(bool enabled) {
             _telemetryData = (byte *)malloc(LEPFLIR_SPI_FRAME_PACKET_SIZE);
 
             if (_telemetryData)
-                _telemetryData[0] = 0x0F; // initialize as discard packet
+                _telemetryData[0] = _telemetryData[1] = 0xFF; // initialize as discard packet
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
             if (!_telemetryData)
                 Serial.println("  LeptonFLiR::sys_setTelemetryEnabled Failure allocating telemetryData.");
@@ -833,7 +833,7 @@ bool LeptonFLiR::sys_getTelemetryEnabled() {
             _telemetryData = (byte *)malloc(LEPFLIR_SPI_FRAME_PACKET_SIZE);
 
             if (_telemetryData)
-                _telemetryData[0] = 0x0F; // initialize as discard packet
+                _telemetryData[0] = _telemetryData[1] = 0xFF; // initialize as discard packet
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
             if (!_telemetryData)
                 Serial.println("  LeptonFLiR::sys_getTelemetryEnabled Failure allocating telemetryData.");
@@ -1661,8 +1661,8 @@ bool LeptonFLiR::waitCommandBegin(int timeout) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  ");
 #endif
-    uint16_t status = readRegister(LEP_I2C_STATUS_REG);
-    if (_lastI2CError != 0)
+    uint16_t status;
+    if (readRegister(LEP_I2C_STATUS_REG, &status))
         return false;
 
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK))
@@ -1681,8 +1681,7 @@ bool LeptonFLiR::waitCommandBegin(int timeout) {
         Serial.print("  ");
 #endif
 
-        status = readRegister(LEP_I2C_STATUS_REG);
-        if (_lastI2CError != 0)
+        if (readRegister(LEP_I2C_STATUS_REG, &status))
             return false;
     }
 
@@ -1702,8 +1701,8 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  ");
 #endif
-    uint16_t status = readRegister(LEP_I2C_STATUS_REG);
-    if (_lastI2CError != 0)
+    uint16_t status;
+    if (readRegister(LEP_I2C_STATUS_REG, &status))
         return false;
 
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK)) {
@@ -1724,8 +1723,7 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
         Serial.print("  ");
 #endif
 
-        status = readRegister(LEP_I2C_STATUS_REG);
-        if (_lastI2CError != 0)
+        if (readRegister(LEP_I2C_STATUS_REG, &status))
             return false;
     }
 
@@ -1751,7 +1749,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
+        if (writeCmdRegister(cmdCode, NULL, 0) == 0) {
 
             waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT);
         }
@@ -1770,8 +1768,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t value) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        uint16_t dataWords[3] = { cmdCode, (uint16_t)1, value };
-        if (writeRegister(LEP_I2C_COMMAND_REG, dataWords, 3) == 0) {
+        if (writeCmdRegister(cmdCode, &value, 1) == 0) {
 
             waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT);
         }
@@ -1790,8 +1787,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint32_t value) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        uint16_t dataWords[4] = { cmdCode, (uint16_t)2, (uint16_t)(value & 0xFFFF), (uint16_t)((value >> 16) & 0xFFFF) };
-        if (writeRegister(LEP_I2C_COMMAND_REG, dataWords, 4) == 0) {
+        if (writeCmdRegister(cmdCode, (uint16_t *)&value, 2) == 0) {
 
             waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT);
         }
@@ -1810,23 +1806,10 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t *dataWords, int dataLeng
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        int retStat;
-        if (dataLength > 0 && dataLength <= 16) {
-            uint16_t cmdData[2] = { cmdCode, (uint16_t)dataLength };
-            retStat = writeRegister(LEP_I2C_COMMAND_REG, cmdData, 2, dataWords, dataLength);
-        }
-        else if (dataLength > 16 && dataLength <= LEP_I2C_DATA_BUFFER_LENGTH / 2) {
-            if ((retStat = writeRegister(LEP_I2C_DATA_BUFFER, dataWords, dataLength)) == 0) {
+        if (writeCmdRegister(cmdCode, dataWords, dataLength) == 0) {
 
-                uint16_t cmdData[2] = { cmdCode, (uint16_t)dataLength };
-                retStat = writeRegister(LEP_I2C_COMMAND_REG, cmdData, 2);
-            }
-        }
-        else
-            retStat = (_lastI2CError = 4);
-
-        if (retStat == 0)
             waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT);
+        }
     }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -1834,31 +1817,19 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t *dataWords, int dataLeng
 #endif
 }
 
-int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
+void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  LeptonFLiR::receiveCommand cmdCode: 0x");
     Serial.println(cmdCode, HEX);
 #endif
 
-    int retVal = 0;
-
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-                uint16_t readLength;
-                if (readRegister(LEP_I2C_DATA_LENGTH_REG, &readLength, 1, 1) == 0) {
-                    readLength /= 2;
-
-                    if ((readLength == 1 && readRegister((uint16_t *)value, 1, 1) == 0) ||
-                        (readLength > 1 && readLength <= 16 && readRegister(LEP_I2C_DATA_0_REG + ((readLength - 1) * 0x02), (uint16_t *)value, 1, 1) == 0) ||
-                        (readLength > 16 && readLength <= LEP_I2C_DATA_BUFFER_LENGTH / 2 && readRegister(LEP_I2C_DATA_BUFFER + ((readLength - 1) * 0x02), (uint16_t *)value, 1, 1) == 0))
-                        retVal = 1;
-                    else
-                        _lastI2CError = 4;
-                }
+                readDataRegister(value, 1);
             }
         }
     }
@@ -1866,35 +1837,21 @@ int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-
-    return retVal;
 }
 
-int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
+void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  LeptonFLiR::receiveCommand cmdCode: 0x");
     Serial.println(cmdCode, HEX);
 #endif
 
-    int retVal = 0;
-
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-                uint16_t readLength;
-                if (readRegister(LEP_I2C_DATA_LENGTH_REG, &readLength, 1, 1) == 0) {
-                    readLength /= 2;
-
-                    if ((readLength == 2 && readRegister((uint16_t *)value, 2, 2) == 0) ||
-                        (readLength > 1 && readLength <= 16 && readRegister(LEP_I2C_DATA_0_REG + ((readLength - 1) * 0x02), (uint16_t *)value, 2, 2) == 0) ||
-                        (readLength > 16 && readLength <= LEP_I2C_DATA_BUFFER_LENGTH / 2 && readRegister(LEP_I2C_DATA_BUFFER + ((readLength - 2) * 0x02), (uint16_t *)value, 2, 2) == 0))
-                        retVal = 2;
-                    else
-                        _lastI2CError = 4;
-                }
+                readDataRegister((uint16_t *)value, 2);
             }
         }
     }
@@ -1902,34 +1859,21 @@ int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-
-    return retVal;
 }
 
-int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength) {
+void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.print("  LeptonFLiR::receiveCommand cmdCode: 0x");
     Serial.println(cmdCode, HEX);
 #endif
 
-    int retVal = 0;
-
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, &cmdCode, 1) == 0) {
+        if (writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-                uint16_t readLength;
-                if (readRegister(LEP_I2C_DATA_LENGTH_REG, &readLength, 1, 1) == 0) {
-                    readLength /= 2;
-
-                    if ((readLength > 0 && readLength <= 16 && readRegister(readWords, readLength, maxLength) == 0) ||
-                        (readLength > 16 && readLength <= LEP_I2C_DATA_BUFFER_LENGTH / 2 && readRegister(LEP_I2C_DATA_BUFFER, readWords, readLength, maxLength) == 0))
-                        retVal = readLength;
-                    else
-                        _lastI2CError = 4;
-                }
+                readDataRegister(readWords, maxLength);
             }
         }
     }
@@ -1937,68 +1881,12 @@ int LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLen
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-
-    return retVal;
 }
 
-void LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t value) {
+int LeptonFLiR::writeCmdRegister(uint16_t cmdCode, uint16_t *dataWords, int dataLength) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::writeRegister regAddress: 0x");
-    Serial.print(regAddress, HEX);
-    Serial.print(", value: 0x");
-    Serial.println(value, HEX);
-#endif
-
-    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-    i2cWire_write16(regAddress);
-    i2cWire_write16(value);
-    i2cWire_endTransmission();
-
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    checkForErrors();
-#endif
-}
-
-uint16_t LeptonFLiR::readRegister(uint16_t regAddress) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::readRegister regAddress: 0x");
-    Serial.println(regAddress, HEX);
-#endif
-
-    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-    i2cWire_write16(regAddress);
-    if (i2cWire_endTransmission()) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        checkForErrors();
-#endif
-        return 0;
-    }
-
-    int bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, 2);
-    if (bytesRead != 2) {
-        while (bytesRead-- > 0)
-            i2cWire_read();
-        _lastI2CError = 4;
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        checkForErrors();
-#endif
-        return 0;
-    }
-
-    uint16_t retVal = i2cWire_read16();
-
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("      LeptonFLiR::readRegister retVal: 0x");
-    Serial.println(retVal, HEX);
-#endif
-
-    return retVal;
-}
-
-int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t *dataWords, int dataLength) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::writeRegister regAddress: 0x");
-    Serial.print(regAddress, HEX);
+    Serial.print("    LeptonFLiR::writeCmdRegister cmdCode: 0x");
+    Serial.print(cmdCode, HEX);
     Serial.print(", dataWords[");
     Serial.print(dataLength);
     Serial.print("]: ");
@@ -2013,110 +1901,78 @@ int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t *dataWords, int data
     // how many words can be written at once. Therefore, we loop around until all words
     // have been written out into their registers.
 
-    int maxLength = (BUFFER_LENGTH - 2) / 2;
-    int dataIndex = max(0, dataLength - maxLength);
-
-    while (dataLength > 0) {
+    if (dataWords && dataLength) {
         i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-
-        i2cWire_write16(regAddress + (dataIndex * 0x02));
-
-        for (int i = dataIndex; i < dataLength; ++i)
-            i2cWire_write16(dataWords[i]);
-
+        i2cWire_write16(LEP_I2C_DATA_LENGTH_REG);
+        i2cWire_write16(dataLength);
         if (i2cWire_endTransmission())
             return _lastI2CError;
 
-        dataLength -= maxLength;
-        dataIndex = max(0, dataIndex - maxLength);
-    }
+        int maxLength = BUFFER_LENGTH / 2;
+        int writeLength = min(maxLength, dataLength);
+        uint16_t regAddress = dataLength <= 16 ? LEP_I2C_DATA_0_REG : LEP_I2C_DATA_BUFFER;
 
-    return _lastI2CError;
-}
+        while (dataLength > 0) {
+            i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
+            i2cWire_write16(regAddress);
 
-int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t *dataWords1, int dataLength1, uint16_t *dataWords2, int dataLength2) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::writeRegister regAddress: 0x");
-    Serial.print(regAddress, HEX);
-    Serial.print(", dataWords[");
-    Serial.print(dataLength1 + dataLength2);
-    Serial.print("]: ");
-    for (int i = 0; i < dataLength1 + dataLength2; ++i) {
-        Serial.print(i > 0 ? "-0x" : "0x");
-        Serial.print(i < dataLength1 ? dataWords1[i] : dataWords2[i - dataLength1], HEX);
-    }
-    Serial.println("");
-#endif
+            while (writeLength-- > 0)
+                i2cWire_write16(*dataWords++);
 
-    // In avr/libraries/Wire.h and avr/libraries/utility/twi.h, BUFFER_LENGTH controls
-    // how many words can be written at once. Therefore, we loop around until all words
-    // have been written out into their registers.
+            if (i2cWire_endTransmission())
+                return _lastI2CError;
 
-    int maxLength = (BUFFER_LENGTH - 2) / 2;
-    int dataLength = dataLength1 + dataLength2;
-    int dataIndex = max(0, dataLength - maxLength);
-
-    while (dataLength > 0) {
-        i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-
-        i2cWire_write16(regAddress + (dataIndex * 0x02));
-
-        for (int i = dataIndex; i < dataLength; ++i) {
-            if (i >= dataLength1)
-                i2cWire_write16(dataWords2[i - dataLength1]);
-            else
-                i2cWire_write16(dataWords1[i]);
+            regAddress += maxLength * 0x02;
+            dataLength -= maxLength;
+            writeLength = min(maxLength, dataLength);
         }
-
-        if (i2cWire_endTransmission())
-            return _lastI2CError;
-
-        dataLength -= maxLength;
-        dataIndex = max(0, dataIndex - maxLength);
     }
-
-    return _lastI2CError;
-}
-
-int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *readWords, int readLength, int maxLength) {
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::readRegister regAddress: 0x");
-    Serial.println(regAddress, HEX);
-#endif
 
     i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
+    i2cWire_write16(LEP_I2C_COMMAND_REG);
+    i2cWire_write16(cmdCode);
+    return i2cWire_endTransmission();
+}
 
-    i2cWire_write(highByte(regAddress));
-    i2cWire_write(lowByte(regAddress));
-
+int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
+    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
+    i2cWire_write16(LEP_I2C_DATA_LENGTH_REG);
     if (i2cWire_endTransmission())
         return _lastI2CError;
 
-    return readRegister(readWords, readLength, maxLength);
-}
+    int bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, 2);
+    if (bytesRead != 2) {
+        while (bytesRead-- > 0)
+            i2cWire_read();
+        return (_lastI2CError = 4);
+    }
 
-int LeptonFLiR::readRegister(uint16_t *readWords, int readLength, int maxLength) {
+    int readLength = i2cWire_read16();
+
+    if (readLength == 0)
+        return (_lastI2CError = 4);
+
     // In avr/libraries/Wire.h and avr/libraries/utility/twi.h, BUFFER_LENGTH controls
     // how many words can be read at once. Therefore, we loop around until all words
     // have been read out from their registers.
 
-    int bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(BUFFER_LENGTH & -2, readLength * 2));
+    bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(BUFFER_LENGTH, readLength));
 
     while (bytesRead > 0 && readLength > 0) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
         int origWordsRead = bytesRead / 2;
-        int origReadLength = readLength;
+        int origReadLength = readLength / 2;
         int origMaxLength = maxLength;
         uint16_t *origReadWords = readWords;
 #endif
 
-        while (bytesRead > 1 && readLength > 0 && maxLength > 0) {
+        while (bytesRead > 1 && readLength > 1 && maxLength > 0) {
             *readWords++ = i2cWire_read16();
-            bytesRead -= 2; --readLength; --maxLength;
+            bytesRead -= 2; readLength -= 2; --maxLength;
         }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        Serial.print("      LeptonFLiR::readRegister readWords[");
+        Serial.print("      LeptonFLiR::readDataRegister readWords[");
         if (origWordsRead == origReadLength && origReadLength == origMaxLength) {
             Serial.print(origWordsRead);
         }
@@ -2143,7 +1999,7 @@ int LeptonFLiR::readRegister(uint16_t *readWords, int readLength, int maxLength)
 #endif
 
         if (readLength > 0)
-            bytesRead += i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(BUFFER_LENGTH & -2, readLength * 2));
+            bytesRead += i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(BUFFER_LENGTH, readLength));
     }
 
     while (bytesRead-- > 0)
@@ -2153,6 +2009,48 @@ int LeptonFLiR::readRegister(uint16_t *readWords, int readLength, int maxLength)
         *readWords++ = 0;
 
     return (_lastI2CError = readLength ? 4 : 0);
+}
+
+int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t value) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.print("    LeptonFLiR::writeRegister regAddress: 0x");
+    Serial.print(regAddress, HEX);
+    Serial.print(", value: 0x");
+    Serial.println(value, HEX);
+#endif
+
+    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
+    i2cWire_write16(regAddress);
+    i2cWire_write16(value);
+    return i2cWire_endTransmission();
+}
+
+int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.print("    LeptonFLiR::readRegister regAddress: 0x");
+    Serial.println(regAddress, HEX);
+#endif
+
+    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
+    i2cWire_write16(regAddress);
+    if (i2cWire_endTransmission())
+        return _lastI2CError;
+
+    int bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, 2);
+    if (bytesRead != 2) {
+        while (bytesRead-- > 0)
+            i2cWire_read();
+        return (_lastI2CError = 4);
+    }
+
+    *value = i2cWire_read16();
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.print("      LeptonFLiR::readRegister retVal: 0x");
+    Serial.println(*value, HEX);
+#endif
+
+    return _lastI2CError;
 }
 
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
@@ -2314,12 +2212,18 @@ void LeptonFLiR::printModuleInfo() {
     Serial.println("B");
 
     Serial.println(""); Serial.println("Power Register:");
-    uint16_t powerReg = readRegister(LEP_I2C_POWER_REG);
+    uint16_t powerReg; readRegister(LEP_I2C_POWER_REG, &powerReg);
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    checkForErrors();
+#endif
     Serial.print("0x");
     Serial.println(powerReg, HEX);
 
     Serial.println(""); Serial.println("Status Register:");
-    uint16_t statusReg = readRegister(LEP_I2C_STATUS_REG);
+    uint16_t statusReg; readRegister(LEP_I2C_STATUS_REG, &statusReg);
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    checkForErrors();
+#endif
     Serial.print("0x");
     Serial.println(statusReg, HEX);
 

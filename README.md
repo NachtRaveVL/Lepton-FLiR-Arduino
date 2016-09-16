@@ -41,7 +41,7 @@ Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (ak
 
 ## Memory Footprint Note
 
-Image storage mode affects the total memory footprint. Memory constrained boards should take notice to the storage requirements. Note that the Lepton FLiR delivers 14bpp thermal image data with AGC mode disabled and 8bpp thermal image data with AGC mode enabled, therefore if using AGC mode always enabled it is more memory efficient to use an 8bpp mode to begin with. Note that with telemetry enabled, memory cost incurs an additional 164 bytes for telemetry data storage. Lastly note that using the 80x60 16bpp mode is the most speed efficient since data transfers write directly to the image memory space without needing to perform software resizes/BLITs.
+Image storage mode affects the total memory footprint. Memory constrained boards should take notice to the storage requirements. Note that the Lepton FLiR delivers 14bpp thermal image data with AGC mode disabled and 8bpp thermal image data with AGC mode enabled, therefore if using AGC mode always enabled it is more memory efficient to use an 8bpp mode to begin with. Note that with telemetry enabled, memory cost incurs an additional 164 bytes for telemetry data storage.
 
 ```Arduino
 typedef enum {

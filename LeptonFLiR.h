@@ -114,9 +114,7 @@ typedef struct {
 // 14bpp thermal image data with AGC mode disabled and 8bpp thermal image data with AGC
 // mode enabled, therefore if using AGC mode always enabled it is more memory efficient
 // to use an 8bpp mode to begin with. Note that with telemetry enabled, memory cost
-// incurs an additional 164 bytes for telemetry data storage. Lastly note that using
-// the 80x60 16bpp mode is the most speed efficient since data transfers write directly
-// to the image memory space without needing to perform software resizes/BLITs.
+// incurs an additional 164 bytes for telemetry data storage.
 typedef enum {
     // Full 16bpp image mode, 9600 bytes for image data, 164 bytes for read frame (9604 bytes total, 9806 bytes if aligned)
     LeptonFLiR_ImageStorageMode_80x60_16bpp,
@@ -376,7 +374,7 @@ private:
 
     int getSPIFrameLines();
     int getSPIFrameTotalBytes();
-    byte *getSPIFrameDataRow(int row);
+    uint16_t *getSPIFrameDataRow(int row);
 
     bool waitCommandBegin(int timeout = 0);
     bool waitCommandFinish(int timeout = 0);
@@ -388,17 +386,15 @@ private:
     void sendCommand(uint16_t cmdCode, uint32_t value);
     void sendCommand(uint16_t cmdCode, uint16_t *dataWords, int dataLength);
 
-    int receiveCommand(uint16_t cmdCode, uint16_t *value);
-    int receiveCommand(uint16_t cmdCode, uint32_t *value);
-    int receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength);
+    void receiveCommand(uint16_t cmdCode, uint16_t *value);
+    void receiveCommand(uint16_t cmdCode, uint32_t *value);
+    void receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength);
 
-    void writeRegister(uint16_t regAddress, uint16_t value);
-    uint16_t readRegister(uint16_t regAddress);
+    int writeCmdRegister(uint16_t cmdCode, uint16_t *dataWords, int dataLength);
+    int readDataRegister(uint16_t *readWords, int maxLength);
 
-    int writeRegister(uint16_t regAddress, uint16_t *dataWords, int dataLength);
-    int writeRegister(uint16_t regAddress, uint16_t *dataWords1, int dataLength1, uint16_t *dataWords2, int dataLength2);
-    int readRegister(uint16_t regAddress, uint16_t *readWords, int readLength, int maxLength);
-    int readRegister(uint16_t *readWords, int readLength, int maxLength);
+    int writeRegister(uint16_t regAddress, uint16_t value);
+    int readRegister(uint16_t regAddress, uint16_t *value);
 
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
     uint8_t _readBytes;
