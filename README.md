@@ -77,6 +77,8 @@ Below are several examples of library usage.
 LeptonFLiR flirController();            // Library using default Wire and default chip select pin D53
 
 void setup() {
+    Serial.begin(115200);
+
     Wire.begin();                       // Wire must be started first
     Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
     SPI.begin();                        // SPI must be started first as well
@@ -107,6 +109,8 @@ static void fastEnableCS(byte pin) { digitalWriteFast(pin, LOW); }
 static void fastDisableCS(byte pin) { digitalWriteFast(pin, HIGH); }
 
 void setup() {
+    Serial.begin(115200);
+
     Wire1.begin();                      // Wire1 must be started first
     Wire1.setClock(400000);             // Supported baud rates are 100kHz, 400kHz, and 1000kHz
     SPI.begin();                        // SPI must be started first as well
@@ -160,6 +164,8 @@ LeptonFLiR flirController(Wire, flirCSPin); // Library using Wire and chip selec
 const byte cardCSPin = 24;
 
 void setup() {
+    Serial.begin(115200);
+
     Wire.begin();                       // Wire must be started first
     Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
     SPI.begin();                        // SPI must be started first as well
@@ -261,7 +267,7 @@ void writeBMPFile(File &bmpFile, byte *imageData, int width, int height, int pit
 
     byte pad[3] = {0,0,0};
     imageData += (height - 1) * pitch;
-    
+
     for (int y = height - 1; y >= 0; --y) {
         for (int x = 0; x < width; ++x) {
             byte pixel[3]; // blue green red
@@ -306,6 +312,8 @@ const byte csPin = 4;
 LeptonFLiR flirController(csPin);       // Library using chip select pin 4
 
 void setup() {
+    Serial.begin(115200);
+
     i2c_init();                         // Software I2C must be started first
     SPI.begin();                        // SPI must be started first as well
 
@@ -333,13 +341,16 @@ In LeptonFLiR.h:
 
 In main sketch:
 ```Arduino
+#include "LeptonFLiR.h"
+
 LeptonFLiR flirController;
 
 void setup() {
-    // ...
+    Serial.begin(115200);
 
     flirController.printModuleInfo();
 }
+
 ```
 
 In serial monitor:
