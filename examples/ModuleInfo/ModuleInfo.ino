@@ -17,3 +17,6 @@ void setup() {
 
     flirController.printModuleInfo();
 }
+
+void loop() {
+}
