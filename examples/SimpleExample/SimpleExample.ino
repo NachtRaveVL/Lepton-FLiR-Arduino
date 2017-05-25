@@ -2,7 +2,7 @@
 
 #include "LeptonFLiR.h"
 
-LeptonFLiR flirController();            // Library using default Wire and default chip select pin D53
+LeptonFLiR flirController;              // Library using default Wire and default chip select pin D53
 
 void setup() {
     Serial.begin(115200);
