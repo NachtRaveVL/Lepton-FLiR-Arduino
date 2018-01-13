@@ -27,7 +27,7 @@ void setup() {
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
 
-    flirController.setSysTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
+    flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
 }
 
 void loop() {
