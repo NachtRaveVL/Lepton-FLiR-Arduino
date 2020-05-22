@@ -20,6 +20,8 @@ Parts of this library are derived from the Lepton FLiR software development SDK,
 
 There are several defines inside of the library's header file that allows for more fine-tuned control.
 
+It is recommended to avoid editing library files directly and instead copy these into your own project and uncomment/define, as desired, before the include directive to this library, or through custom build flags.
+
 ```Arduino
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
