@@ -1,7 +1,7 @@
 // Lepton-FLiR-Arduino Software I2C Example
 // In this example, we utilize the software I2C functionality for chips that do not have
-// a hardware I2C bus. We must uncomment the LEPFLIR_ENABLE_SOFTWARE_I2C define in the
-// libraries main header file for software I2C mode to be enabled.
+// a hardware I2C bus. We copy the LEPFLIR_ENABLE_SOFTWARE_I2C define from the libraries
+// header file for software I2C mode to be enabled.
 
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
 #define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary

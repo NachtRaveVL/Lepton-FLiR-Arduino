@@ -29,7 +29,7 @@
 #define LeptonFLiR_H
 
 // Library Setup
-// NOTE: // NOTE: It is recommended to avoid editing library files directly and instead copy these into your own project and uncomment/define, as desired, before the include directive to this library, or through custom build flags.
+// NOTE: It is recommended to avoid editing library files directly and instead copy these into your own project and uncomment/define, as desired, before the include directive to this library, or through custom build flags.
 
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
@@ -44,22 +44,22 @@
 //#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS   1
 
 // Uncomment this define to enable debug output.
-#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
+//#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
 
 // Hookup Instructions
+// -PLEASE READ-
 // Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS)
 // correctly (Due, Zero, ATmega, etc. often use pins 50=MISO, 51=MOSI, 52=SCK, 53=SS, but
-// one can just simply use the ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=SCK,
-// which are consistent across all boards - Due boards also have a SPI header, which is
-// set up exactly like the ICSP header). The module's MOSI line can simply be grounded
-// since the module only uses SPI for slave-out data transfers (slave-in data transfers
-// being ignored). The SS pin may be any digital output pin, with usage being active-low.
-// The recommended VCC power supply and logic level is 3.3v, but 5v is also supported.
-// The two issolated power pins on the side of the module's breakout can safely be left
-// disconnected. The minimum SPI transfer rate is ~2.2MHz, which means one needs at least
-// an 8MHz processor, but a 16MHz processor is the recommended minimum given the actual
-// processing work involved to resize/BLIT the final image. The actual SPI transfer rate
-// selected will be the first rate equal to or below 20MHz given the SPI clock divider
+// one can just simply use the ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=SCK, which
+// are consistent across all Arduino-specific boards). The module's MOSI line can simply
+// be grounded since the module only uses SPI for slave-out data transfers (slave-in data
+// transfers being ignored). The SS pin may be any digital output pin, with usage being
+// active-low. The recommended VCC power supply and logic level is 3.3v, with 5v being
+// supported *only* if your board can handle such (which often the case is not given the
+// kinds of boards supported by this library). The two issolated power pins on the side of
+// the FLiR module's breakout can safely be left disconnected. While the minimum SPI transfer
+// rate is ~2.2MHz, the desired SPI transfer rate of 20MHz is used. The actual SPI transfer
+// rate selected will be the first rate equal to or below 20MHz given the SPI clock divider
 // (i.e. processor speed /2, /4, /8, /16, ..., /128).
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -69,7 +69,18 @@
 #endif
 #ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 #include <Wire.h>
+
+// Define BUFFER_LENGTH on platforms that don't natively define such.
+#ifndef BUFFER_LENGTH
+#ifdef I2C_BUFFER_LENGTH
+#define BUFFER_LENGTH I2C_BUFFER_LENGTH
+#else
+#warning "i2c BUFFER_LENGTH not defined - using default of 32, which may not be supported by your microcontroller's hardware. Check Wire.h (or similar) file for your hardware and manually define to remove this warning."
+#define BUFFER_LENGTH 32
 #endif
+#endif // /ifndef BUFFER_LENGTH
+
+#endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 #include <SPI.h>
 #include "LeptonFLiRDefs.h"
 
