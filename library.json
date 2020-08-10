@@ -17,6 +17,33 @@
         "type": "git",
         "url": "https://github.com/NachtRaveVL/Lepton-FLiR-Arduino.git"
     },
+    "examples": [
+        {
+            "name": "SimpleExample",
+            "base": "examples/SimpleExample",
+            "files": ["SimpleExample.ino"]
+        },
+        {
+            "name": "AdvancedExample",
+            "base": "examples/AdvancedExample",
+            "files": ["AdvancedExample.ino"]
+        },
+        {
+            "name": "ImageCaptureExample",
+            "base": "examples/ImageCaptureExample",
+            "files": ["ImageCaptureExample.ino"]
+        },
+        {
+            "name": "SoftwareI2CExample",
+            "base": "examples/SoftwareI2CExample",
+            "files": ["SoftwareI2CExample.ino"]
+        },
+        {
+            "name": "ModuleInfo",
+            "base": "examples/ModuleInfo",
+            "files": ["ModuleInfo.ino"]
+        }
+    ],
     "frameworks": ["arduino", "espidf"],
     "platforms": ["teensy", "espressif32"]
 }

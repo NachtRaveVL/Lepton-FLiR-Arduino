@@ -85,6 +85,7 @@ typedef enum {
 Below are several examples of library usage.
 
 ### Simple Example
+
 ```Arduino
 #include "LeptonFLiR.h"
 
