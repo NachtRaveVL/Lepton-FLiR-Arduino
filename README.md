@@ -22,9 +22,9 @@ Lastly, major shout out to the people at Lepton who were kind enough to send me 
 
 ## Supported Microcontrollers
 
-Unfortunately during our testing, largely due to SPI data transfer limitations (and lack of DMA-capable transfer), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and the even more impressive 2.4GHz ESP32-S are also slated for experimentation.
+Unfortunately during our testing, largely due to SPI data transfer limitations (and lack of DMA-capable transfer), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation.
 
-As of this writing, we don't have the exact list of which microcontrollers that will work with this library, but we are currently testing this library under those systems and seeing what supported we can muster.
+As of this writing, we don't have the exact list of which specific microcontrollers will work with this library, but we are currently testing this library under those systems and seeing what supported we can muster.
 
 ## Library Setup
 
