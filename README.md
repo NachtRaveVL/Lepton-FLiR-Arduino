@@ -5,22 +5,24 @@ Arduino Library for the Lepton FLiR Thermal Camera Module.
 
 **Lepton-FLiR-Arduino v0.9.91**
 
-** UNDER NEW DEVELOPMENT AS OF AUGUST 2020 **
+**UNDER NEW DEVELOPMENT AS OF AUGUST 2020**
 
-Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+ recommended).  
+Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
 
 Created by NachtRaveVL, August 1st, 2016.
 
 This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable memory footprint size, adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
-** OLD ** Dependencies include Scheduler if on a ARM/ARMD architecture (Due, Zero, etc.), but usage can be disabled via library setup defines.
+**NOTE: To be removed by v1.0** Dependencies include Scheduler if on a ARM/ARMD architecture (Due, Zero, etc.), but usage can be disabled via library setup defines.
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
+Lastly, major shout out to the people at Lepton who were kind enough to send me all 3 different kinds of their FLiR thermal cameras - you guys rock!
+
 ## Supported Microcontrollers
 
-Unfortunately during our testing, largely due to SPI data transfer limitations, we were unable to successfully utilize any Arduino-specific microcontroller, including the Due (/sad face/). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4.
+Unfortunately during our testing, largely due to SPI data transfer limitations (and lack of DMA-capable transfer), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and the even more impressive 2.4GHz ESP32-S are also slated for experimentation.
 
 As of this writing, we don't have the exact list of which microcontrollers that will work with this library, but we are currently testing this library under those systems and seeing what supported we can muster.
 
@@ -53,7 +55,7 @@ Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (ak
 
 ## Memory Footprint Note
 
-** NOTE: This feature to be discontinued and removed by v1.0 due to the limited ability of Arduino-specific microcontrollers to handle the SPI data transfer effectively. **
+**NOTE: This feature to be discontinued and removed by v1.0 due to the limited ability of Arduino-specific microcontrollers to handle the SPI data transfer rate.**
 
 Image storage mode affects the total memory footprint. Memory constrained boards should take notice to the storage requirements. Note that the Lepton FLiR delivers 14bpp thermal image data with AGC mode disabled and 8bpp thermal image data with AGC mode enabled, therefore if using AGC mode as enabled it is more memory efficient to use an 8bpp mode to begin with. Note that with telemetry enabled, memory cost incurs an additional 164 bytes for telemetry data storage.
 

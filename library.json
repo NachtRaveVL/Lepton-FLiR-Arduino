@@ -1,8 +1,8 @@
 {
     "name": "Lepton-FLiR-Arduino",
     "version": "0.9.91",
-    "keywords": "Lepton, FLiR, Arduino, controller, driver",
-    "description": "Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+ recommended).",
+    "keywords": "Lepton, FLiR, forward looking, infrared, thermal, camera, i2c, spi, controller, driver",
+    "description": "Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).",
     "license": "MIT",
     "authors": [
         {
@@ -12,13 +12,11 @@
             "maintainer": true
         }
     ],
+    "homepage": "https://github.com/NachtRaveVL/Lepton-FLiR-Arduino/",
     "repository": {
         "type": "git",
         "url": "https://github.com/NachtRaveVL/Lepton-FLiR-Arduino.git"
     },
-    "export": {
-        "include": "Scheduler"
-    },
-    "frameworks": "arduino",
-    "platforms": "*"
+    "frameworks": ["arduino", "espidf"],
+    "platforms": ["teensy", "espressif32"]
 }

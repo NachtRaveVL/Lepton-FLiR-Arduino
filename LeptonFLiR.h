@@ -29,7 +29,10 @@
 #define LeptonFLiR_H
 
 // Library Setup
-// NOTE: It is recommended to avoid editing library files directly and instead copy these into your own project and uncomment/define, as desired, before the include directive to this library, or through custom build flags.
+
+// NOTE: It is recommended to avoid editing library files directly and instead copy these
+// into your own project and uncomment/define, as desired, before the include directive
+// to this library, or through custom build flags.
 
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
