@@ -16,7 +16,7 @@ This library allows communication with boards running a Lepton FLiR thermal came
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
-The datasheet for the IC is available from <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.
+The datasheet for the IC is available from <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>. Additional interface documentation is available from <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
 
 ## Supported Microcontrollers
 
@@ -51,15 +51,27 @@ There are several initialization mode flags exposed through this library that ar
 
 From LeptonFLiR.h:
 ```Arduino
+typedef enum {
+    // Full 16bpp image mode, 9600 bytes for image data, 164 bytes for read frame (9604 bytes total, 9806 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_80x60_16bpp,
+    // Full 8bpp image mode, 4800 bytes for image data, 164 bytes for read frame (4964 bytes total, 5006 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_80x60_8bpp,
 
-// NOTE: Currently under development.
+    // Halved 16bpp image mode, 2400 bytes for image data, 328 bytes for read frame (2728 bytes total, 2782 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_40x30_16bpp,
+    // Halved 8bpp image mode, 1200 bytes for image data, 328 bytes for read frame (1528 bytes total, 1814 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_40x30_8bpp,
+
+    // Quartered 16bpp image mode, 600 bytes for image data, 656 bytes for read frame (1256 bytes total, 1446 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_20x15_16bpp,
+    // Quartered 8bpp image mode, 300 bytes for image data, 656 bytes for read frame (956 bytes total, 1202 bytes if aligned)
+    LeptonFLiR_ImageStorageMode_20x15_8bpp,
+} LeptonFLiR_ImageStorageMode;
 
 typedef enum {
     LeptonFLiR_TemperatureMode_Celsius,
     LeptonFLiR_TemperatureMode_Fahrenheit,
     LeptonFLiR_TemperatureMode_Kelvin,
-
-    LeptonFLiR_TemperatureMode_Count
 } LeptonFLiR_TemperatureMode;
 ```
 
@@ -78,9 +90,9 @@ Which Lepton camera version is being used and which color mode(s) is(are) active
 ### Image Color Mode
 
 The various ways in which image data is stored, and thus accessed, is based on the following:
-* When neither AGC, TLinear, nor pseudo-color LUT (aka palettized) modes are enabled, the image data will be in 16bpp grayscale mode with the 2 most-signifcant bits zero'ed out (effectively 14bpp) - this is considered standard run mode.
-* When TLinear mode is enabled, the image data will be in 16bpp grayscale mode.
-* When AGC mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
+* When neither AGC (automatic gain correction), TLinear (aka radiometric output), nor pseudo-color LUT (aka palettized) modes are enabled, the image data will be in 16bpp grayscale mode with the 2 most-signifcant bits zero'ed out (effectively 14bpp) - this is considered the standard run mode.
+* When TLinear (aka radiometric output) mode is enabled, the image data will be in 16bpp grayscale mode (full 16bpp).
+* When AGC (automatic gain correction) mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
 * When pseudo-color LUT (aka palettized) mode is enabled, the image data will be 24bpp RGB888 (created from either the selected preset LUT or user-supplied LUT).
 
 Due to the packet-nature of the VoSPI transfer, transfering the image data out of the storage buffers requires special handling. _Future versions of this library will provide a more robust way of supporting final image access._
