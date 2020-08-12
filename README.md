@@ -138,7 +138,7 @@ void setup() {
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
 
-    flirController.setSysTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
+    flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
 }
 
 void loop() {
@@ -197,7 +197,7 @@ void setup() {
     // Setting use of AGC for histogram equalization (since we only have 8-bit per pixel data anyways)
     flirController.agc_setAGCEnabled(ENABLED);
 
-    flirController.setSysTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
+    flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
 
     SD.rmdir("FLIR");                   // Starting fresh with new frame captures
 }
@@ -344,7 +344,7 @@ void setup() {
     // Using lowest memory allocation mode 20x15 8bpp and default celsius temperature mode
     flirController.init(LeptonFLiR_ImageStorageMode_20x15_8bpp);
 
-    flirController.setSysTelemetryEnabled(DISABLED); // Default mode is enabled
+    flirController.sys_setTelemetryEnabled(DISABLED); // Default mode is enabled
 }
 
 void loop() {

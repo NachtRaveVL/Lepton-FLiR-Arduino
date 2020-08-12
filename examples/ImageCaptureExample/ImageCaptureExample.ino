@@ -27,7 +27,7 @@ void setup() {
     // Setting use of AGC for histogram equalization (since we only have 8-bit per pixel data anyways)
     flirController.agc_setAGCEnabled(ENABLED);
 
-    flirController.setSysTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
+    flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
 
     SD.rmdir("FLIR");                   // Starting fresh with new frame captures
 }

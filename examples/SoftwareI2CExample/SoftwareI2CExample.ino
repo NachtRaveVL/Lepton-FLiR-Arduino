@@ -31,7 +31,7 @@ void setup() {
     // Using lowest memory allocation mode 20x15 8bpp and default celsius temperature mode
     flirController.init(LeptonFLiR_ImageStorageMode_20x15_8bpp);
 
-    flirController.setSysTelemetryEnabled(DISABLED); // Default mode is enabled
+    flirController.sys_setTelemetryEnabled(DISABLED); // Default mode is enabled
 }
 
 void loop() {
