@@ -16,7 +16,8 @@ This library allows communication with boards running a Lepton FLiR thermal came
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
-The datasheet for the IC is available from <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>. Additional interface documentation is available from <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
+The datasheet for the IC is available from <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.  
+Additional interface documentation is available from <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
 
 ## Supported Microcontrollers
 
