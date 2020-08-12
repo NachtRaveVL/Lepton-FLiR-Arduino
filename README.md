@@ -127,7 +127,7 @@ void loop() {
 
 In this example, we will utilize various features of the library.
 
-We will be using Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, Teensy 3.5/3.6/4.1, etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
+We will be using Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 ```Arduino
 #include "LeptonFLiR.h"
@@ -384,7 +384,7 @@ In main sketch:
 LeptonFLiR flirController;
 
 void setup() {
-        Serial.begin(115200);
+    Serial.begin(115200);
 
     Wire.begin();                       // Wire must be started first
     Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
