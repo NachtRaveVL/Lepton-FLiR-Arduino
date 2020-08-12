@@ -47,7 +47,7 @@ In LeptonFLiR.h:
 
 ### Library Initialization
 
-There are several initialization mode flags exposed through this library that are used for more fine-tuned control. These flags are expected to be provided to the library's 'init(...)' function, commonly called inside of the sketch's `setup()` function.
+There are several initialization mode flags exposed through this library that are used for more fine-tuned control. These flags are expected to be provided to the library's `init(...)` function, commonly called inside of the sketch's `setup()` function.
 
 From LeptonFLiR.h:
 ```Arduino
@@ -71,15 +71,29 @@ Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (ak
 
 ## Memory Callouts
 
+### Memory Storage Cost
+
+Which Lepton camera version is being used and which color mode(s) is(are) active will determine the memory requirements to store a single video image frame, and must be set at initialization time. _Future versions of this library hope to automatically detect such._ Leptons before v3 commonly use a 80x60 pixel frame, while Leptons of v3 and later use a 160x120 pixel frame. Keep in mind that higher image size costs not just extra memory, but also more data that needs transfered over SPI. SPI data transfer must succeed in under a set frame time, and if such does not occur (referred to as a de-sync) then the rest of the data frame is lost - this has long been the major bottleneck of using this module with less powerful microcontrollers in the past.
+
 ### Image Color Mode
 
-The Lepton camera that is being used and what color mode is active will determine the memory requirements to store a single video frame, and must be set at initialization time. Leptons before v3 commonly use a 80x60 pixel frame, while Leptons of v3 and later use a 160x120 pixel frame. When neither AGC nor TLinear modes are enabled, the image data will be in 16bpp grayscale mode with the 2 most-signifcant bits zero'ed out (effectively 14bpp). When TLinear mode is enabled, the image data will be in 16bpp grayscale mode. When AGC mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
+The various ways in which image data is stored, and thus accessed, is based on the following:
+* When neither AGC, TLinear, nor pseudo-color LUT (aka palettized) modes are enabled, the image data will be in 16bpp grayscale mode with the 2 most-signifcant bits zero'ed out (effectively 14bpp) - this is considered standard run mode.
+* When TLinear mode is enabled, the image data will be in 16bpp grayscale mode.
+* When AGC mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
+* When pseudo-color LUT (aka palettized) mode is enabled, the image data will be 24bpp RGB888 (created from either the selected preset LUT or user-supplied LUT).
 
-See
+Due to the packet-nature of the VoSPI transfer, transfering the image data out of the storage buffers requires special handling. _Future versions of this library will provide a more robust way of supporting final image access._
 
-## Extended Functions
+### Extended Functions
 
-This library has an extended list of functionality for those who care to dive into such, but can be compiled-out via commenting-out this define in the library's 
+This library has an extended list of functionality for those who care to dive into such, but isn't always particularly the most useful for various general use cases. If one uncomments the line below inside the main header file (or defines it via custom build flag), this extended functionality can be manually compiled-out.
+
+In LeptonFLiR.h:
+```Arduino
+// Uncomment this define if wanting to exclude extended i2c functions from compilation.
+#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS   1
+```
 
 ## Example Usage
 
@@ -113,7 +127,7 @@ void loop() {
 
 In this example, we will utilize various features of the library.
 
-We will be using Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
+We will be using Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, Teensy 3.5/3.6/4.1, etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 ```Arduino
 #include "LeptonFLiR.h"
@@ -355,7 +369,7 @@ void loop() {
 
 In this example, we enable debug output support.
 
-If one uncomments the line below inside the main header file, debug output support will be enabled and the printModuleInfo() method will become available. Calling this method will display information about the module itself, including initalized states, register values, current settings, etc. Additionally, all library calls being made will display internal debug information about the structure of the call itself. An example of this output is shown below.
+If one uncomments the line below inside the main header file (or defines it via custom build flag), debug output support will be enabled and the printModuleInfo() method will become available. Calling this method will display information about the module itself, including initalized states, register values, current settings, etc. Additionally, all library calls being made will display internal debug information about the structure of the call itself. An example of this output is shown below.
 
 In LeptonFLiR.h:
 ```Arduino
@@ -370,7 +384,14 @@ In main sketch:
 LeptonFLiR flirController;
 
 void setup() {
-    Serial.begin(115200);
+        Serial.begin(115200);
+
+    Wire.begin();                       // Wire must be started first
+    Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
+    SPI.begin();                        // SPI must be started first as well
+
+    // Using 40x30 8bpp memory allocation mode and default celsius temperature mode
+    flirController.init(LeptonFLiR_ImageStorageMode_40x30_8bpp);
 
     flirController.printModuleInfo();
 }
