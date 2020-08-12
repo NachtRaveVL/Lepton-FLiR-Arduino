@@ -5,39 +5,35 @@ Arduino Library for the Lepton FLiR Thermal Camera Module.
 
 **Lepton-FLiR-Arduino v0.9.91**
 
-**UNDER NEW DEVELOPMENT AS OF AUGUST 2020**
+**UNDER RENEWED DEVELOPMENT AS OF AUGUST 2020**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
 
 Created by NachtRaveVL, August 1st, 2016.
 
-This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable memory footprint size, adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
-
-**NOTE: To be removed by v1.0** Dependencies include Scheduler if on a ARM/ARMD architecture (Due, Zero, etc.), but usage can be disabled via library setup defines.
+This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
-Lastly, major shout out to the people at Lepton who were kind enough to send me all 3 different kinds of their FLiR thermal cameras - you guys rock!
+The datasheet for the IC is available from <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.
 
 ## Supported Microcontrollers
 
-Unfortunately during our testing, largely due to SPI data transfer limitations (and lack of DMA-capable transfer), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation.
+Unfortunately during our testing, largely due to SPI data transfer limitations, we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation.
 
-As of this writing, we don't have the exact list of which specific microcontrollers will work with this library, but we are currently testing this library under those systems and seeing what supported we can muster.
+As of this writing, we don't have the exact list of which specific microcontrollers will work with this library, but we are currently testing this library under those systems and seeing what supported we can muster. We will update this section in the future with boards we've tested this library on.
 
 ## Library Setup
 
-There are several defines inside of the library's header file that allows for more fine-tuned control.
+### Header Defines
 
-It is recommended to avoid editing library files directly and instead copy these into your own project and uncomment/define, as desired, before the include directive to this library, or through custom build flags.
+There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them as a compilation flag via custom build system. While editing the main header file isn't the most ideal, it is often the easiest way when using the Arduino IDE, as it doesn't support custom build flags. Be aware that editing this header file directly will affect all projects on your system using this library.
 
+In LeptonFLiR.h:
 ```Arduino
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
-
-// Uncomment this define to disable usage of the Scheduler library on SAM/SAMD architecures.
-//#define LEPFLIR_DISABLE_SCHEDULER       1   // https://github.com/arduino-libraries/Scheduler
 
 // Uncomment this define to disable 16 byte aligned memory allocations (may hinder performance).
 //#define LEPFLIR_DISABLE_ALIGNED_MALLOC  1
@@ -49,36 +45,41 @@ It is recommended to avoid editing library files directly and instead copy these
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
 ```
 
-## Hookup Instructions
+### Library Initialization
 
-Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly (Due, Zero, ATmega, etc. often use pins 50=MISO, 51=MOSI, 52=SCK, 53=SS, but one can just simply use the ICSP header pins ICSP-1=MISO, ICSP-4=MOSI, ICSP-3=SCK, which are consistent across all Arduino-specific boards). The module's MOSI line can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored). The SS pin may be any digital output pin, with usage being active-low. The recommended VCC power supply and logic level is 3.3v, with 5v being supported *only* if your board can handle such (which often the case is not given the kinds of boards supported by this library). The two issolated power pins on the side of the FLiR module's breakout can safely be left disconnected. While the minimum SPI transfer rate is ~2.2MHz, the desired SPI transfer rate of 20MHz is used. The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, /16, ..., /128).
+There are several initialization mode flags exposed through this library that are used for more fine-tuned control. These flags are expected to be provided to the library's 'init(...)' function, commonly called inside of the sketch's `setup()` function.
 
-## Memory Footprint Note
-
-**NOTE: This feature to be discontinued and removed by v1.0 due to the limited ability of Arduino-specific microcontrollers to handle the SPI data transfer rate.**
-
-Image storage mode affects the total memory footprint. Memory constrained boards should take notice to the storage requirements. Note that the Lepton FLiR delivers 14bpp thermal image data with AGC mode disabled and 8bpp thermal image data with AGC mode enabled, therefore if using AGC mode as enabled it is more memory efficient to use an 8bpp mode to begin with. Note that with telemetry enabled, memory cost incurs an additional 164 bytes for telemetry data storage.
-
+From LeptonFLiR.h:
 ```Arduino
+
+// NOTE: Currently under development.
+
 typedef enum {
-    // Full 16bpp image mode, 9600 bytes for image data, 164 bytes for read frame (9604 bytes total, 9806 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_80x60_16bpp,
-    // Full 8bpp image mode, 4800 bytes for image data, 164 bytes for read frame (4964 bytes total, 5006 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_80x60_8bpp,
+    LeptonFLiR_TemperatureMode_Celsius,
+    LeptonFLiR_TemperatureMode_Fahrenheit,
+    LeptonFLiR_TemperatureMode_Kelvin,
 
-    // Halved 16bpp image mode, 2400 bytes for image data, 328 bytes for read frame (2728 bytes total, 2782 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_40x30_16bpp,
-    // Halved 8bpp image mode, 1200 bytes for image data, 328 bytes for read frame (1528 bytes total, 1814 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_40x30_8bpp,
-
-    // Quartered 16bpp image mode, 600 bytes for image data, 656 bytes for read frame (1256 bytes total, 1446 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_20x15_16bpp,
-    // Quartered 8bpp image mode, 300 bytes for image data, 656 bytes for read frame (956 bytes total, 1202 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_20x15_8bpp,
-
-    LeptonFLiR_ImageStorageMode_Count
-} LeptonFLiR_ImageStorageMode;
+    LeptonFLiR_TemperatureMode_Count
+} LeptonFLiR_TemperatureMode;
 ```
+
+## Hookup Callouts
+
+### SPI Data Line
+
+Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32X uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS. The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored). The SS pin may be any digital output pin, with usage being active-low. The recommended VCC power supply and logic level is 3.3v. The two issolated power pins on the side of the FLiR v1.4 breakout can safely be left disconnected. The minimum SPI transfer rate is ~2.2MHz, while the maximum SPI transfer rate is 20MHz. The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
+
+## Memory Callouts
+
+### Image Color Mode
+
+The Lepton camera that is being used and what color mode is active will determine the memory requirements to store a single video frame, and must be set at initialization time. Leptons before v3 commonly use a 80x60 pixel frame, while Leptons of v3 and later use a 160x120 pixel frame. When neither AGC nor TLinear modes are enabled, the image data will be in 16bpp grayscale mode with the 2 most-signifcant bits zero'ed out (effectively 14bpp). When TLinear mode is enabled, the image data will be in 16bpp grayscale mode. When AGC mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
+
+See
+
+## Extended Functions
+
+This library has an extended list of functionality for those who care to dive into such, but can be compiled-out via commenting-out this define in the library's 
 
 ## Example Usage
 
@@ -306,19 +307,16 @@ void writeBMPFile(File &bmpFile, byte *imageData, int width, int height, int pit
 
 In this example, we utilize the software I2C functionality for chips that do not have a hardware I2C bus.
 
-If one defines `LEPFLIR_ENABLE_SOFTWARE_I2C`, such as before the include directive to this library, as a compilation flag, or by directly editing the library headers (not recommended), software I2C mode will be enabled.
+If one uncomments the line below inside the main header file (or defines it via custom build flag), software I2C mode for the library will be enabled.
 
-From LeptonFLiR.h:
+In LeptonFLiR.h:
 ```Arduino
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-//#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 ```
 
 In main sketch:
 ```Arduino
-// Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
-
 #include "LeptonFLiR.h"
 
 #define SCL_PIN 2                       // Setup defines are written before library include
@@ -357,19 +355,16 @@ void loop() {
 
 In this example, we enable debug output support.
 
-If one defines `LEPFLIR_ENABLE_DEBUG_OUTPUT`, such as before the include directive to this library, as a compilation flag, or by directly editing the library headers (not recommended), debug output support will be enabled and the printModuleInfo() method becomes available. Calling this method will display information about the module itself, including initalized states, register values, current settings, etc. All library calls being made will also display internal debug information about the structure of the call itself. An example of this output is shown below.
+If one uncomments the line below inside the main header file, debug output support will be enabled and the printModuleInfo() method will become available. Calling this method will display information about the module itself, including initalized states, register values, current settings, etc. Additionally, all library calls being made will display internal debug information about the structure of the call itself. An example of this output is shown below.
 
-From LeptonFLiR.h:
+In LeptonFLiR.h:
 ```Arduino
 // Uncomment this define to enable debug output.
-//#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
+#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
 ```
 
 In main sketch:
 ```Arduino
-// Uncomment this define to enable debug output.
-#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
-
 #include "LeptonFLiR.h"
 
 LeptonFLiR flirController;
@@ -526,7 +521,7 @@ LeptonFLiR::sys_getAuxTemperature
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
       LeptonFLiR::readDataRegister readWords[1]: 0x778B
-91.18°F
+91.18ï¿½F
 
 Sys FPA Temperature:
 LeptonFLiR::sys_getFPATemperature
@@ -539,7 +534,7 @@ LeptonFLiR::sys_getFPATemperature
       LeptonFLiR::readRegister regAddress: 0x2
       LeptonFLiR::readRegister retVal: 0x6
       LeptonFLiR::readDataRegister readWords[1]: 0x788D
-95.83°F
+95.83ï¿½F
 
 Telemetry Enabled:
 LeptonFLiR::sys_getTelemetryEnabled
