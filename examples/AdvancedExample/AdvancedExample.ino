@@ -17,12 +17,20 @@ static void fastDisableCS(byte pin) { digitalWriteFast(pin, HIGH); }
 void setup() {
     Serial.begin(115200);
 
-    Wire1.begin();                      // Wire1 must be started first
+    Wire1.begin();                      // Wire1 must be started
     Wire1.setClock(400000);             // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
 
-    // Using default memory allocation mode 80x60 16bpp and default celsius temperature mode
-    flirController.init();
+    // SPI must also be started
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us.
+    SPI.begin(flirCSPin)
+#else
+    SPI.begin();
+#endif
+
+    // Using Lepton v1 camera and default celsius temperature mode
+    // NOTE: Make sure to change this to what camera version you're using.
+    flirController.init(LeptonFLiR_CameraType_Lepton1);
 
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
@@ -31,7 +39,7 @@ void setup() {
 }
 
 void loop() {
-    if (flirController.readNextFrame()) { // Read next frame and store result into internal imageData
+    if (flirController.tryReadNextFrame()) { // Establishes sync, then reads next frame into raw data buffer
         // Find the hottest spot on the frame
         int hotVal = 0; hotX, hotY;
 

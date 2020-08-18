@@ -18,12 +18,20 @@ LeptonFLiR flirController;
 void setup() {
     Serial.begin(115200);
 
-    Wire.begin();                       // Wire must be started first
+    Wire.begin();                       // Wire must be started
     Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
 
-    // Using 40x30 8bpp memory allocation mode and default celsius temperature mode
-    flirController.init(LeptonFLiR_ImageStorageMode_40x30_8bpp);
+    // SPI must also be started
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us.
+    SPI.begin(flirController.getChipSelectPin())
+#else
+    SPI.begin();
+#endif
+
+    // Using Lepton v1 camera and default celsius temperature mode
+    // NOTE: Make sure to change this to what camera version you're using.
+    flirController.init(LeptonFLiR_CameraType_Lepton1);
 
     flirController.printModuleInfo();
 }

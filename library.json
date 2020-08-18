@@ -1,6 +1,6 @@
 {
     "name": "Lepton-FLiR-Arduino",
-    "version": "0.9.91",
+    "version": "0.9.92",
     "keywords": "Lepton, FLiR, forward looking, infrared, thermal, camera, i2c, spi, controller, driver",
     "description": "Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).",
     "license": "MIT",
@@ -45,5 +45,5 @@
         }
     ],
     "frameworks": ["arduino", "espidf"],
-    "platforms": ["teensy", "espressif32"]
+    "platforms": ["avr", "sam", "samd", "teensy", "espressif32"]
 }
