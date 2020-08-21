@@ -36,6 +36,7 @@
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
     uint8_t _readBytes;
 #endif
+    void i2cWire_begin();
     void i2cWire_beginTransmission(uint8_t);
     uint8_t i2cWire_endTransmission(void);
     uint8_t i2cWire_requestFrom(uint8_t, uint8_t);

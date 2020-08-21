@@ -8,19 +8,20 @@
 
 #include "LeptonFLiRIDDDefs.h"
 
-extern const float FLT_EPSILON;                 // Floating point error tolerance.
-
+#ifndef FLT_EPSILON
+#define FLT_EPSILON                     0.00001f            // Floating point error tolerance
+#endif
 #ifndef ENABLED
-#define ENABLED  0x1                            // Enabled define (convenience)
+#define ENABLED                         0x1                 // Enabled define (convenience)
 #endif
 #ifndef DISABLED
-#define DISABLED 0x0                            // Disabled define (convenience)
+#define DISABLED                        0x0                 // Disabled define (convenience)
 #endif
 
-#define LEPFLIR_GEN_CMD_TIMEOUT       5000      // Timeout for commands to be processed
-#define LEPFLIR_SPI_MAX_SPEED         20000000  // Maximum SPI speed for FLiR module
-#define LEPFLIR_SPI_OPTIMAL_MIN_SPEED 12000000  // Minimum optimal SPI speed for FLiR module
-#define LEPFLIR_SPI_MIN_SPEED         2200000   // Minimum SPI speed for FLiR module
+#define LEPFLIR_GEN_CMD_TIMEOUT         5000                // Timeout for commands to be processed
+#define LEPFLIR_SPI_MAX_SPEED           20000000            // Maximum SPI speed for FLiR module
+#define LEPFLIR_SPI_OPTIMAL_MIN_SPEED   12000000            // Minimum optimal SPI speed for FLiR module
+#define LEPFLIR_SPI_MIN_SPEED           2200000             // Minimum SPI speed for FLiR module
 
 enum LeptonFLiR_CameraType {
     LeptonFLiR_CameraType_Lepton1,              // Lepton v1 camera, running at 80x60
@@ -31,7 +32,7 @@ enum LeptonFLiR_CameraType {
     LeptonFLiR_CameraType_Lepton3_5,            // Lepton v3.5 camera, running at 160x120
 
     LeptonFLiR_CameraType_Count,                // Internal use only
-    LeptonFLiR_CameraType_Unknown = -1          // Internal use only
+    LeptonFLiR_CameraType_Undefined = -1        // Internal use only
 };
 
 enum LeptonFLiR_TemperatureMode {
@@ -39,7 +40,8 @@ enum LeptonFLiR_TemperatureMode {
     LeptonFLiR_TemperatureMode_Fahrenheit,      // Fahrenheit temperature mode
     LeptonFLiR_TemperatureMode_Kelvin,          // Kelvin temperature mode
 
-    LeptonFLiR_TemperatureMode_Count            // Internal use only
+    LeptonFLiR_TemperatureMode_Count,           // Internal use only
+    LeptonFLiR_TemperatureMode_Undefined = -1   // Internal use only
 };
 
 enum LeptonFLiR_ImageMode {
@@ -54,7 +56,7 @@ enum LeptonFLiR_ImageMode {
     LeptonFLiR_ImageMode_160x120_16bpp_164Brf,
 
     LeptonFLiR_ImageMode_Count,                 // Internal use only
-    LeptonFLiR_ImageMode_Unknown = -1           // Internal use only
+    LeptonFLiR_ImageMode_Undefined = -1         // Internal use only
 };
 
 enum LeptonFLiR_ImageOutputMode {
@@ -63,7 +65,7 @@ enum LeptonFLiR_ImageOutputMode {
     LeptonFLiR_ImageOutputMode_RGB888,          // 24bpp RGB888 image output mode
 
     LeptonFLiR_ImageOutputMode_Count,           // Internal use only
-    LeptonFLiR_ImageOutputMode_Unknown = -1     // Internal use only
+    LeptonFLiR_ImageOutputMode_Undefined = -1   // Internal use only
 };
 
 enum LeptonFLiR_TelemetryMode {
@@ -115,7 +117,7 @@ struct LeptonFLiR_TelemetryData {
     float windowTemperature;                    // Window temperature, min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
     float windowReflTemperature;                // Window reflection temperature, min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)
     LeptonFLiR_TelemetryGainMode gainMode;      // Gain mode
-    LeptonFLiR_TelemetryGainMode effGainMode;   // Effective gain mode (low/high resolved if gain mode = auto)
+    LeptonFLiR_TelemetryGainMode effGainMode;   // Effective gain mode (low/high resolved when gain mode = auto)
     bool gainModeSwitchDesired;                 // Gain mode switch desired flag
     float radGainModeSwitchHtLTemp;             // Gain mode threshold high-to-low temperature, when auto mode should switch from high to low mode (tlinear-disabled)
     float radGainModeSwitchLtHTemp;             // Gain mode threshold low-to-high temperature, when auto mode should switch from low to high mode (tlinear-disabled)

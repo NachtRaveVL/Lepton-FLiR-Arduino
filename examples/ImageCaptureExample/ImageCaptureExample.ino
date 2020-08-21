@@ -8,29 +8,19 @@
 #include <SD.h>
 
 const byte flirCSPin = 22;
-LeptonFLiR flirController(Wire, flirCSPin); // Library using Wire and chip select pin D22
+LeptonFLiR flirController(flirCSPin);   // Library using chip select pin D22, and default Wire @400kHz
 
 const byte cardCSPin = 24;
 
 void setup() {
-    Serial.begin(115200);
-
-    Wire.begin();                       // Wire must be started
-    Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-
-    // SPI must also be started
-#ifdef __SAM3X8E__
-    // Arduino Due has SPI library that manages the CS pin for us.
-    SPI.begin(flirCSPin)
-#else
-    SPI.begin();
-#endif
+    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial and SD
 
     SD.begin(cardCSPin);                // SD library using chip select pin D24
 
-    // Using Lepton v1 camera and fahrenheit temperature mode
-    // NOTE: Make sure to change this to what camera version you're using.
-    flirController.init(LeptonFLiR_CameraType_Lepton1, LeptonFLiR_TemperatureMode_Fahrenheit);
+    // Initializes module using Lepton v1 camera, fahrenheit temperature mode, and also begins Wire/SPI
+    // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
+    flirController.init(LeptonFLiR_CameraType_Lepton1,
+                        LeptonFLiR_TemperatureMode_Fahrenheit);
 
     // Setting use of AGC for histogram equalization (image output will be 8bpp grayscale)
     flirController.agc_setAGCEnabled(ENABLED);

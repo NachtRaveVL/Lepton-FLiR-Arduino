@@ -125,7 +125,7 @@ void LeptonFLiR::printModuleInfo() {
     LeptonFLiR::FrameSettings* nextFrame = getNextFrame();
 
     Serial.println(""); Serial.println("Image Storage Mode:");
-    LeptonFLiR_ImageMode imageMode = nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Unknown;
+    LeptonFLiR_ImageMode imageMode = nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
     Serial.print(imageMode);
     Serial.print(": ");
     switch (imageMode) {
@@ -137,14 +137,14 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println("LeptonFLiR_ImageMode_160x120_24bpp_244Brf"); break;
         case LeptonFLiR_ImageMode_160x120_16bpp_164Brf:
             Serial.println("LeptonFLiR_ImageMode_160x120_16bpp_164Brf"); break;
-        case LeptonFLiR_ImageMode_Unknown:
-            Serial.println("LeptonFLiR_ImageMode_Unknown"); break;
+        case LeptonFLiR_ImageMode_Undefined:
+            Serial.println("LeptonFLiR_ImageMode_Undefined"); break;
         default:
             Serial.println(""); break;
     }
 
     Serial.println(""); Serial.println("Image Output Mode:");
-    LeptonFLiR_ImageOutputMode outputMode = nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Unknown;
+    LeptonFLiR_ImageOutputMode outputMode = nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined;
     Serial.print(outputMode);
     Serial.print(": ");
     switch (outputMode) {
@@ -154,8 +154,8 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println("LeptonFLiR_ImageOutputMode_GS16"); break;
         case LeptonFLiR_ImageOutputMode_RGB888:
             Serial.println("LeptonFLiR_ImageOutputMode_RGB888"); break;
-        case LeptonFLiR_ImageOutputMode_Unknown:
-            Serial.println("LeptonFLiR_ImageOutputMode_Unknown"); break;
+        case LeptonFLiR_ImageOutputMode_Undefined:
+            Serial.println("LeptonFLiR_ImageOutputMode_Undefined"); break;
         default:
             Serial.println(""); break;
     }

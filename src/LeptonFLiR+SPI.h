@@ -13,6 +13,7 @@
 // class LeptonFLiR {
 // protected:
 
+    void SPI_begin();
     static void SPI_transfer16(uint16_t *buffer, int count);
     static void SPI_ignore16(int count);
 

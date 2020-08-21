@@ -35,7 +35,10 @@
 // Be aware that editing this file directly will affect all projects using this library.
 
 // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-//#define LEPFLIR_ENABLE_SOFTWARE_I2C   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+//#define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+
+// Uncomment this define to disable usage of the Scheduler library on SAM/SAMD architecures.
+//#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
 
 // Uncomment this define if wanting to exclude extended i2c functions from compilation.
 //#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
@@ -59,28 +62,29 @@
 // SPI clock divider (i.e. proc speed /2, /4, /8, ..., /128). Anything below 12MHz is
 // considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
 
-#if (defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD)) && !defined(LEPFLIR_DISABLE_SCHEDULER)
-#include "Scheduler.h"
-#define LEPFLIR_USE_SCHEDULER
-#endif
-
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
 #else
 #include <WProgram.h>
 #endif
 
+#if !defined(LEPFLIR_DISABLE_SCHEDULER) && (defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD))
+#include "Scheduler.h"
+#define LEPFLIR_USE_SCHEDULER
+#endif
+
 #ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 #include <Wire.h>
-// Define BUFFER_LENGTH on platforms that don't natively define such.
-#ifndef BUFFER_LENGTH
-#ifdef I2C_BUFFER_LENGTH
-#define BUFFER_LENGTH I2C_BUFFER_LENGTH
+#if BUFFER_LENGTH
+#define LEPFLIR_I2C_BUFFER_LENGTH   BUFFER_LENGTH
+#elif I2C_BUFFER_LENGTH
+#define LEPFLIR_I2C_BUFFER_LENGTH   I2C_BUFFER_LENGTH
 #else
-#warning "i2c BUFFER_LENGTH not defined - using default of 32, which may not be supported by your microcontroller's hardware. Check Wire.h (or similar) file for your hardware and manually define to remove this warning."
-#define BUFFER_LENGTH 32
-#endif
-#endif // /ifndef BUFFER_LENGTH
+#warning "i2c buffer length not defined - using default value of 32, which may not be correct for your microcontroller. Check Wire.h (or similar) for your hardware and manually define BUFFER_LENGTH or I2C_BUFFER_LENGTH to remove this warning."
+#define LEPFLIR_I2C_BUFFER_LENGTH   32
+#endif // /if BUFFER_LENGTH
+#else
+#define LEPFLIR_USE_SOFTWARE_I2C
 #endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 
 #include <SPI.h>
@@ -88,29 +92,37 @@
 #include "LeptonFLiRDefines.h"
 #include "LeptonFLiRInlines.hpp"
 
+
 class LeptonFLiR {
 public:
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
-    // May use a different Wire instance than Wire. Some chipsets, such as Due/Zero/etc.,
-    // have a Wire1 class instance that uses the SDA1/SCL1 lines instead.
-    // Supported i2c baud rates are 100kHz, 400kHz, and 1000kHz.
-    // Supported SPI baud rates are 2.2MHz to 20MHz.
+    // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
-    LeptonFLiR(TwoWire& i2cWire = Wire, byte spiCSPin = 10, byte isrVSyncPin = -1);
+    // Boards with more than one i2c line (e.g. Due/Zero/etc.) may use a different Wire
+    // instance, such as Wire1 (which uses SDA1/SCL1 pins), Wire2 (SDA2/SCL2), etc.
+    // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
+    // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
+    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, int i2cSpeed = 400000);
+
+    // Convenience constructor for custom Wire instance. See main constructor.
+    LeptonFLiR(TwoWire& i2cWire, int i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 #else
-    // Minimum supported i2c baud rate is 100kHz, which means minimum supported processor
-    // speed is 4MHz+ while running i2c standard mode. For 400kHz i2c baud rate, minimum
-    // supported processor speed is 16MHz+ while running i2c fast mode.
-    // Supported SPI baud rates are 2.2MHz to 20MHz.
+    // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
-    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = -1);
+    // Minimum supported i2c clock speed is 100kHz, which means minimum supported processor
+    // speed is 4MHz+ while running i2c standard mode. For 400kHz i2c clock speed, minimum
+    // supported processor speed is 16MHz+ while running i2c fast mode.
+    // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
+    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 #endif
     ~LeptonFLiR();
 
-    // Called in setup()
+    // Initializes module, also begins Wire/SPI instances. Typically called in setup().
+    // See individual enums for more info.
     void init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMode tempMode = LeptonFLiR_TemperatureMode_Celsius);
 
+    // Mode accessors
     byte getChipSelectPin();                                // CS pin
     byte getISRVSyncPin();                                  // ISR VSync pin
     LeptonFLiR_CameraType getCameraType();                  // Lepton camera type
@@ -170,19 +182,19 @@ public:
     // Modules of this class are separated into multiple files for organizational sake.
     // Each file is meant to expand upon the available methods of the LeptonFLiR class.
 #define LEPFLIR_IN_PUBLIC
-    #include "LeptonFLiR+AGC.h"         // AGC module commands
-    #include "LeptonFLiR+SYS.h"         // SYS module commands
-    #include "LeptonFLiR+VID.h"         // VID module commands
-    #include "LeptonFLiR+OEM.h"         // OEM module commands
-    #include "LeptonFLiR+RAD.h"         // RAD module commands
-    #include "LeptonFLiR+Utils.h"       // Utility methods
+    #include "LeptonFLiR+AGC.h"                 // AGC module commands
+    #include "LeptonFLiR+SYS.h"                 // SYS module commands
+    #include "LeptonFLiR+VID.h"                 // VID module commands
+    #include "LeptonFLiR+OEM.h"                 // OEM module commands
+    #include "LeptonFLiR+RAD.h"                 // RAD module commands
+    #include "LeptonFLiR+Utils.h"               // Utility methods
 #undef LEPFLIR_IN_PUBLIC
 
 protected:
 #define LEPFLIR_IN_PROTECTED
-    #include "LeptonFLiR+Protected.h"   // Protected members
-    #include "LeptonFLiR+Wire.h"        // i2c communications
-    #include "LeptonFLiR+SPI.h"         // SPI communications
+    #include "LeptonFLiR+Protected.h"           // Protected members
+    #include "LeptonFLiR+Wire.h"                // i2c communications
+    #include "LeptonFLiR+SPI.h"                 // SPI communications
 #undef LEPFLIR_IN_PROTECTED
 };
 

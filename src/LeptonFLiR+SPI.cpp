@@ -5,6 +5,19 @@
 
 #include "LeptonFLiR.h"
 
+bool LeptonFLiR::_spiBegan = false;
+
+void LeptonFLiR::SPI_begin() {
+    if (LeptonFLiR::_spiBegan) return;
+    LeptonFLiR::_spiBegan = true;
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us
+    SPI.begin(getChipSelectPin())
+#else
+    SPI.begin();
+#endif
+}
+
 void LeptonFLiR::SPI_transfer16(uint16_t *buffer, int count) {
 #if defined(ARDUINO_ARCH_SAM)
     while (count-- > 0)

@@ -5,8 +5,6 @@
 
 #include "LeptonFLiR.h"
 
-const float FLT_EPSILON = 0.00001f;
-
 #ifndef digitalWriteFast
 static void csEnableFuncDef(byte pin) { digitalWrite(pin, LOW); }
 static void csDisableFuncDef(byte pin) { digitalWrite(pin, HIGH); }
@@ -16,24 +14,58 @@ static void csDisableFuncDef(byte pin) { digitalWriteFast(pin, HIGH); }
 #endif
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
-LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, byte spiCSPin, byte isrVSyncPin)
-    : _i2cWire(&i2cWire), _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
+
+LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, int i2cSpeed)
+    : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
+      _i2cWire(&i2cWire), _i2cSpeed(i2cSpeed),
+      _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
+      _cameraType(LeptonFLiR_CameraType_Undefined),
+      _tempMode(LeptonFLiR_TemperatureMode_Undefined),
+      _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
+      _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
+      _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
+      _telemetryOutput(NULL),
+      _frameCounter(0),
+      _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
+      _isReadingNextFrame(false),
+      _lastI2CError(0), _lastLepResult(0)
+{ }
+
+LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, int i2cSpeed, byte spiCSPin, byte isrVSyncPin)
+    : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
+      _i2cWire(&i2cWire), _i2cSpeed(i2cSpeed),
+      _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
+      _cameraType(LeptonFLiR_CameraType_Undefined),
+      _tempMode(LeptonFLiR_TemperatureMode_Undefined),
+      _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
+      _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
+      _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
+      _telemetryOutput(NULL),
+      _frameCounter(0),
+      _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
+      _isReadingNextFrame(false),
+      _lastI2CError(0), _lastLepResult(0)
+{ }
+
 #else
+
 LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
     : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
-#endif
-    _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
-    _cameraType(LeptonFLiR_CameraType_Unknown),
-    _tempMode(LeptonFLiR_TemperatureMode_Celsius),
-    _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
-    _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
-    _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
-    _telemetryOutput(NULL),
-    _frameCounter(0),
-    _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
-    _isReadingNextFrame(false),
-    _lastI2CError(0), _lastLepResult(0)
+      _readBytes(0),
+      _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
+      _cameraType(LeptonFLiR_CameraType_Undefined),
+      _tempMode(LeptonFLiR_TemperatureMode_Undefined),
+      _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
+      _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
+      _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
+      _telemetryOutput(NULL),
+      _frameCounter(0),
+      _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
+      _isReadingNextFrame(false),
+      _lastI2CError(0), _lastLepResult(0)
 { }
+
+#endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
 
 LeptonFLiR::~LeptonFLiR() {
     _frameData = NULL;
@@ -50,14 +82,27 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     _tempMode = (LeptonFLiR_TemperatureMode)constrain((int)tempMode, 0, (int)LeptonFLiR_TemperatureMode_Count - 1);
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("LeptonFLiR::init spiCSPin: ");
+    Serial.print("LeptonFLiR::init cameraType: ");
+    Serial.print(_cameraType);
+    Serial.print(", tempMode: ");
+    Serial.print(_tempMode);
+    Serial.print(", spiCSPin: ");
     Serial.print(_spiCSPin);
     Serial.print(", isrVSyncPin: ");
     Serial.print(_isrVSyncPin);
-    Serial.print(", cameraType: ");
-    Serial.print(_cameraType);
-    Serial.print(", tempMode: ");
-    Serial.println(_tempMode);
+#ifndef LEPFLIR_USE_SOFTWARE_I2C
+    Serial.print(", i2cSpeed: ");
+    Serial.println(_i2cSpeed);
+#else
+    Serial.println("");
+#endif
+#endif
+
+    i2cWire_begin();
+    SPI_begin();
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    checkForErrors();
 #endif
 
 #ifndef __SAM3X8E__ // Arduino Due's SPI library handles its own CS latching
@@ -65,7 +110,7 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     _csDisableFunc(_spiCSPin);
 #endif
 
-    if (_isrVSyncPin > 0) {
+    if (_isrVSyncPin != DISABLED) {
         // TODO: Write/enable ISR. -NR
     }
 
@@ -164,7 +209,7 @@ bool LeptonFLiR::isImageDataAvailable() {
 }
 
 LeptonFLiR_ImageMode LeptonFLiR::getImageMode() {
-    return _lastFrame ? _lastFrame->imageMode : LeptonFLiR_ImageMode_Unknown;
+    return _lastFrame ? _lastFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
 }
 
 int LeptonFLiR::getImageBpp() {
@@ -185,7 +230,7 @@ LeptonFLiR_PixelData LeptonFLiR::getImagePixelData(int row, int col) {
 }
 
 LeptonFLiR_ImageOutputMode LeptonFLiR::getImageOutputMode() {
-    return _lastFrame ? _lastFrame->outputMode : LeptonFLiR_ImageOutputMode_Unknown;
+    return _lastFrame ? _lastFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined;
 }
 
 int LeptonFLiR::getImageOutputBpp() {
@@ -223,14 +268,14 @@ bool LeptonFLiR::isTelemetryDataAvailable() {
 
 uint32_t LeptonFLiR::getTelemetryFrameCounter() {
     if (!isTelemetryDataAvailable()) return 0;
-    uint16_t *telemetryData_A = (uint16_t *)_lastFrame->telemetryData;
+    const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
 
     return ((uint32_t)telemetryData_A[20] << 16) | (uint32_t)telemetryData_A[21];
 }
 
 bool LeptonFLiR::getTelemetryShouldRunFFCNormalization() {
     if (!isTelemetryDataAvailable()) return false;
-    uint16_t *telemetryData_A = (uint16_t *)_lastFrame->telemetryData;
+    const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
 
     uint_fast8_t ffcState = (telemetryData_A[4] & 0x0018) >> 3;
     if (lowByte(telemetryData_A[0]) >= 9 && ffcState >= 1)
@@ -241,7 +286,7 @@ bool LeptonFLiR::getTelemetryShouldRunFFCNormalization() {
 
 bool LeptonFLiR::getTelemetryAGCEnabled() {
     if (!isTelemetryDataAvailable()) return false;
-    uint16_t *telemetryData_A = (uint16_t *)_lastFrame->telemetryData;
+    const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
 
     return telemetryData_A[4] & 0x0800;
 }
@@ -252,9 +297,9 @@ LeptonFLiR_TelemetryData* LeptonFLiR::getTelemetryOutputData() {
 
 void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
     if (!isTelemetryDataAvailable()) return;
-    uint16_t *telemetryData_A = (uint16_t *)_lastFrame->telemetryData;
-    uint16_t *telemetryData_B = (uint16_t *)((uintptr_t)_lastFrame->telemetryData + getSPIFrameLineSize());
-    uint16_t *telemetryData_C = (uint16_t *)((uintptr_t)_lastFrame->telemetryData + 2*getSPIFrameLineSize());
+    const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
+    const uint16_t *telemetryData_B = (const uint16_t *)getTelemetryData(1);
+    const uint16_t *telemetryData_C = (const uint16_t *)getTelemetryData(2);
     // TODO: Verify Telem B and C lines are always next to A line in SPI buffer memory. -NR
 
     telemetry->revisionMajor = lowByte(telemetryData_A[0]);

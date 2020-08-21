@@ -5,6 +5,8 @@
 
 #include "LeptonFLiR.h"
 
+bool LeptonFLiR::_i2cBegan = false;
+
 bool LeptonFLiR::waitCommandBegin(int timeout) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.println("    LeptonFLiR::waitCommandBegin");
@@ -266,7 +268,7 @@ int LeptonFLiR::writeCmdRegister(uint16_t cmdCode, uint16_t *dataWords, int data
         if (i2cWire_endTransmission())
             return _lastI2CError;
 
-        int maxLength = BUFFER_LENGTH / 2;
+        int maxLength = LEPFLIR_I2C_BUFFER_LENGTH / 2;
         int writeLength = min(maxLength, dataLength);
         uint16_t regAddress = dataLength <= 16 ? LEP_I2C_DATA_0_REG : LEP_I2C_DATA_BUFFER;
 
@@ -311,10 +313,11 @@ int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
         return (_lastI2CError = 4);
 
     // In avr/libraries/Wire.h and avr/libraries/utility/twi.h, BUFFER_LENGTH controls
-    // how many words can be read at once. Therefore, we loop around until all words
-    // have been read out from their registers.
+    // how many channels can be written at once. Therefore, we loop around until all
+    // channels have been written out into their registers. I2C_BUFFER_LENGTH is also
+    // used in other architectures, all of which goes into LEPFLIR_I2C_BUFFER_LENGTH.
 
-    bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(BUFFER_LENGTH, readLength));
+    bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(LEPFLIR_I2C_BUFFER_LENGTH, readLength));
 
     while (bytesRead > 0 && readLength > 0) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -357,7 +360,7 @@ int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
 #endif
 
         if (readLength > 0)
-            bytesRead += i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(BUFFER_LENGTH, readLength));
+            bytesRead += i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(LEPFLIR_I2C_BUFFER_LENGTH, readLength));
     }
 
     while (bytesRead-- > 0)
@@ -412,11 +415,24 @@ int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
 }
 
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
+bool __attribute__((noinline)) i2c_init(void);
 bool __attribute__((noinline)) i2c_start(uint8_t addr);
 void __attribute__((noinline)) i2c_stop(void) asm("ass_i2c_stop");
 bool __attribute__((noinline)) i2c_write(uint8_t value) asm("ass_i2c_write");
 uint8_t __attribute__((noinline)) i2c_read(bool last);
 #endif
+
+void LeptonFLiR::i2cWire_begin() {
+    if (LeptonFLiR::_i2cBegan) return;
+    LeptonFLiR::_i2cBegan = true;
+    _lastI2CError = 0;
+#ifndef LEPFLIR_USE_SOFTWARE_I2C
+    _i2cWire->begin();
+    _i2cWire->setClock(_i2cSpeed);
+#else
+    if (!i2c_init()) _lastI2CError = 4;
+#endif
+}
 
 void LeptonFLiR::i2cWire_beginTransmission(uint8_t addr) {
     _lastI2CError = 0;

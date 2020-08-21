@@ -5,7 +5,7 @@
 //
 // In LeptonFLiR.h:
 // // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-// #define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+// #define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 
 #include "LeptonFLiR.h"
 
@@ -15,29 +15,19 @@
 #define SDA_PORT PORTC 
 
 #if F_CPU >= 16000000
-#define I2C_FASTMODE 1                  // Running a 16MHz processor allows us to use I2C fast mode
+#define I2C_FASTMODE 1                  // Running a 16MHz processor allows us to use i2c fast mode
 #endif
 
-#include "SoftI2CMaster.h"              // Include must come after setup defines
+#include "SoftI2CMaster.h"              // Include must come after setup defines (see library setup)
 
 const byte flirCSPin = 4;
 LeptonFLiR flirController(flirCSPin);   // Library using chip select pin D4
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial
 
-    i2c_init();                         // Software I2C must be started
-
-    // SPI must also be started
-#ifdef __SAM3X8E__
-    // Arduino Due has SPI library that manages the CS pin for us.
-    SPI.begin(flirCSPin)
-#else
-    SPI.begin();
-#endif
-
-    // Using Lepton v1 camera and default celsius temperature mode
-    // NOTE: Make sure to change this to what camera version you're using.
+    // Initializes module using Lepton v1 camera, default celsius temperature mode, and also begins Wire/SPI
+    // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
     flirController.init(LeptonFLiR_CameraType_Lepton1);
 
     flirController.sys_setTelemetryEnabled(DISABLED); // Default mode is enabled

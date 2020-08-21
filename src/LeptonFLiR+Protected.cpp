@@ -9,15 +9,15 @@ LeptonFLiR::FrameSettings::FrameSettings(LeptonFLiR::FrameSettings* lastFrame, u
     : frameNumber(frameNum),
       telemetryMode(lastFrame ? lastFrame->telemetryMode : LeptonFLiR_TelemetryMode_Disabled),
       agcEnabled(lastFrame ? lastFrame->agcEnabled : false),
-      tlinearEnabled(lastFrame ? frame->tlinearEnabled : false),
-      pclutEnabled(frame ? frame->pclutEnabled : false),
-      imageMode(frame ? frame->imageMode : LeptonFLiR_ImageMode_Unknown),
-      outputMode(frame ? frame->outputMode : LeptonFLiR_ImageOutputMode_Unknown),
+      tlinearEnabled(lastFrame ? lastFrame->tlinearEnabled : false),
+      pclutEnabled(lastFrame ? lastFrame->pclutEnabled : false),
+      imageMode(lastFrame ? lastFrame->imageMode : LeptonFLiR_ImageMode_Undefined),
+      outputMode(lastFrame ? lastFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined),
       offsetTable(NULL), imageData(NULL), telemetryData(NULL)
 { }
 
 LeptonFLiR::FrameSettings::~FrameSettings() {
-    if (offsetTable) { delete [] offsetTable; offsetTable = nil; }
+    if (offsetTable) { delete [] offsetTable; offsetTable = NULL; }
 }
 
 LeptonFLiR::FrameSettings* LeptonFLiR::getNextFrame() {
@@ -43,13 +43,13 @@ void LeptonFLiR::updateNextFrame() {
             case LeptonFLiR_CameraType_Lepton2_5: {
                 switch (format) {
                     case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW14:
-                        _nextFrame->_imageMode = LeptonFLiR_ImageMode_80x60_16bpp_164Brf;
+                        _nextFrame->imageMode = LeptonFLiR_ImageMode_80x60_16bpp_164Brf;
                         break;
                     case LEP_VID_VIDEO_OUTPUT_FORMAT_RGB888:
-                        _nextFrame->_imageMode = LeptonFLiR_ImageMode_80x60_24bpp_244Brf;
+                        _nextFrame->imageMode = LeptonFLiR_ImageMode_80x60_24bpp_244Brf;
                         break;
                     default:
-                        _nextFrame->_imageMode = LeptonFLiR_ImageMode_Unknown;
+                        _nextFrame->imageMode = LeptonFLiR_ImageMode_Undefined;
                         break;
                 }
             } break;
@@ -58,19 +58,19 @@ void LeptonFLiR::updateNextFrame() {
             case LeptonFLiR_CameraType_Lepton3_5: {
                 switch (format) {
                     case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW14:
-                        _nextFrame->_imageMode = LeptonFLiR_ImageMode_160x120_16bpp_164Brf;
+                        _nextFrame->imageMode = LeptonFLiR_ImageMode_160x120_16bpp_164Brf;
                         break;
                     case LEP_VID_VIDEO_OUTPUT_FORMAT_RGB888:
-                        _nextFrame->_imageMode = LeptonFLiR_ImageMode_160x120_24bpp_244Brf;
+                        _nextFrame->imageMode = LeptonFLiR_ImageMode_160x120_24bpp_244Brf;
                         break;
                     default:
-                        _nextFrame->_imageMode = LeptonFLiR_ImageMode_Unknown;
+                        _nextFrame->imageMode = LeptonFLiR_ImageMode_Undefined;
                         break;
                 }
             } break;
 
             default:
-                _nextFrame->_imageMode = LeptonFLiR_ImageMode_Unknown;
+                _nextFrame->imageMode = LeptonFLiR_ImageMode_Undefined;
                 break;
         }
 
@@ -120,12 +120,12 @@ uint32_t LeptonFLiR::getNextFrameNumber() {
 
 LeptonFLiR_ImageMode LeptonFLiR::getNextImageMode() {
     LeptonFLiR::FrameSettings* nextFrame = getNextFrame();
-    return nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Unknown;
+    return nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
 }
 
 LeptonFLiR_ImageOutputMode LeptonFLiR::getNextImageOutputMode() {
     LeptonFLiR::FrameSettings* nextFrame = getNextFrame();
-    return nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Unknown;
+    return nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined;
 }
 
 LeptonFLiR_TelemetryMode LeptonFLiR::getNextTelemetryMode() {
@@ -281,13 +281,13 @@ static void printSPIFrame(uint16_t *spiFrame) {
 
 #endif
 
-byte *LeptonFLiR::getImageData(int row, int section) {
+const byte *LeptonFLiR::getImageData(int row, int section) {
     // TODO: Write get image data (section). -NR
     return NULL;
 }
 
-byte *LeptonFLiR::getTelemetryData() {
-    return isTelemetryDataAvailable() ? _telemetryData : NULL;
+const byte *LeptonFLiR::getTelemetryData(int row) {
+    return isTelemetryDataAvailable() ? (const byte *)((uintptr_t)_lastFrame->telemetryData + row*getSPIFrameLineSize()) : NULL;
 }
 
 float LeptonFLiR::kelvin100ToCelsius(uint16_t kelvin100) {

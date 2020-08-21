@@ -8,32 +8,21 @@
 #include "digitalWriteFast.h"
 
 const byte flirCSPin = 22;
-LeptonFLiR flirController(Wire1, flirCSPin); // Library using Wire1 and chip select pin D22
+LeptonFLiR flirController(flirCSPin, Wire1); // Library using chip select pin D22, and Wire1 @400kHz
 
 // Fast CS enable/disable routines, using the digitalWriteFast library
 static void fastEnableCS(byte pin) { digitalWriteFast(pin, LOW); }
 static void fastDisableCS(byte pin) { digitalWriteFast(pin, HIGH); }
 
 void setup() {
-    Serial.begin(115200);
-
-    Wire1.begin();                      // Wire1 must be started
-    Wire1.setClock(400000);             // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-
-    // SPI must also be started
-#ifdef __SAM3X8E__
-    // Arduino Due has SPI library that manages the CS pin for us.
-    SPI.begin(flirCSPin)
-#else
-    SPI.begin();
-#endif
-
-    // Using Lepton v1 camera and default celsius temperature mode
-    // NOTE: Make sure to change this to what camera version you're using.
-    flirController.init(LeptonFLiR_CameraType_Lepton1);
+    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial
 
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
+
+    // Initializes module using Lepton v1 camera, default celsius temperature mode, and also begins Wire/SPI
+    // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
+    flirController.init(LeptonFLiR_CameraType_Lepton1);
 
     flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
 }
