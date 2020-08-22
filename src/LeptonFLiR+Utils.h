@@ -23,6 +23,8 @@
     LEP_RESULT getLastLepResult();
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    float getCameraVersion();
+    int getWireInterfaceNumber();
     void printModuleInfo();
     void checkForErrors();
 #endif

@@ -82,20 +82,36 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     _tempMode = (LeptonFLiR_TemperatureMode)constrain((int)tempMode, 0, (int)LeptonFLiR_TemperatureMode_Count - 1);
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("LeptonFLiR::init cameraType: ");
-    Serial.print(_cameraType);
+    const int spiDivisor = getSPIClockDivisor();
+    const float spiSpeed = F_CPU / (const float)spiDivisor;
+    Serial.print("LeptonFLiR::init cameraType: v");
+    Serial.print(getCameraVersion(), 1);
     Serial.print(", tempMode: ");
-    Serial.print(_tempMode);
+    Serial.print(getTemperatureSymbol());
     Serial.print(", spiCSPin: ");
     Serial.print(_spiCSPin);
     Serial.print(", isrVSyncPin: ");
-    Serial.print(_isrVSyncPin);
+    if (_isrVSyncPin != DISABLED) {
+        Serial.print(_isrVSyncPin);
+        Serial.print(" (on-rising)");
+    } else
+        Serial.print("<disabled>");
+    Serial.print(", i2cWire#: ");
+    Serial.print(getWireInterfaceNumber());
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     Serial.print(", i2cSpeed: ");
-    Serial.println(_i2cSpeed);
-#else
-    Serial.println("");
+    Serial.print(roundf(_i2cSpeed / 1000.0f)); Serial.print("kHz");
 #endif
+    Serial.print(", spiSpeed: ");
+    Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
+    Serial.print("MHz (SPI_CLOCK_DIV"); Serial.print(spiDivisor); Serial.print(")");
+    if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
+        Serial.print(" <speed too low>");
+    else if (spiSpeed > LEPFLIR_SPI_MAX_SPEED + FLT_EPSILON)
+        Serial.print(" <speed too high>");
+    else if (spiSpeed < LEPFLIR_SPI_OPTIMAL_MIN_SPEED - FLT_EPSILON)
+        Serial.print(" <speed sub-optimal>");
+    Serial.println("");
 #endif
 
     i2cWire_begin();
@@ -113,24 +129,6 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     if (_isrVSyncPin != DISABLED) {
         // TODO: Write/enable ISR. -NR
     }
-
-#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    const int divisor = getSPIClockDivisor();
-    const float spiSpeed = F_CPU / (const float)divisor;
-    Serial.print("  LeptonFLiR::init SPIPortSpeed: ");
-    Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
-    Serial.print("MHz (SPI_CLOCK_DIV");
-    Serial.print(divisor);
-    Serial.print(")");
-    if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
-        Serial.println(" <speed too low>");
-    else if (spiSpeed > LEPFLIR_SPI_MAX_SPEED + FLT_EPSILON)
-        Serial.println(" <speed too high>");
-    else if (spiSpeed < LEPFLIR_SPI_OPTIMAL_MIN_SPEED - FLT_EPSILON)
-        Serial.println(" <speed sub-optimal>");
-    else
-        Serial.println("");
-#endif
 }
 
 byte LeptonFLiR::getChipSelectPin() {

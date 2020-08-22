@@ -44,7 +44,7 @@
 //#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
 
 // Uncomment this define to enable debug output.
-#define LEPFLIR_ENABLE_DEBUG_OUTPUT
+//#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 // Hookup Callout: SPI Data Line
 // -PLEASE READ-

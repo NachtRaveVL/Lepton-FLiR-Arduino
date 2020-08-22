@@ -54,43 +54,93 @@ LEP_RESULT LeptonFLiR::getLastLepResult() {
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
+float LeptonFLiR::getCameraVersion() {
+    switch (_cameraType) {
+        case LeptonFLiR_CameraType_Lepton1: return 1.0f;
+        case LeptonFLiR_CameraType_Lepton1_6: return 1.6f;
+        case LeptonFLiR_CameraType_Lepton2: return 2.0f;
+        case LeptonFLiR_CameraType_Lepton2_5: return 2.5f;
+        case LeptonFLiR_CameraType_Lepton3: return 3.0f;
+        case LeptonFLiR_CameraType_Lepton3_5: return 3.5f;
+        default: return -1.0f;
+    }
+}
+
+int LeptonFLiR::getWireInterfaceNumber() {
+#ifndef LEPFLIR_USE_SOFTWARE_I2C
+    if (_i2cWire == &Wire) return 0;
+#if WIRE_INTERFACES_COUNT > 1
+    if (_i2cWire == &Wire1) return 1;
+#endif
+#if WIRE_INTERFACES_COUNT > 2
+    if (_i2cWire == &Wire2) return 2;
+#endif
+#if WIRE_INTERFACES_COUNT > 3
+    if (_i2cWire == &Wire3) return 3;
+#endif
+#if WIRE_INTERFACES_COUNT > 4
+    if (_i2cWire == &Wire4) return 4;
+#endif
+#if WIRE_INTERFACES_COUNT > 5
+    if (_i2cWire == &Wire5) return 5;
+#endif
+#endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
+    return -1;
+}
+
+static const char *textForWireInterfaceNumber(int wireNum) {
+#ifndef LEPFLIR_USE_SOFTWARE_I2C
+    switch (wireNum) {
+        case 0: return "Wire";
+        case 1: return "Wire1";
+        case 2: return "Wire2";
+        case 3: return "Wire3";
+        case 4: return "Wire4";
+        case 5: return "Wire5";
+        default: return "<other>";
+    }
+#else
+    return "SoftwareI2C";
+#endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
+}
+
 void LeptonFLiR::printModuleInfo() {
     char buffer[80];
 
     Serial.println(""); Serial.println(" ~~~ LeptonFLiR Module Info ~~~");
 
     Serial.println(""); Serial.println("Chip Select Pin:");
-    Serial.print("D");
-    Serial.print(_spiCSPin);
+    Serial.print("D"); Serial.print(_spiCSPin);
     Serial.println(" (active-low)");
+    Serial.println("ISR VSync Pin:");
+    if (_isrVSyncPin != DISABLED) {
+        Serial.print("D"); Serial.print(_isrVSyncPin);
+        Serial.println(" (on-rising)");
+    } else
+        Serial.println("<disabled>");
 
-    Serial.println(""); Serial.println("ISR VSync Pin:");
-    Serial.print("D");
-    Serial.print(_isrVSyncPin);
-    if (_isrVSyncPin > 0)
-        Serial.println(" (ISR-on-high)");
-    else
-        Serial.println(" (disabled)");
+    Serial.println(""); Serial.println("i2c Instance:");
+    Serial.println(textForWireInterfaceNumber(getWireInterfaceNumber()));
+#ifndef LEPFLIR_USE_SOFTWARE_I2C
+    Serial.println("i2c Speed:");
+    Serial.print(roundf(_i2cSpeed / 1000.0f)); Serial.println("kHz");
+#endif
 
-    Serial.println(""); Serial.println("SPI Port Speed:");
-    const int divisor = getSPIClockDivisor();
-    const float spiSpeed = F_CPU / (const float)divisor;
+    Serial.println(""); Serial.println("SPI Speed:");
+    const int spiDivisor = getSPIClockDivisor();
+    const float spiSpeed = F_CPU / (const float)spiDivisor;
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
-    Serial.print("MHz (SPI_CLOCK_DIV");
-    Serial.print(divisor);
-    Serial.print(")");
+    Serial.print("MHz (SPI_CLOCK_DIV"); Serial.print(spiDivisor); Serial.print(")");
     if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
-        Serial.println(" <speed too low>");
+        Serial.print(" (speed too low)");
     else if (spiSpeed > LEPFLIR_SPI_MAX_SPEED + FLT_EPSILON)
-        Serial.println(" <speed too high>");
+        Serial.print(" (speed too high)");
     else if (spiSpeed < LEPFLIR_SPI_OPTIMAL_MIN_SPEED - FLT_EPSILON)
-        Serial.println(" <speed sub-optimal>");
-    else
-        Serial.println("");
+        Serial.print(" (speed sub-optimal)");
+    Serial.println("");
 
     Serial.println(""); Serial.println("Camera Type:");
-    Serial.print(_cameraType);
-    Serial.print(": ");
+    Serial.print(_cameraType); Serial.print(": ");
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
             Serial.println("LeptonFLiR_CameraType_Lepton1"); break;
@@ -109,8 +159,7 @@ void LeptonFLiR::printModuleInfo() {
     }
 
     Serial.println(""); Serial.println("Temperature Mode:");
-    Serial.print(_tempMode);
-    Serial.print(": ");
+    Serial.print(_tempMode); Serial.print(": ");
     switch (_tempMode) {
         case LeptonFLiR_TemperatureMode_Celsius:
             Serial.println("LeptonFLiR_TemperatureMode_Celsius"); break;
@@ -126,8 +175,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("Image Storage Mode:");
     LeptonFLiR_ImageMode imageMode = nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
-    Serial.print(imageMode);
-    Serial.print(": ");
+    Serial.print(imageMode); Serial.print(": ");
     switch (imageMode) {
         case LeptonFLiR_ImageMode_80x60_24bpp_244Brf:
             Serial.println("LeptonFLiR_ImageMode_80x60_24bpp_244Brf"); break;
@@ -145,8 +193,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("Image Output Mode:");
     LeptonFLiR_ImageOutputMode outputMode = nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined;
-    Serial.print(outputMode);
-    Serial.print(": ");
+    Serial.print(outputMode); Serial.print(": ");
     switch (outputMode) {
         case LeptonFLiR_ImageOutputMode_GS8:
             Serial.println("LeptonFLiR_ImageOutputMode_GS8"); break;
@@ -189,24 +236,21 @@ void LeptonFLiR::printModuleInfo() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-    Serial.print("0x");
-    Serial.println(powerReg, HEX);
+    Serial.print("0x"); Serial.println(powerReg, HEX);
 
     Serial.println(""); Serial.println("Status Register:");
     uint16_t statusReg; readRegister(LEP_I2C_STATUS_REG, &statusReg);
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-    Serial.print("0x");
-    Serial.println(statusReg, HEX);
+    Serial.print("0x"); Serial.println(statusReg, HEX);
 
     Serial.println(""); Serial.println("AGC Enabled:");
     Serial.println(agc_getAGCEnabled() ? "enabled" : "disabled");
 
     Serial.println(""); Serial.println("AGC Policy:");
     LEP_AGC_POLICY policy = agc_getAGCPolicy();
-    Serial.print(policy);
-    Serial.print(": ");
+    Serial.print(policy); Serial.print(": ");
     switch (policy) {
         case LEP_AGC_LINEAR:
             Serial.println("LEP_AGC_LINEAR"); break;
@@ -218,8 +262,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("AGC HEQ Scale Factor:");
     LEP_AGC_HEQ_SCALE_FACTOR factor = agc_getHEQScaleFactor();
-    Serial.print(factor);
-    Serial.print(": ");
+    Serial.print(factor); Serial.print(": ");
     switch (factor) {
         case LEP_AGC_SCALE_TO_8_BITS:
             Serial.println("LEP_AGC_SCALE_TO_8_BITS"); break;
@@ -234,8 +277,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("SYS Camera Status:");
     LEP_SYS_CAM_STATUS_STATES camStatus = sys_getCameraStatus();
-    Serial.print(camStatus);
-    Serial.print(": ");
+    Serial.print(camStatus); Serial.print(": ");
     switch (camStatus) {
         case LEP_SYSTEM_READY:
             Serial.println("LEP_SYSTEM_READY"); break;
@@ -276,8 +318,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("Vid Polarity:");
     LEP_VID_POLARITY polarity = vid_getPolarity();
-    Serial.print(polarity);
-    Serial.print(": ");
+    Serial.print(polarity); Serial.print(": ");
     switch (polarity) {
         case LEP_VID_WHITE_HOT:
             Serial.println("LEP_VID_WHITE_HOT"); break;
@@ -289,8 +330,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("Vid Pseudo Color Lookup Table:");
     LEP_VID_PCOLOR_LUT mode = vid_getPseudoColorLUT();
-    Serial.print(mode);
-    Serial.print(": ");
+    Serial.print(mode); Serial.print(": ");
     switch (mode) {
         case LEP_VID_WHEEL6_LUT:
             Serial.println("LEP_VID_WHEEL6_LUT"); break;
@@ -320,9 +360,8 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("Vid Image Output Format:");
     LEP_VID_VIDEO_OUTPUT_FORMAT format = vid_getOutputFormat();
-    Serial.print(format);
-    Serial.print(": ");
-    switch (mode) {
+    Serial.print(format); Serial.print(": ");
+    switch (format) {
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8:
             Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8"); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW10:
