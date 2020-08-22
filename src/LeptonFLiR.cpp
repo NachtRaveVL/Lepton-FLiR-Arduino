@@ -15,7 +15,7 @@ static void csDisableFuncDef(byte pin) { digitalWriteFast(pin, HIGH); }
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
 
-LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, int i2cSpeed)
+LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32_t i2cSpeed)
     : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
       _i2cWire(&i2cWire), _i2cSpeed(i2cSpeed),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
@@ -31,7 +31,7 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, int i2
       _lastI2CError(0), _lastLepResult(0)
 { }
 
-LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, int i2cSpeed, byte spiCSPin, byte isrVSyncPin)
+LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte isrVSyncPin)
     : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
       _i2cWire(&i2cWire), _i2cSpeed(i2cSpeed),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
@@ -100,7 +100,7 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     Serial.print(getWireInterfaceNumber());
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     Serial.print(", i2cSpeed: ");
-    Serial.print(roundf(_i2cSpeed / 1000.0f)); Serial.print("kHz");
+    Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.print("kHz");
 #endif
     Serial.print(", spiSpeed: ");
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
@@ -137,6 +137,20 @@ byte LeptonFLiR::getChipSelectPin() {
 
 byte LeptonFLiR::getISRVSyncPin() {
     return _isrVSyncPin;
+}
+
+uint32_t LeptonFLiR::getI2CSpeed() {
+#ifndef LEPFLIR_USE_SOFTWARE_I2C
+    return _i2cSpeed;
+#else
+#if I2C_FASTMODE
+    return 400000;
+#elif I2C_SLOWMODE
+    return 25000;
+#else
+    return 100000;
+#endif
+#endif // ifndef LEPFLIR_USE_SOFTWARE_I2C
 }
 
 LeptonFLiR_CameraType LeptonFLiR::getCameraType() {

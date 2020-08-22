@@ -121,10 +121,8 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("i2c Instance:");
     Serial.println(textForWireInterfaceNumber(getWireInterfaceNumber()));
-#ifndef LEPFLIR_USE_SOFTWARE_I2C
     Serial.println("i2c Speed:");
-    Serial.print(roundf(_i2cSpeed / 1000.0f)); Serial.println("kHz");
-#endif
+    Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.println("kHz");
 
     Serial.println(""); Serial.println("SPI Speed:");
     const int spiDivisor = getSPIClockDivisor();
