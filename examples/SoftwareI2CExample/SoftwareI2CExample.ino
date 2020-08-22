@@ -1,7 +1,7 @@
-// Lepton-FLiR-Arduino Software I2C Example
-// In this example, we utilize the software I2C functionality for chips that do not have
-// a hardware I2C bus. If one uncomments the line below inside the main header file (or
-// defines it via custom build flag), software I2C mode for the library will be enabled.
+// Lepton-FLiR-Arduino Software i2c Example
+// In this example, we utilize the software i2c functionality for chips that do not have
+// a hardware i2c bus. If one uncomments the line below inside the main header file (or
+// defines it via custom build flag), software i2c mode for the library will be enabled.
 //
 // In LeptonFLiR.h:
 // // Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
@@ -24,9 +24,9 @@ const byte flirCSPin = 4;
 LeptonFLiR flirController(flirCSPin);   // Library using chip select pin D4
 
 void setup() {
-    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial
+    Serial.begin(115200);               // Library will begin SoftI2C/SPI, so we just need to begin Serial
 
-    // Initializes module using Lepton v1 camera, default celsius temperature mode, and also begins Wire/SPI
+    // Initializes module using Lepton v1 camera, default celsius temperature mode, and also begins SoftI2C/SPI
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
     flirController.init(LeptonFLiR_CameraType_Lepton1);
 

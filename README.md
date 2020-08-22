@@ -74,7 +74,7 @@ There are several initialization mode settings exposed through this library that
 
 #### Class Instantiation
 
-The library's class object must first be instantiated, commonly at the top of the sketch where pin setups are defined (or exposed through some other mechanism), which makes a call to the library's class constructor. The constructor allows one to set the module's SPI CS pin, ISR VSync pin, Wire class instance, and i2c clock speed (the last two of which being ommitted when in software i2c mode). The default constructor values of the library, if left unspecified, is SPI CS pin `D10`, ISR VSync pin `DISABLED`, and Wire class instance `Wire` @`400k`Hz.
+The library's class object must first be instantiated, commonly at the top of the sketch where pin setups are defined (or exposed through some other mechanism), which makes a call to the library's class constructor. The constructor allows one to set the module's SPI CS pin, ISR VSync pin, i2c Wire class instance, and i2c clock speed (the last two of which being ommitted when in software i2c mode). The default constructor values of the library, if left unspecified, is SPI CS pin `D10`, ISR VSync pin `DISABLED`, and i2c Wire class instance `Wire` @`400k`Hz.
 
 From LeptonFLiR.h, in class LeptonFLiR, when in hardware i2c mode:
 ```Arduino
@@ -192,11 +192,11 @@ Note that you will need a MicroSD card reader module for this example to work. B
 // TODO: Reinclude this example after modifications completed. -NR
 ```
 
-### Software I2C Example
+### Software i2c Example
 
-In this example, we utilize the software I2C functionality for chips that do not have a hardware I2C bus.
+In this example, we utilize the software i2c library for chips that do not have a hardware i2c bus.
 
-If one uncomments the line below inside the main header file (or defines it via custom build flag), software I2C mode for the library will be enabled.
+If one uncomments the line below inside the main header file (or defines it via custom build flag), software i2c mode for the library will be enabled.
 
 In LeptonFLiR.h:
 ```Arduino

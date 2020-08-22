@@ -115,7 +115,7 @@ public:
     // supported processor speed is 16MHz+ while running i2c fast mode.
     // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
-#endif
+#endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
     ~LeptonFLiR();
 
     // Initializes module, also begins Wire/SPI instances. Typically called in setup().
