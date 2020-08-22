@@ -415,7 +415,7 @@ int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
 }
 
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
-bool __attribute__((noinline)) i2c_init(void);
+boolean __attribute__((noinline)) i2c_init(void);
 bool __attribute__((noinline)) i2c_start(uint8_t addr);
 void __attribute__((noinline)) i2c_stop(void) asm("ass_i2c_stop");
 bool __attribute__((noinline)) i2c_write(uint8_t value) asm("ass_i2c_write");
