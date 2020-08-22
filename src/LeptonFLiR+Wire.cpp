@@ -428,7 +428,7 @@ void LeptonFLiR::i2cWire_begin() {
     _lastI2CError = 0;
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     _i2cWire->begin();
-    _i2cWire->setClock(_i2cSpeed);
+    _i2cWire->setClock(getI2CSpeed());
 #else
     if (!i2c_init()) _lastI2CError = 4;
 #endif
