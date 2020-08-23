@@ -146,8 +146,8 @@ enum LeptonFLiR_TemperatureMode {
 * The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored).
 * The SS pin may be any digital output pin, with usage being active-low.
 * The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
-* * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
-* * Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
+  * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
+  * Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
 
 ## Memory Callouts
 
