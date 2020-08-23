@@ -169,7 +169,7 @@ Below are several examples of library usage.
 
 In this example, we will utilize various features of the library.
 
-We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Mega/etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
+We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Mega/etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at <https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast>.
 
 ```Arduino
 // TODO: Reinclude this example after modifications completed. -NR
@@ -187,7 +187,7 @@ Note that you will need a MicroSD card reader module for this example to work. B
 
 ### Software i2c Example
 
-In this example, we utilize a popular software i2c library for chips that do not have a hardware i2c bus. This library can be found at <http://playground.arduino.cc/Main/SoftwareI2CLibrary>.
+In this example, we utilize a popular software i2c library for chips that do not have a hardware i2c bus, avilable at <http://playground.arduino.cc/Main/SoftwareI2CLibrary>.
 
 If one uncomments the line below inside the main header file (or defines it via custom build flag), software i2c mode for the library will be enabled. Additionally, you will need to correctly define SCL_PIN, SCL_PORT, SDA_PIN, and SDA_PORT according to your setup. I2C_FASTMODE=1 should be set for 16MHz+ processors. Lastly note that, while in software i2c mode, the clock speed returned by the library (via `getI2CSpeed()`) is only an upper bound and may not represent the actual i2c clock speed set nor achieved.
 

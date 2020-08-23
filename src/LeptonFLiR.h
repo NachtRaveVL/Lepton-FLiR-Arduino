@@ -108,7 +108,7 @@ public:
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
     // Minimum supported i2c clock speed is 100kHz, which sets minimum processor speed at
-    // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minumum
+    // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minimum
     // processor speed is 16MHz+ running in i2c fast mode.
     // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
