@@ -137,11 +137,17 @@ enum LeptonFLiR_TemperatureMode {
 
 ## Hookup Callouts
 
+* The recommended VCC power supply and logic level is 3.3v.
+* The two issolated power pins on the side of the FLiR v1.4 and v2 breakouts can safely be left disconnected.
+
 ### SPI Data Line
 
-Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32X uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS. The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored). The SS pin may be any digital output pin, with usage being active-low. The recommended VCC power supply and logic level is 3.3v. 
-
-The two issolated power pins on the side of the FLiR v1.4 and v2 breakouts can safely be left disconnected. The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz. The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128). Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
+* Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32X uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS.
+* The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored).
+* The SS pin may be any digital output pin, with usage being active-low.
+* The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
+* * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
+* * Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
 
 ## Memory Callouts
 
