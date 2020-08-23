@@ -53,11 +53,11 @@
 // with usage being active-low. The recommended VCC power supply and logic level is 3.3v.
 // The two issolated power pins on the side of the FLiR v1.4 and v2 breakouts can safely
 // be left disconnected. The minimum SPI transfer rate depends on the image resolution
-// used by the sensor, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays
-// requiring ~X.XMHz minimum, while the maximum SPI transfer rate is 20MHz. The actual
+// used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays
+// requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz. The actual
 // SPI transfer rate selected will be the first rate equal to or below 20MHz given the
-// SPI clock divider (i.e. proc speed /2, /4, /8, ..., /128). Anything below 12MHz is
-// considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
+// SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128). Anything below 12MHz
+// is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
@@ -99,7 +99,7 @@ public:
     // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
     // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
-    // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
+    // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
 
     // Convenience constructor for custom Wire instance. See main constructor.
@@ -110,7 +110,7 @@ public:
     // Minimum supported i2c clock speed is 100kHz, which sets minimum processor speed at
     // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minimum
     // processor speed is 16MHz+ running in i2c fast mode.
-    // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
+    // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 #endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
     ~LeptonFLiR();
