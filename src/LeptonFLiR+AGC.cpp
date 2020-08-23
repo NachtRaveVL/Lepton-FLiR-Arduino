@@ -77,8 +77,6 @@ bool LeptonFLiR::agc_getAGCCalcEnabled() {
     return enabled;
 }
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
 void LeptonFLiR::agc_setHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region) {
     if (!region) return;
 
@@ -342,5 +340,3 @@ uint16_t LeptonFLiR::agc_getHEQNormalizationFactor() {
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_NORMALIZATION_FACTOR, LEP_I2C_COMMAND_TYPE_GET), &factor);
     return factor;
 }
-
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS

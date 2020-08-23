@@ -17,12 +17,4 @@
 
     // TODO: Fill out RAD module commands. -NR
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-    // RAD extended module commands
-
-    // TODO: Fill out extended RAD module commands. -NR
-
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-#endif // /#ifndef LeptonFLiR_RAD_H
+#endif // /ifndef LeptonFLiR_RAD_H

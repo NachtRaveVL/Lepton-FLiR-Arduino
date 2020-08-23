@@ -30,20 +30,17 @@
 
 // Library Setup
 
-// NOTE: It is recommended to avoid editing library files directly and instead use custom
-// build flags. While most custom build systems support such, the Arduino IDE does not.
-// Be aware that editing this file directly will affect all projects using this library.
+// NOTE: While editing the main header file isn't ideal, it is often the easiest given
+// the Arduino IDE's limited custom build flag support. Editing this header file directly
+// will affect all projects compiled on your system using these library files.
 
-// Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
+// Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 
-// Uncomment this define to disable usage of the Scheduler library on SAM/SAMD architecures.
+// Uncomment or -D this define to disable usage of the Scheduler library on SAM/SAMD architecures.
 //#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
 
-// Uncomment this define if wanting to exclude extended i2c functions from compilation.
-//#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-// Uncomment this define to enable debug output.
+// Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 // Hookup Callout: SPI Data Line
@@ -99,8 +96,8 @@ public:
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
-    // Boards with more than one i2c line (e.g. Due/Zero/etc.) may use a different Wire
-    // instance, such as Wire1 (which uses SDA1/SCL1 pins), Wire2 (SDA2/SCL2), etc.
+    // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
+    // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
@@ -199,4 +196,4 @@ protected:
 #undef LEPFLIR_IN_PROTECTED
 };
 
-#endif // /#ifndef LeptonFLiR_H
+#endif // /ifndef LeptonFLiR_H

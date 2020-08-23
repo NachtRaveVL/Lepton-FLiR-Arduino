@@ -99,6 +99,6 @@
     static uint16_t fahrenheitToKelvin100(float fahrenheit);
     static uint16_t kelvinToKelvin100(float kelvin);
 
-#endif // /#ifdef LEPFLIR_IN_PROTECTED
+#endif // /ifdef LEPFLIR_IN_PROTECTED
 
-#endif // /#ifndef LeptonFLiR_Protected_H
+#endif // /ifndef LeptonFLiR_Protected_H

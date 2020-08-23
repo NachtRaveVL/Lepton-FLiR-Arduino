@@ -32,10 +32,6 @@
 
     // TODO: Check to make sure we have all the VID module commands up to v3.5. -NR
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-    // VID extended module commands
-
     void vid_setUserColorLUT(LEP_VID_LUT_BUFFER *mode); // These two methods may not work as intended, possibly leaving the I2C bus on the
     void vid_getUserColorLUT(LEP_VID_LUT_BUFFER *mode); // FLiR in a non-responding state. A full power cycle may be needed to reset.
 
@@ -53,6 +49,4 @@
     void vid_setGamma(uint32_t gamma); // def:58
     uint32_t vid_getGamma();
 
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-#endif // /#ifndef LeptonFLiR_VID_H
+#endif // /ifndef LeptonFLiR_VID_H

@@ -45,4 +45,4 @@
     uint8_t i2cWire_read(void);
     uint16_t i2cWire_read16(void);
 
-#endif // /#ifndef LeptonFLiR_Wire_H
+#endif // /ifndef LeptonFLiR_Wire_H

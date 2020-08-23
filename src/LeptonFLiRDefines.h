@@ -146,4 +146,4 @@ union LeptonFLiR_PixelData {
     } pclut;
 };
 
-#endif // /#ifndef LeptonFLiRDefines_H
+#endif // /ifndef LeptonFLiRDefines_H

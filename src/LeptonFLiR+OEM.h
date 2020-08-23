@@ -17,12 +17,4 @@
 
     // TODO: Fill out OEM module commands. -NR
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-    // OEM extended module commands
-
-    // TODO: Fill out extended OEM module commands. -NR
-
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-#endif // /#ifndef LeptonFLiR_OEM_H
+#endif // /ifndef LeptonFLiR_OEM_H

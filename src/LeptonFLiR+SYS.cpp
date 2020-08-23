@@ -117,8 +117,6 @@ void LeptonFLiR::sys_runFFCNormalization() {
     sendCommand(cmdCode(LEP_CID_SYS_RUN_FFC, LEP_I2C_COMMAND_TYPE_RUN));
 }
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
 void LeptonFLiR::sys_runPingCamera() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.println("LeptonFLiR::sys_runPingCamera");
@@ -240,5 +238,3 @@ LEP_SYS_FFC_STATUS LeptonFLiR::sys_getFFCNormalizationStatus() {
     receiveCommand(cmdCode(LEP_CID_SYS_FFC_STATUS, LEP_I2C_COMMAND_TYPE_GET), &status);
     return (LEP_SYS_FFC_STATUS)status;
 }
-
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS

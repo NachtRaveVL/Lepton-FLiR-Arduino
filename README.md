@@ -49,22 +49,25 @@ Note<sup>1</sup>: Arduino Due allows for non-power-of-2 clock divisors.
 
 ## Library Setup
 
+### Installation
+
+The easiest way to install this library is to utilize the Arduino IDE library manager, or through a package manager such as PlatformIO. Otherwise, simply download this library and extract its files into a `Lepton-FLiR-Arduino` folder in your Arduino custom libraries folder, typically found in your `[My ]Documents\Arduino\libraries` folder (Windows), or `~/Documents/Arduino/libraries/` folder (Linux/OSX).
+
 ### Header Defines
+ 
+There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them via custom build flags. While editing the main header file isn't ideal, it is often the easiest given the Arduino IDE's limited custom build flag support. Note that editing the library's main header file directly will affect all projects compiled on your system using those modified library files.
 
-There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them as a compilation flag via custom build system. While editing the main header file isn't the most ideal, it is often the easiest way when using the Arduino IDE, as it doesn't support custom build flags. Be aware that editing this header file directly will affect all projects on your system using this library.
+Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform.[local.]txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files.
 
-In LeptonFLiR.h:
+From LeptonFLiR.h:
 ```Arduino
-// Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
+// Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 
-// Uncomment this define to disable usage of the Scheduler library on SAM/SAMD architecures.
+// Uncomment or -D this define to disable usage of the Scheduler library on SAM/SAMD architecures.
 //#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
 
-// Uncomment this define if wanting to exclude extended i2c functions from compilation.
-//#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-// Uncomment this define to enable debug output.
+// Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
@@ -80,8 +83,8 @@ From LeptonFLiR.h, in class LeptonFLiR, when in hardware i2c mode:
 ```Arduino
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
-    // Boards with more than one i2c line (e.g. Due/Zero/etc.) may use a different Wire
-    // instance, such as Wire1 (which uses SDA1/SCL1 pins), Wire2 (SDA2/SCL2), etc.
+    // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
+    // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
@@ -152,16 +155,6 @@ The various ways in which image data is stored, and thus accessed, is based on t
 
 Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transfering the image data out of the storage buffers requires special handling. Image row data must be accessed via the supplied library functions, largely since SPI packet data may arrive out-of-order. In 160x120 frame size mode (Lepton v3+), rows are split into two sections and which section being accessed must be specified. _Future versions of this library will provide a more robust way of supporting final image access, as well as support for Lepton v3+ running 160x120 frame size mode._
 
-### Extended Functions
-
-This library has an extended list of functionality for those who care to dive into such, but isn't always particularly the most useful for various general use cases. If one uncomments the line below inside the main header file (or defines it via custom build flag), this extended functionality can be manually compiled-out. Alternatively, if using a custom build system, it is recommended to instead use a standard code stripper on the produced binary.
-
-In LeptonFLiR.h:
-```Arduino
-// Uncomment this define if wanting to exclude extended i2c functions from compilation.
-#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-```
-
 ## Example Usage
 
 Below are several examples of library usage.
@@ -176,7 +169,7 @@ Below are several examples of library usage.
 
 In this example, we will utilize various features of the library.
 
-We will be using Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
+We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Mega/etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 ```Arduino
 // TODO: Reinclude this example after modifications completed. -NR
@@ -194,14 +187,18 @@ Note that you will need a MicroSD card reader module for this example to work. B
 
 ### Software i2c Example
 
-In this example, we utilize the software i2c library for chips that do not have a hardware i2c bus.
+In this example, we utilize a popular software i2c library for chips that do not have a hardware i2c bus. This library can be found at <http://playground.arduino.cc/Main/SoftwareI2CLibrary>.
 
-If one uncomments the line below inside the main header file (or defines it via custom build flag), software i2c mode for the library will be enabled.
+If one uncomments the line below inside the main header file (or defines it via custom build flag), software i2c mode for the library will be enabled. Additionally, you will need to correctly define SCL_PIN, SCL_PORT, SDA_PIN, and SDA_PORT according to your setup. I2C_FASTMODE=1 should be set for 16MHz+ processors. Lastly note that, while in software i2c mode, the clock speed returned by the library (via `getI2CSpeed()`) is only an upper bound and may not represent the actual i2c clock speed set nor achieved.
 
 In LeptonFLiR.h:
 ```Arduino
-// Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+// Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
+#define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+```  
+Alternatively, in platform.[local.]txt:
+```Arduino
+build.extra_flags=-DLEPFLIR_ENABLE_SOFTWARE_I2C
 ```
 
 In main sketch:
@@ -217,8 +214,12 @@ If one uncomments the line below inside the main header file (or defines it via 
 
 In LeptonFLiR.h:
 ```Arduino
-// Uncomment this define to enable debug output.
+// Uncomment or -D this define to enable debug output.
 #define LEPFLIR_ENABLE_DEBUG_OUTPUT
+```  
+Alternatively, in platform.[local.]txt:
+```Arduino
+build.extra_flags=-DLEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
 In main sketch:

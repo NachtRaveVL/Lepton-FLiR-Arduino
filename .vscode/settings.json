@@ -19,6 +19,8 @@
         "xlocnum": "cpp",
         "xloctime": "cpp",
         "algorithm": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "atomic": "cpp",
+        "charconv": "cpp"
     }
 }

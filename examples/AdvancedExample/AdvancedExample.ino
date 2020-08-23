@@ -1,7 +1,7 @@
 // Lepton-FLiR-Arduino Advanced Example
 // In this example, we will utilize various features of the library. We will be using
-// Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, etc.) - change to
-// Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library,
+// Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Mega/etc.) - change
+// to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library,
 // available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 #include "LeptonFLiR.h"

@@ -502,7 +502,7 @@ void LeptonFLiR::checkForErrors() {
     }
 }
 
-#endif // /#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+#endif // /ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 static inline void byteToHexString(byte value, char *buffer) {
     byte highNibble = value / 16;

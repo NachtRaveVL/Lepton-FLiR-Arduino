@@ -17,4 +17,4 @@
     static void SPI_transfer16(uint16_t *buffer, int count);
     static void SPI_ignore16(int count);
 
-#endif // /#ifndef LeptonFLiR_SPI_H
+#endif // /ifndef LeptonFLiR_SPI_H

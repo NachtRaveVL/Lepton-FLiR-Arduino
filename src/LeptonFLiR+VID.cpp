@@ -95,8 +95,6 @@ LEP_VID_VIDEO_OUTPUT_FORMAT LeptonFLiR::vid_getOutputFormat() {
     return (LEP_VID_VIDEO_OUTPUT_FORMAT)format;
 }
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
 void LeptonFLiR::vid_setUserColorLUT(LEP_VID_LUT_BUFFER *table) {
     if (!table) return;
 
@@ -200,5 +198,3 @@ uint32_t LeptonFLiR::vid_getGamma() {
     receiveCommand(cmdCode(LEP_CID_VID_GAMMA_SELECT, LEP_I2C_COMMAND_TYPE_GET), &gamma);
     return gamma;
 }
-
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS

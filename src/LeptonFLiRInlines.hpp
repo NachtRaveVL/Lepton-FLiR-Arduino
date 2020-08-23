@@ -22,4 +22,4 @@ static inline void delayTimeout(int timeout) {
 #endif
 }
 
-#endif // /#ifndef LeptonFLiRInlines_HPP
+#endif // /ifndef LeptonFLiRInlines_HPP

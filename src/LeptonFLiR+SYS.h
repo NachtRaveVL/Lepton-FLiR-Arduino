@@ -34,10 +34,6 @@
 
     // TODO: Check to make sure we have all the SYS module commands up to v3.5. -NR
 
-#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-    // SYS extended module commands
-
     void sys_runPingCamera(); // return put into lastLepResult
 
     void sys_runFrameAveraging();
@@ -60,6 +56,4 @@
 
     LEP_SYS_FFC_STATUS sys_getFFCNormalizationStatus(); // def:LEP_SYS_FFC_STATUS_READY
 
-#endif // /#ifndef LEPFLIR_EXCLUDE_EXT_I2C_FUNCS
-
-#endif // /#ifndef LeptonFLiR_SYS_H
+#endif // /ifndef LeptonFLiR_SYS_H
