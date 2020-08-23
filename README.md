@@ -14,7 +14,7 @@ Created by NachtRaveVL, August 1st, 2016.
 
 This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
-Dependencies include Scheduler if on a ARM/ARMD architecture (Due, Zero, etc.), but usage can be disabled via library setup header defines.
+Dependencies include Scheduler if on a ARM/ARMD architecture (e.g. Due/Zero/etc.), but usage can be disabled via library setup header defines or custom build flags.
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
@@ -97,9 +97,9 @@ From LeptonFLiR.h, in class LeptonFLiR, when in software i2c mode (see examples 
 ```Arduino
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
-    // Minimum supported i2c clock speed is 100kHz, which means minimum supported processor
-    // speed is 4MHz+ while running i2c standard mode. For 400kHz i2c clock speed, minimum
-    // supported processor speed is 16MHz+ while running i2c fast mode.
+    // Minimum supported i2c clock speed is 100kHz, which sets minimum processor speed at
+    // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minimum
+    // processor speed is 16MHz+ running in i2c fast mode.
     // Supported SPI clock speeds are 2.2MHz(@80x60)/8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 ```
