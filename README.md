@@ -79,7 +79,7 @@ There are several initialization mode settings exposed through this library that
 
 #### Class Instantiation
 
-The library's class object must first be instantiated, commonly at the top of the sketch where pin setups are defined (or exposed through some other mechanism), which makes a call to the library's class constructor. The constructor allows one to set the module's SPI CS pin, ISR VSync pin, i2c Wire class instance, and i2c clock speed (the last two of which being ommitted when in software i2c mode). The default constructor values of the library, if left unspecified, is SPI CS pin `D10`, ISR VSync pin `DISABLED`, and i2c Wire class instance `Wire` @`400k`Hz.
+The library's class object must first be instantiated, commonly at the top of the sketch where pin setups are defined (or exposed through some other mechanism), which makes a call to the library's class constructor. The constructor allows one to set the module's SPI CS pin, ISR VSync pin, i2c Wire class instance, if on Espressif then i2c SDA pin and i2c SCL pin, and lastly i2c clock speed (the i2c parameters being ommitted when in software i2c mode). The default constructor values of the library, if left unspecified, is SPI CS pin `D10`, ISR VSync pin `DISABLED`, i2c Wire class instance `Wire` @`400k`Hz, and if on Espressif then i2c SDA pin `D21` and i2c SCL pin `D22` (ESP32[-S] defaults).
 
 From LeptonFLiR.h, in class LeptonFLiR, when in hardware i2c mode:
 ```Arduino
@@ -87,12 +87,21 @@ From LeptonFLiR.h, in class LeptonFLiR, when in hardware i2c mode:
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
     // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
     // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
+    // On Espressif, may supply i2c SDA pin and i2c SCL pin (for begin(...) call).
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
-    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
+    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire,
+#ifdef ESP_PLATFORM
+        byte i2cSDAPin = 21, byte i2cSCLPin = 22
+#endif
+        uint32_t i2cSpeed = 400000);
 
     // Convenience constructor for custom Wire instance. See main constructor.
-    LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+    LeptonFLiR(TwoWire& i2cWire,
+#ifdef ESP_PLATFORM
+        byte i2cSDAPin = 21, byte i2cSCLPin = 22,
+#endif
+        uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 ```
 
 From LeptonFLiR.h, in class LeptonFLiR, when in software i2c mode (see examples for sample usage):

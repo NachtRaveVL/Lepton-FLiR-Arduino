@@ -427,11 +427,15 @@ void LeptonFLiR::i2cWire_begin() {
     LeptonFLiR::_i2cBegan = true;
     _lastI2CError = 0;
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
+#ifndef ESP_PLATFORM
     _i2cWire->begin();
     _i2cWire->setClock(getI2CSpeed());
 #else
+    _i2cWire->begin(getI2CSDAPin(), getI2CSCLPin(), getI2CSpeed());
+#endif // /ifndef ESP_PLATFORM
+#else
     if (!i2c_init()) _lastI2CError = 4;
-#endif
+#endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
 }
 
 void LeptonFLiR::i2cWire_beginTransmission(uint8_t addr) {

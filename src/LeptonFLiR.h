@@ -93,19 +93,27 @@
 
 class LeptonFLiR {
 public:
-
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
 
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
     // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
     // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
+    // On Espressif, may supply i2c SDA pin and i2c SCL pin (for begin(...) call).
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
-    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
+    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire,
+#ifdef ESP_PLATFORM
+        byte i2cSDAPin = 21, byte i2cSCLPin = 22
+#endif
+        uint32_t i2cSpeed = 400000);
 
     // Convenience constructor for custom Wire instance. See main constructor.
-    LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+    LeptonFLiR(TwoWire& i2cWire,
+#ifdef ESP_PLATFORM
+        byte i2cSDAPin = 21, byte i2cSCLPin = 22,
+#endif
+        uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 
 #else
 
@@ -127,6 +135,10 @@ public:
     // Mode accessors
     byte getChipSelectPin();                                // CS pin
     byte getISRVSyncPin();                                  // ISR VSync pin
+#if defined(ESP_PLATFORM) && !defined(LEPFLIR_USE_SOFTWARE_I2C)
+    byte getI2CSDAPin();
+    byte getI2CSCLPin();
+#endif
     uint32_t getI2CSpeed();                                 // i2c clock speed (Hz)
     LeptonFLiR_CameraType getCameraType();                  // Lepton camera type
     LeptonFLiR_TemperatureMode getTemperatureMode();        // Temperature mode

@@ -15,9 +15,17 @@ static void csDisableFuncDef(byte pin) { digitalWriteFast(pin, HIGH); }
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
 
-LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32_t i2cSpeed)
+LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire,
+#ifdef ESP_PLATFORM
+    byte i2cSDAPin, byte i2cSCLPin,
+#endif
+    uint32_t i2cSpeed)
     : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
-      _i2cWire(&i2cWire), _i2cSpeed(i2cSpeed),
+      _i2cWire(&i2cWire),
+#ifdef ESP_PLATFORM
+      _i2cSDAPin(i2cSDAPin), _i2cSCLPin(i2cSCLPin),
+#endif
+      _i2cSpeed(i2cSpeed),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
@@ -31,9 +39,17 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32
       _lastI2CError(0), _lastLepResult(0)
 { }
 
-LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte isrVSyncPin)
+LeptonFLiR::LeptonFLiR(TwoWire& i2cWire,
+#ifdef ESP_PLATFORM
+    byte i2cSDAPin, byte i2cSCLPin,
+#endif
+    uint32_t i2cSpeed, byte spiCSPin, byte isrVSyncPin)
     : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
-      _i2cWire(&i2cWire), _i2cSpeed(i2cSpeed),
+      _i2cWire(&i2cWire),
+#ifdef ESP_PLATFORM
+      _i2cSDAPin(i2cSDAPin), _i2cSCLPin(i2cSCLPin),
+#endif
+      _i2cSpeed(i2cSpeed),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
@@ -98,10 +114,14 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
         Serial.print("<disabled>");
     Serial.print(", i2cWire#: ");
     Serial.print(getWireInterfaceNumber());
-#ifndef LEPFLIR_USE_SOFTWARE_I2C
+#if defined(ESP_PLATFORM) && !defined(LEPFLIR_USE_SOFTWARE_I2C)
+    Serial.print(", i2cSDAPin: ");
+    Serial.print(getI2CSDAPin());
+    Serial.print(", i2cSCLPin: ");
+    Serial.print(getI2CSCLPin());
+#endif
     Serial.print(", i2cSpeed: ");
     Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.print("kHz");
-#endif
     Serial.print(", spiSpeed: ");
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
     Serial.print("MHz (SPI_CLOCK_DIV"); Serial.print(spiDivisor); Serial.print(")");
@@ -138,6 +158,18 @@ byte LeptonFLiR::getChipSelectPin() {
 byte LeptonFLiR::getISRVSyncPin() {
     return _isrVSyncPin;
 }
+
+#if defined(ESP_PLATFORM) && !defined(LEPFLIR_USE_SOFTWARE_I2C)
+
+byte LeptonFLiR::getI2CSDAPin() {
+    return _i2cSDAPin;
+}
+
+byte LeptonFLiR::getI2CSCLPin() {
+    return _i2cSCLPin;
+}
+
+#endif // /if defined(ESP_PLATFORM) && !defined(LEPFLIR_USE_SOFTWARE_I2C)
 
 uint32_t LeptonFLiR::getI2CSpeed() {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C

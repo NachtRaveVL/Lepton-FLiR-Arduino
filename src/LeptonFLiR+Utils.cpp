@@ -122,6 +122,12 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("i2c Instance:");
     Serial.println(textForWireInterfaceNumber(getWireInterfaceNumber()));
+#if defined(ESP_PLATFORM) && !defined(LEPFLIR_USE_SOFTWARE_I2C)
+    Serial.println("i2c SDA Pin:");
+    Serial.print("D"); Serial.println(getI2CSDAPin());
+    Serial.println("i2c SCL Pin:");
+    Serial.print("D"); Serial.println(getI2CSCLPin());
+#endif
     Serial.println("i2c Speed:");
     Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.println("kHz");
 
