@@ -48,7 +48,7 @@
 // The recommended VCC power supply and logic level is 3.3v. The two issolated power pins
 // on the side of the FLiR v1.4 and v2 breakouts can safely be left disconnected. Make
 // sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS)
-// correctly. Teensy 3.x uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32(-S)
+// correctly. Teensy 3.x uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32[-S]
 // uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS. The module's MOSI line is optional and
 // can simply be grounded since the module only uses SPI for slave-out data transfers
 // (slave-in data transfers being ignored). The SS pin may be any digital output pin,

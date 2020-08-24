@@ -142,7 +142,7 @@ enum LeptonFLiR_TemperatureMode {
 
 ### SPI Data Line
 
-* Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32X uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS.
+* Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32[-S] uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS.
 * The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored).
 * The SS pin may be any digital output pin, with usage being active-low.
 * The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
