@@ -167,6 +167,7 @@ void LeptonFLiR::setFastCSFuncs(digitalWriteFunc csEnableFunc, digitalWriteFunc 
 int LeptonFLiR::getImageWidth() {
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
+        case LeptonFLiR_CameraType_Lepton1_5:
         case LeptonFLiR_CameraType_Lepton1_6:
         case LeptonFLiR_CameraType_Lepton2:
         case LeptonFLiR_CameraType_Lepton2_5:
@@ -182,6 +183,7 @@ int LeptonFLiR::getImageWidth() {
 int LeptonFLiR::getImageHeight() {
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
+        case LeptonFLiR_CameraType_Lepton1_5:
         case LeptonFLiR_CameraType_Lepton1_6:
         case LeptonFLiR_CameraType_Lepton2:
         case LeptonFLiR_CameraType_Lepton2_5:

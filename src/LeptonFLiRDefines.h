@@ -25,6 +25,7 @@
 
 enum LeptonFLiR_CameraType {
     LeptonFLiR_CameraType_Lepton1,              // Lepton v1 camera, running at 80x60
+    LeptonFLiR_CameraType_Lepton1_5,            // Lepton v1.5 camera, running at 80x60
     LeptonFLiR_CameraType_Lepton1_6,            // Lepton v1.6 camera, running at 80x60
     LeptonFLiR_CameraType_Lepton2,              // Lepton v2 camera, running at 80x60
     LeptonFLiR_CameraType_Lepton2_5,            // Lepton v2.5 camera, running at 80x60

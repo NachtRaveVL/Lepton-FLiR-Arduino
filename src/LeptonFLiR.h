@@ -95,6 +95,7 @@ class LeptonFLiR {
 public:
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
+
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
     // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
@@ -105,7 +106,9 @@ public:
 
     // Convenience constructor for custom Wire instance. See main constructor.
     LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+
 #else
+
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
     // Minimum supported i2c clock speed is 100kHz, which sets minimum processor speed at
@@ -113,6 +116,7 @@ public:
     // processor speed is 16MHz+ running in i2c fast mode.
     // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
     LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+
 #endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
     ~LeptonFLiR();
 

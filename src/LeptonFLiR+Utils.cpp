@@ -57,6 +57,7 @@ LEP_RESULT LeptonFLiR::getLastLepResult() {
 float LeptonFLiR::getCameraVersion() {
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1: return 1.0f;
+        case LeptonFLiR_CameraType_Lepton1_5: return 1.5f;
         case LeptonFLiR_CameraType_Lepton1_6: return 1.6f;
         case LeptonFLiR_CameraType_Lepton2: return 2.0f;
         case LeptonFLiR_CameraType_Lepton2_5: return 2.5f;
@@ -142,6 +143,8 @@ void LeptonFLiR::printModuleInfo() {
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
             Serial.println("LeptonFLiR_CameraType_Lepton1"); break;
+        case LeptonFLiR_CameraType_Lepton1_5:
+            Serial.println("LeptonFLiR_CameraType_Lepton1_5"); break;
         case LeptonFLiR_CameraType_Lepton1_6:
             Serial.println("LeptonFLiR_CameraType_Lepton1_6"); break;
         case LeptonFLiR_CameraType_Lepton2:
