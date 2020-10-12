@@ -21,6 +21,11 @@
         "algorithm": "cpp",
         "regex": "cpp",
         "atomic": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "valarray": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "associative_base": "cpp",
+        "serstream": "cpp"
     }
 }

@@ -59,7 +59,7 @@ The easiest way to install this library is to utilize the Arduino IDE library ma
  
 There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them via custom build flags. While editing the main header file isn't ideal, it is often the easiest given the Arduino IDE's limited custom build flag support. Note that editing the library's main header file directly will affect all projects compiled on your system using those modified library files.
 
-Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform.[local.]txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files.
+Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform[.local].txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files.
 
 From LeptonFLiR.h:
 ```Arduino
@@ -87,21 +87,12 @@ From LeptonFLiR.h, in class LeptonFLiR, when in hardware i2c mode:
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
     // Boards with more than one i2c line (e.g. Due/Mega/etc.) can supply a different
     // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
-    // On Espressif, may supply i2c SDA pin and i2c SCL pin (for begin(...) call).
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
-    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire,
-#ifdef ESP_PLATFORM
-        byte i2cSDAPin = 21, byte i2cSCLPin = 22
-#endif
-        uint32_t i2cSpeed = 400000);
+    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
 
     // Convenience constructor for custom Wire instance. See main constructor.
-    LeptonFLiR(TwoWire& i2cWire,
-#ifdef ESP_PLATFORM
-        byte i2cSDAPin = 21, byte i2cSCLPin = 22,
-#endif
-        uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+    LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
 ```
 
 From LeptonFLiR.h, in class LeptonFLiR, when in software i2c mode (see examples for sample usage):
@@ -117,11 +108,11 @@ From LeptonFLiR.h, in class LeptonFLiR, when in software i2c mode (see examples 
 
 #### Device Initialization
 
-Additionally, a call is expected to be provided to the library class object's `init(...)` method, commonly called inside of the sketch's `setup()` function. This allows one to set the module's hardware camera type and temperature display mode. This method also begins the supplied Wire and SPI instances. The module's hardware camera type must be explicitly provided. The remaining default init values of the library, if left unspecified, is `LeptonFLiR_TemperatureMode_Celsius`.
+Additionally, a call is expected to be provided to the library class object's `init(...)` method, commonly called inside of the sketch's `setup()` function. This allows one to set the module's hardware camera type and temperature display mode. The module's hardware camera type must be explicitly provided. The remaining default init values of the library, if left unspecified, is `LeptonFLiR_TemperatureMode_Celsius`.
 
 From LeptonFLiR.h, in class LeptonFLiR:
 ```Arduino
-    // Initializes module, also begins Wire/SPI instances. Typically called in setup().
+    // Initializes module. Typically called in setup().
     // See individual enums for more info.
     void init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMode tempMode = LeptonFLiR_TemperatureMode_Celsius);
 ```
@@ -216,7 +207,7 @@ In LeptonFLiR.h:
 // Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
 #define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 ```  
-Alternatively, in platform.[local.]txt:
+Alternatively, in platform[.local].txt:
 ```Arduino
 build.extra_flags=-DLEPFLIR_ENABLE_SOFTWARE_I2C
 ```
@@ -237,7 +228,7 @@ In LeptonFLiR.h:
 // Uncomment or -D this define to enable debug output.
 #define LEPFLIR_ENABLE_DEBUG_OUTPUT
 ```  
-Alternatively, in platform.[local.]txt:
+Alternatively, in platform[.local].txt:
 ```Arduino
 build.extra_flags=-DLEPFLIR_ENABLE_DEBUG_OUTPUT
 ```

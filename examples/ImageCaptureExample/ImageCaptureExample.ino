@@ -13,11 +13,18 @@ LeptonFLiR flirController(flirCSPin);   // Library using chip select pin D22, an
 const byte cardCSPin = 24;
 
 void setup() {
-    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial and SD
+    Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us
+    SPI.begin(flirController.getChipSelectPin());
+#else
+    SPI.begin();
+#endif
+    Wire.begin();
 
     SD.begin(cardCSPin);                // SD library using chip select pin D24
 
-    // Initializes module using Lepton v1 camera, fahrenheit temperature mode, and also begins Wire/SPI
+    // Initializes module using Lepton v1 camera, and fahrenheit temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
     flirController.init(LeptonFLiR_CameraType_Lepton1,
                         LeptonFLiR_TemperatureMode_Fahrenheit);

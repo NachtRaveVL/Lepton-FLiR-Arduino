@@ -15,12 +15,19 @@ static void fastEnableCS(byte pin) { digitalWriteFast(pin, LOW); }
 static void fastDisableCS(byte pin) { digitalWriteFast(pin, HIGH); }
 
 void setup() {
-    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial
+    Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us
+    SPI.begin(flirController.getChipSelectPin());
+#else
+    SPI.begin();
+#endif
+    Wire.begin();
 
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
 
-    // Initializes module using Lepton v1 camera, default celsius temperature mode, and also begins Wire/SPI
+    // Initializes module using Lepton v1 camera, and default celsius temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
     flirController.init(LeptonFLiR_CameraType_Lepton1);
 

@@ -1,5 +1,5 @@
 /*  Arduino Library for the Lepton FLiR Thermal Camera Module.
-    Copyright (c) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
+    Copyright (C) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
     LeptonFLiR / Utilities
 */
 
@@ -122,12 +122,6 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println("i2c Instance:");
     Serial.println(textForWireInterfaceNumber(getWireInterfaceNumber()));
-#if defined(ESP_PLATFORM) && !defined(LEPFLIR_USE_SOFTWARE_I2C)
-    Serial.println("i2c SDA Pin:");
-    Serial.print("D"); Serial.println(getI2CSDAPin());
-    Serial.println("i2c SCL Pin:");
-    Serial.print("D"); Serial.println(getI2CSCLPin());
-#endif
     Serial.println("i2c Speed:");
     Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.println("kHz");
 

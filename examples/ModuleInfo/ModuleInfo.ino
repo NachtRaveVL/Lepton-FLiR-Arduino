@@ -7,13 +7,13 @@
 // current settings, etc. Additionally, all library calls being made will display
 // internal debug information about the structure of the call itself. You may refer to
 // https://forum.arduino.cc/index.php?topic=602603.0 on how to define custom build flags
-// manually via modifying platform.[local.]txt.
+// manually via modifying platform[.local].txt.
 //
 // In LeptonFLiR.h:
 // // Uncomment or -D this define to enable debug output.
 // #define LEPFLIR_ENABLE_DEBUG_OUTPUT
 //
-// Alternatively, in platform.[local.]txt:
+// Alternatively, in platform[.local].txt:
 // build.extra_flags=-DLEPFLIR_ENABLE_DEBUG_OUTPUT
 
 #include "LeptonFLiR.h"
@@ -21,9 +21,16 @@
 LeptonFLiR flirController;              // Library using default chip select pin D10, and default Wire @400kHz
 
 void setup() {
-    Serial.begin(115200);               // Library will begin Wire/SPI, so we just need to begin Serial
+    Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us
+    SPI.begin(flirController.getChipSelectPin());
+#else
+    SPI.begin();
+#endif
+    Wire.begin();
 
-    // Initializes module using Lepton v1 camera, default celsius temperature mode, and also begins Wire/SPI
+    // Initializes module using Lepton v1 camera, and default celsius temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
     flirController.init(LeptonFLiR_CameraType_Lepton1);
 

@@ -1,5 +1,5 @@
 /*  Arduino Library for the Lepton FLiR Thermal Camera Module.
-    Copyright (c) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
+    Copyright (C) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
     LeptonFLiR / Protected Members
 */
 

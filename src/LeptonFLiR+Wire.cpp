@@ -1,11 +1,17 @@
 /*  Arduino Library for the Lepton FLiR Thermal Camera Module.
-    Copyright (c) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
+    Copyright (C) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
     LeptonFLiR / i2c Communications
 */
 
 #include "LeptonFLiR.h"
 
-bool LeptonFLiR::_i2cBegan = false;
+#ifdef LEPFLIR_USE_SOFTWARE_I2C
+boolean __attribute__((noinline)) i2c_init(void);
+bool __attribute__((noinline)) i2c_start(uint8_t addr);
+void __attribute__((noinline)) i2c_stop(void) asm("ass_i2c_stop");
+bool __attribute__((noinline)) i2c_write(uint8_t value) asm("ass_i2c_write");
+uint8_t __attribute__((noinline)) i2c_read(bool last);
+#endif
 
 bool LeptonFLiR::waitCommandBegin(int timeout) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -414,28 +420,11 @@ int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
     return _lastI2CError;
 }
 
-#ifdef LEPFLIR_USE_SOFTWARE_I2C
-boolean __attribute__((noinline)) i2c_init(void);
-bool __attribute__((noinline)) i2c_start(uint8_t addr);
-void __attribute__((noinline)) i2c_stop(void) asm("ass_i2c_stop");
-bool __attribute__((noinline)) i2c_write(uint8_t value) asm("ass_i2c_write");
-uint8_t __attribute__((noinline)) i2c_read(bool last);
-#endif
-
 void LeptonFLiR::i2cWire_begin() {
-    if (LeptonFLiR::_i2cBegan) return;
-    LeptonFLiR::_i2cBegan = true;
     _lastI2CError = 0;
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
-#ifndef ESP_PLATFORM
-    _i2cWire->begin();
     _i2cWire->setClock(getI2CSpeed());
-#else
-    _i2cWire->begin(getI2CSDAPin(), getI2CSCLPin(), getI2CSpeed());
-#endif // /ifndef ESP_PLATFORM
-#else
-    if (!i2c_init()) _lastI2CError = 4;
-#endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
+#endif
 }
 
 void LeptonFLiR::i2cWire_beginTransmission(uint8_t addr) {
@@ -458,7 +447,7 @@ uint8_t LeptonFLiR::i2cWire_endTransmission(void) {
 
 uint8_t LeptonFLiR::i2cWire_requestFrom(uint8_t addr, uint8_t len) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
-    return _i2cWire->requestFrom(addr, len);
+    return _i2cWire->requestFrom(addr, (size_t)len);
 #else
     i2c_start(addr | 0x01);
     return (_readBytes = len);

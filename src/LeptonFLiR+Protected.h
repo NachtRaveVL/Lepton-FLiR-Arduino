@@ -1,5 +1,5 @@
 /*  Arduino Library for the Lepton FLiR Thermal Camera Module.
-    Copyright (c) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
+    Copyright (C) 2016-2020 NachtRaveVL     <nachtravevl@gmail.com>
     LeptonFLiR / Protected Members
 */
 #ifndef LeptonFLiR_Protected_H
@@ -36,10 +36,6 @@
     byte _isrVSyncPin;                                      // ISR vsync pin (Lepton FLiR Breakout v2+ only) (default: DISABLED)
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     TwoWire *_i2cWire;                                      // Wire class instance (unowned) (default: Wire)
-#ifdef ESP_PLATFORM
-    byte _i2cSDAPin;                                        // ESP i2c SDA pin (default: 21)
-    byte _i2cSCLPin;                                        // ESP i2c SCL pin (default: 22)
-#endif
     uint32_t _i2cSpeed;                                     // Module's i2c clock speed (default: 400000)
 #endif
     SPISettings _spiSettings;                               // SPI port settings
