@@ -82,6 +82,7 @@
 #define LEPFLIR_I2C_BUFFER_LENGTH   32
 #endif // /if BUFFER_LENGTH
 #else
+#include <avr/io.h>
 #define LEPFLIR_USE_SOFTWARE_I2C
 #endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 

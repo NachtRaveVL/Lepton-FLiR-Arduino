@@ -98,7 +98,7 @@ static const char *textForWireInterfaceNumber(int wireNum) {
         case 3: return "Wire3";
         case 4: return "Wire4";
         case 5: return "Wire5";
-        default: return "<other>";
+        default: return "<CustomWire>";
     }
 #else
     return "SoftwareI2C";
@@ -110,35 +110,35 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.println(" ~~~ LeptonFLiR Module Info ~~~");
 
-    Serial.println(""); Serial.println("Chip Select Pin:");
+    Serial.println(""); Serial.print("Chip Select Pin: ");
     Serial.print("D"); Serial.print(_spiCSPin);
-    Serial.println(" (active-low)");
-    Serial.println("ISR VSync Pin:");
+    Serial.println(" <active-low>");
+    Serial.print("ISR VSync Pin: ");
     if (_isrVSyncPin != DISABLED) {
         Serial.print("D"); Serial.print(_isrVSyncPin);
-        Serial.println(" (on-rising)");
+        Serial.println(" <on-rising>");
     } else
         Serial.println("<disabled>");
 
-    Serial.println(""); Serial.println("i2c Instance:");
+    Serial.println(""); Serial.print("i2c Instance: ");
     Serial.println(textForWireInterfaceNumber(getWireInterfaceNumber()));
-    Serial.println("i2c Speed:");
+    Serial.print("i2c Speed: ");
     Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.println("kHz");
 
-    Serial.println(""); Serial.println("SPI Speed:");
+    Serial.println(""); Serial.print("SPI Speed: ");
     const int spiDivisor = getSPIClockDivisor();
     const float spiSpeed = F_CPU / (const float)spiDivisor;
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
     Serial.print("MHz (SPI_CLOCK_DIV"); Serial.print(spiDivisor); Serial.print(")");
     if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
-        Serial.print(" (speed too low)");
+        Serial.print(" <speed too slow>");
     else if (spiSpeed > LEPFLIR_SPI_MAX_SPEED + FLT_EPSILON)
-        Serial.print(" (speed too high)");
+        Serial.print(" <speed too high>");
     else if (spiSpeed < LEPFLIR_SPI_OPTIMAL_MIN_SPEED - FLT_EPSILON)
-        Serial.print(" (speed sub-optimal)");
+        Serial.print(" <speed sub-optimal>");
     Serial.println("");
 
-    Serial.println(""); Serial.println("Camera Type:");
+    Serial.println(""); Serial.print("Camera Type: ");
     Serial.print(_cameraType); Serial.print(": ");
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
@@ -155,11 +155,12 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println("LeptonFLiR_CameraType_Lepton3"); break;
         case LeptonFLiR_CameraType_Lepton3_5:
             Serial.println("LeptonFLiR_CameraType_Lepton3_5"); break;
-        default:
+        case LeptonFLiR_CameraType_Count:
+        case LeptonFLiR_CameraType_Undefined:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("Temperature Mode:");
+    Serial.println(""); Serial.print("Temperature Mode: ");
     Serial.print(_tempMode); Serial.print(": ");
     switch (_tempMode) {
         case LeptonFLiR_TemperatureMode_Celsius:
@@ -168,13 +169,14 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println("LeptonFLiR_TemperatureMode_Fahrenheit"); break;
         case LeptonFLiR_TemperatureMode_Kelvin:
             Serial.println("LeptonFLiR_TemperatureMode_Kelvin"); break;
-        default:
+        case LeptonFLiR_TemperatureMode_Count:
+        case LeptonFLiR_TemperatureMode_Undefined:
             Serial.println(""); break;
     }
 
     LeptonFLiR::FrameSettings* nextFrame = getNextFrame();
 
-    Serial.println(""); Serial.println("Image Storage Mode:");
+    Serial.println(""); Serial.print("Image Storage Mode: ");
     LeptonFLiR_ImageMode imageMode = nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
     Serial.print(imageMode); Serial.print(": ");
     switch (imageMode) {
@@ -186,13 +188,12 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println("LeptonFLiR_ImageMode_160x120_24bpp_244Brf"); break;
         case LeptonFLiR_ImageMode_160x120_16bpp_164Brf:
             Serial.println("LeptonFLiR_ImageMode_160x120_16bpp_164Brf"); break;
+        case LeptonFLiR_ImageMode_Count:
         case LeptonFLiR_ImageMode_Undefined:
-            Serial.println("LeptonFLiR_ImageMode_Undefined"); break;
-        default:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("Image Output Mode:");
+    Serial.println(""); Serial.print("Image Output Mode: ");
     LeptonFLiR_ImageOutputMode outputMode = nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined;
     Serial.print(outputMode); Serial.print(": ");
     switch (outputMode) {
@@ -200,11 +201,12 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println("LeptonFLiR_ImageOutputMode_GS8"); break;
         case LeptonFLiR_ImageOutputMode_GS16:
             Serial.println("LeptonFLiR_ImageOutputMode_GS16"); break;
+        case LeptonFLiR_ImageOutputMode_RGB565:
+            Serial.println("LeptonFLiR_ImageOutputMode_RGB565"); break;
         case LeptonFLiR_ImageOutputMode_RGB888:
             Serial.println("LeptonFLiR_ImageOutputMode_RGB888"); break;
+        case LeptonFLiR_ImageOutputMode_Count:
         case LeptonFLiR_ImageOutputMode_Undefined:
-            Serial.println("LeptonFLiR_ImageOutputMode_Undefined"); break;
-        default:
             Serial.println(""); break;
     }
 
@@ -354,10 +356,10 @@ void LeptonFLiR::printModuleInfo() {
     }
 
     Serial.println(""); Serial.println("Vid Focus Calculation Enabled:");
-    Serial.println(vid_getFocusCalcEnabled() ? "enabled" : "disabled");
+    Serial.println(vid_getFocusCalcEnabled() ? "<enabled>" : "<disabled>");
 
     Serial.println(""); Serial.println("Vid Freeze Enabled:");
-    Serial.println(vid_getFreezeEnabled() ? "enabled" : "disabled");
+    Serial.println(vid_getFreezeEnabled() ? "<enabled>" : "<disabled>");
 
     Serial.println(""); Serial.println("Vid Image Output Format:");
     LEP_VID_VIDEO_OUTPUT_FORMAT format = vid_getOutputFormat();

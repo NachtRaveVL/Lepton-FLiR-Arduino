@@ -63,6 +63,7 @@ enum LeptonFLiR_ImageMode {
 enum LeptonFLiR_ImageOutputMode {
     LeptonFLiR_ImageOutputMode_GS8,             // 8bpp grayscale image output mode
     LeptonFLiR_ImageOutputMode_GS16,            // 16bpp grayscale image output mode
+    LeptonFLiR_ImageOutputMode_RGB565,          // 16bpp RGB565 image output mode
     LeptonFLiR_ImageOutputMode_RGB888,          // 24bpp RGB888 image output mode
 
     LeptonFLiR_ImageOutputMode_Count,           // Internal use only

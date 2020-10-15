@@ -95,7 +95,7 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     Serial.print(", isrVSyncPin: ");
     if (_isrVSyncPin != DISABLED) {
         Serial.print(_isrVSyncPin);
-        Serial.print(" (on-rising)");
+        Serial.print(" <on-rising>");
     } else
         Serial.print("<disabled>");
     Serial.print(", i2cWire#: ");
@@ -250,6 +250,7 @@ int LeptonFLiR::getImageOutputBpp() {
             return 1;
         case LeptonFLiR_ImageOutputMode_GS16:
             return 2;
+        case LeptonFLiR_ImageOutputMode_RGB565:
         case LeptonFLiR_ImageOutputMode_RGB888:
             return 3;
         default:

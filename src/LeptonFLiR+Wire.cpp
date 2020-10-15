@@ -8,8 +8,8 @@
 #ifdef LEPFLIR_USE_SOFTWARE_I2C
 boolean __attribute__((noinline)) i2c_init(void);
 bool __attribute__((noinline)) i2c_start(uint8_t addr);
-void __attribute__((noinline)) i2c_stop(void) asm("ass_i2c_stop");
-bool __attribute__((noinline)) i2c_write(uint8_t value) asm("ass_i2c_write");
+void __attribute__((noinline)) LEPFLIR_i2c_stop(void) asm("ass_i2c_stop");
+bool __attribute__((noinline)) LEPFLIR_i2c_write(uint8_t value) asm("ass_i2c_write");
 uint8_t __attribute__((noinline)) i2c_read(bool last);
 #endif
 
@@ -440,7 +440,7 @@ uint8_t LeptonFLiR::i2cWire_endTransmission(void) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return (_lastI2CError = _i2cWire->endTransmission());
 #else
-    i2c_stop();
+    LEPFLIR_i2c_stop();
     return (_lastI2CError = 0);
 #endif
 }
@@ -458,7 +458,7 @@ size_t LeptonFLiR::i2cWire_write(uint8_t data) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return _i2cWire->write(data);
 #else
-    return (size_t)i2c_write(data);
+    return (size_t)LEPFLIR_i2c_write(data);
 #endif
 }
 
@@ -466,7 +466,7 @@ size_t LeptonFLiR::i2cWire_write16(uint16_t data) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return _i2cWire->write(highByte(data)) + _i2cWire->write(lowByte(data));
 #else
-    return (size_t)i2c_write(highByte(data)) + (size_t)i2c_write(lowByte(data));
+    return (size_t)LEPFLIR_i2c_write(highByte(data)) + (size_t)LEPFLIR_i2c_write(lowByte(data));
 #endif
 }
 
