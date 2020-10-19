@@ -13,6 +13,7 @@ void setup() {
     SPI.begin();
 #endif
     Wire.begin();
+    Wire.setClock(flirController.getI2CSpeed());
 
     // Initializes module using Lepton v1 camera, and default celsius temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
@@ -20,5 +21,9 @@ void setup() {
 }
 
 void loop() {
-    flirController.tryReadNextFrame();  // Establishes sync, then reads next frame into raw data buffer
+    // Establishes sync, then reads next frame into raw data buffer
+    if (flirController.tryReadNextFrame())
+        Serial.println("Frame read success");
+    else
+        Serial.println("Frame read failure");
 }

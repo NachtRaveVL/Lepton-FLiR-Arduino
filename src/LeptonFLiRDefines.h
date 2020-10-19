@@ -18,10 +18,12 @@
 #define DISABLED                        0x0                 // Disabled define (convenience)
 #endif
 
+
 #define LEPFLIR_GEN_CMD_TIMEOUT         5000                // Timeout for commands to be processed
 #define LEPFLIR_SPI_MAX_SPEED           20000000            // Maximum SPI speed for FLiR module
 #define LEPFLIR_SPI_OPTIMAL_MIN_SPEED   12000000            // Minimum optimal SPI speed for FLiR module
 #define LEPFLIR_SPI_MIN_SPEED           2200000             // Minimum SPI speed for FLiR module
+
 
 enum LeptonFLiR_CameraType {
     LeptonFLiR_CameraType_Lepton1,              // Lepton v1 camera, running at 80x60
@@ -87,6 +89,7 @@ enum LeptonFLiR_TelemetryGainMode {
     LeptonFLiR_TelemetryGainMode_Low,           // Low gain mode
     LeptonFLiR_TelemetryGainMode_Auto           // Auto gain mode (not valid for effGainMode)
 };
+
 
 struct LeptonFLiR_TelemetryData {
     byte revisionMajor;                         // Telemetry major revision #

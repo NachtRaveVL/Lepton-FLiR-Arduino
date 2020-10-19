@@ -5,13 +5,67 @@
 
 #include "LeptonFLiR.h"
 
-#ifndef digitalWriteFast
-static void csEnableFuncDef(byte pin) { digitalWrite(pin, LOW); }
-static void csDisableFuncDef(byte pin) { digitalWrite(pin, HIGH); }
+static void uDigWriteLowFuncDef(byte pin) {
+#ifdef LEPFLIR_USE_DIGITALWRITEFAST
+    digitalWriteFast(pin, LOW);
 #else
-static void csEnableFuncDef(byte pin) { digitalWriteFast(pin, LOW); }
-static void csDisableFuncDef(byte pin) { digitalWriteFast(pin, HIGH); }
+    digitalWrite(pin, LOW);
 #endif
+}
+
+static void uDigWriteHighFuncDef(byte pin) {
+#ifdef LEPFLIR_USE_DIGITALWRITEFAST
+    digitalWriteFast(pin, HIGH);
+#else
+    digitalWrite(pin, HIGH);
+#endif
+}
+
+static void uDelayMillisFuncDef(unsigned int timeout) {
+#ifdef LEPFLIR_USE_SCHEDULER
+    if (timeout > 0) {
+        unsigned long currTime = millis();
+        unsigned long endTime = currTime + (unsigned long)timeout;
+        if (currTime < endTime) { // not overflowing
+            while (millis() < endTime)
+                Scheduler.yield();
+        } else { // overflowing
+            unsigned long begTime = currTime;
+            while (currTime >= begTime || currTime < endTime) {
+                Scheduler.yield();
+                currTime = millis();
+            }
+        }
+    } else
+        Scheduler.yield();
+#else
+    delay(timeout);
+#endif
+}
+
+static void uDelayMicrosFuncDef(unsigned int timeout) {
+#ifdef LEPFLIR_USE_SCHEDULER
+    if (timeout > 1000) {
+        unsigned long currTime = micros();
+        unsigned long endTime = currTime + (unsigned long)timeout;
+        if (currTime < endTime) { // not overflowing
+            while (micros() < endTime)
+                Scheduler.yield();
+        } else { // overflowing
+            unsigned long begTime = currTime;
+            while (currTime >= begTime || currTime < endTime) {
+                Scheduler.yield();
+                currTime = micros();
+            }
+        }
+    } else if (timeout > 0)
+        delayMicroseconds(timeout);
+    else
+        Scheduler.yield();
+#else
+    delayMicroseconds(timeout);
+#endif
+}
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
 
@@ -22,7 +76,8 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
-      _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
+      _uDigWriteLowFunc(uDigWriteLowFuncDef), _uDigWriteHighFunc(uDigWriteLowFuncFuncDef),
+      _uDelayMillisFunc(uDelayMillisFuncDef), _uDelayMicrosFunc(uDelayMicrosFuncDef),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
       _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
       _telemetryOutput(NULL),
@@ -39,7 +94,8 @@ LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte 
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
-      _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
+      _uDigWriteLowFunc(uDigWriteLowFuncDef), _uDigWriteHighFunc(uDigWriteLowFuncFuncDef),
+      _uDelayMillisFunc(uDelayMillisFuncDef), _uDelayMicrosFunc(uDelayMicrosFuncDef),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
       _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
       _telemetryOutput(NULL),
@@ -57,7 +113,8 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
-      _csEnableFunc(csEnableFuncDef), _csDisableFunc(csDisableFuncDef),
+      _uDigWriteLowFunc(uDigWriteLowFuncDef), _uDigWriteHighFunc(uDigWriteLowFuncFuncDef),
+      _uDelayMillisFunc(uDelayMillisFuncDef), _uDelayMicrosFunc(uDelayMicrosFuncDef),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
       _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
       _telemetryOutput(NULL),
@@ -80,8 +137,8 @@ LeptonFLiR::~LeptonFLiR() {
 }
 
 void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMode tempMode) {
-    _cameraType = (LeptonFLiR_CameraType)constrain((int)cameraType, 0, (int)LeptonFLiR_CameraType_Count - 1);
-    _tempMode = (LeptonFLiR_TemperatureMode)constrain((int)tempMode, 0, (int)LeptonFLiR_TemperatureMode_Count - 1);
+    _cameraType = (LeptonFLiR_CameraType)min(max((int)cameraType, 0), (int)LeptonFLiR_CameraType_Count - 1);
+    _tempMode = (LeptonFLiR_TemperatureMode)min(max((int)tempMode, 0), (int)LeptonFLiR_TemperatureMode_Count - 1);
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     const int spiDivisor = getSPIClockDivisor();
@@ -114,15 +171,13 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     Serial.println("");
 #endif
 
-    i2cWire_begin();
-
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
 
 #ifndef __SAM3X8E__ // Arduino Due's SPI library handles its own CS latching
     pinMode(_spiCSPin, OUTPUT);
-    _csDisableFunc(_spiCSPin);
+    _uDigWriteHighFunc(_spiCSPin);
 #endif
 
     if (_isrVSyncPin != DISABLED) {
@@ -158,9 +213,14 @@ LeptonFLiR_TemperatureMode LeptonFLiR::getTemperatureMode() {
     return _tempMode;
 }
 
-void LeptonFLiR::setFastCSFuncs(digitalWriteFunc csEnableFunc, digitalWriteFunc csDisableFunc) {
-    _csEnableFunc = csEnableFunc ? csEnableFunc : csEnableFuncDef;
-    _csDisableFunc = csDisableFunc ? csDisableFunc : csDisableFuncDef;
+void LeptonFLiR::setUserDelayFuncs(UserDelayFunc delayMillisFunc, UserDelayFunc delayMicrosFunc) {
+    _uDelayMillisFunc = delayMillisFunc ? delayMillisFunc : uDelayMillisFuncDef;
+    _uDelayMicrosFunc = delayMicrosFunc ? delayMicrosFunc : uDelayMicrosFuncDef;
+}
+
+void LeptonFLiR::setUserDigitalWriteFuncs(UserDigitalWriteFunc digitalWriteLowFunc, UserDigitalWriteFunc digitalWriteHighFunc) {
+    _uDigWriteLowFunc = digitalWriteLowFunc ? digitalWriteLowFunc : uDigWriteLowFuncDef;
+    _uDigWriteHighFunc = digitalWriteHighFunc ? digitalWriteHighFunc : uDigWriteHighFuncDef;
 }
 
 int LeptonFLiR::getImageWidth() {
@@ -471,11 +531,11 @@ bool LeptonFLiR::tryReadNextFrame() {
 
         SPI.beginTransaction(_spiSettings);
 
-        _csEnableFunc(_spiCSPin);
-        _csDisableFunc(_spiCSPin);
+        _uDigWriteLowFunc(_spiCSPin);
+        _uDigWriteHighFunc(_spiCSPin);
         delayTimeout(185);
 
-        _csEnableFunc(_spiCSPin);
+        _uDigWriteLowFunc(_spiCSPin);
         
         while (currImgRow < imgRows || currTeleRow < teleRows) {
             if (!spiPacketRead) {
@@ -527,9 +587,9 @@ bool LeptonFLiR::tryReadNextFrame() {
 #endif
 
                 if (skipFrame && (currReadRow || framesSkipped)) {
-                    _csDisableFunc(_spiCSPin);
+                    _uDigWriteHighFunc(_spiCSPin);
                     delayTimeout(185);
-                    _csEnableFunc(_spiCSPin);
+                    _uDigWriteLowFunc(_spiCSPin);
                 }
 
                 uint_fast8_t triesLeft = 120;
@@ -551,7 +611,7 @@ bool LeptonFLiR::tryReadNextFrame() {
                                 Serial.println("  LeptonFLiR::tryReadNextFrame Maximum frame skip reached. Aborting.");
 #endif
 
-                                _csDisableFunc(_spiCSPin);
+                                _uDigWriteHighFunc(_spiCSPin);
                                 SPI.endTransaction();
                                 _isReadingNextFrame = false;
                                 return false;
@@ -582,7 +642,7 @@ bool LeptonFLiR::tryReadNextFrame() {
                     Serial.println("  LeptonFLiR::tryReadNextFrame Maximum resync retries reached. Aborting.");
 #endif
 
-                    _csDisableFunc(_spiCSPin);
+                    _uDigWriteHighFunc(_spiCSPin);
                     SPI.endTransaction();
                     _isReadingNextFrame = false;
                     return false;
@@ -599,7 +659,7 @@ bool LeptonFLiR::tryReadNextFrame() {
                     spiFrame = getSPIFrameDataRow(0) + 2;
                     uint_fast8_t size = LEPFLIR_SPI_FRAME_PACKET_SIZE16 - 2;
                     while (size--)
-                        *pxlData++ = (byte)constrain(*spiFrame++, 0, 0x00FF);
+                        *pxlData++ = (byte)min(max(*spiFrame++, 0), 0x00FF);
                 }
                 else {
                     spiFrame = getSPIFrameDataRow(0) + 2;
@@ -630,9 +690,9 @@ bool LeptonFLiR::tryReadNextFrame() {
                         total /= divisor;
 
                         if (imgBpp == 2)
-                            *((uint16_t *)pxlData) = (uint16_t)constrain(total, 0, clamp);
+                            *((uint16_t *)pxlData) = (uint16_t)min(max(total, 0), clamp);
                         else
-                            *((byte *)pxlData) = (byte)constrain(total, 0, clamp);
+                            *((byte *)pxlData) = (byte)min(max(total, 0), clamp);
                         pxlData += imgBpp;
                         spiFrame += spiRows;
                     }

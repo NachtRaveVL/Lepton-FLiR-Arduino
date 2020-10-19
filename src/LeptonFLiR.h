@@ -40,6 +40,9 @@
 // Uncomment or -D this define to disable usage of the Scheduler library on SAM/SAMD architecures.
 //#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
 
+// Uncomment or -D this define to disable usage of the digitalWriteFast library.
+//#define LEPFLIR_DISABLE_DIGITALWRITEFAST        // https://github.com/watterott/Arduino-Libs
+
 // Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 
@@ -71,6 +74,11 @@
 #define LEPFLIR_USE_SCHEDULER
 #endif
 
+#ifndef LEPFLIR_DISABLE_DIGITALWRITEFAST
+#include "digitalWriteFast.h"
+#define LEPFLIR_USE_DIGITALWRITEFAST
+#endif
+
 #ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 #include <Wire.h>
 #if BUFFER_LENGTH
@@ -90,7 +98,6 @@
 
 #include "LeptonFLiRDefines.h"
 #include "LeptonFLiRInlines.hpp"
-
 
 class LeptonFLiR {
 public:
@@ -131,12 +138,22 @@ public:
     LeptonFLiR_CameraType getCameraType();                  // Lepton camera type
     LeptonFLiR_TemperatureMode getTemperatureMode();        // Temperature mode
 
-    // Sets fast enable/disable methods to call when enabling and disabling the SPI chip
-    // select pin (e.g. PORTB |= 0x01, PORTB &= ~0x01, etc.). The function itself depends
-    // on the board and pin used (see also digitalWriteFast library). Enable should set
-    // the pin LOW, and disable should set the pin HIGH (aka active-low).
-    typedef void(*digitalWriteFunc)(byte); // Passes pin number in
-    void setFastCSFuncs(digitalWriteFunc csEnableFunc, digitalWriteFunc csDisableFunc);
+    typedef void(*UserDelayFunc)(unsigned int);             // Passes delay timeout (where 0 indicates inside long blocking call / yield attempt suggested)
+    // Sets user delay functions to call when a delay has to occur for processing to
+    // continue. User functions here can customize what this means - typically it would
+    // mean to call into a thread barrier() or yield() mechanism. Default implementation
+    // simply calls standard delay() and delayMicroseconds(), unless on SAM/SAMD
+    // architectures where Scheduler is available, in which case when timeout > 1ms
+    // Scheduler.yield() is called until timeout expires.
+    void setUserDelayFuncs(UserDelayFunc delayMillisFunc, UserDelayFunc delayMicrosFunc);
+
+    typedef void(*UserDigitalWriteFunc)(byte);              // Passes pin number
+    // Sets user digital write functions to call when a LOW or HIGH value needs written
+    // to any pin. User functions here can customize what this means - typically it would
+    // mean to set/unset a specific bit on the specific direct PORT interface. Default
+    // implementation simply calls standard digitalWrite, unless digitalWriteFast library
+    // is available, in which case digitalWriteFast is called.
+    void setUserDigitalWriteFuncs(UserDigitalWriteFunc digitalWriteLowFunc, UserDigitalWriteFunc digitalWriteHighFunc);
 
     // Image descriptors
     int getImageWidth();                                    // Image pixel width

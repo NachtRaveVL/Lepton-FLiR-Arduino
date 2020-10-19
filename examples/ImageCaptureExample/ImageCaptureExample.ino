@@ -21,6 +21,7 @@ void setup() {
     SPI.begin();
 #endif
     Wire.begin();
+    Wire.setClock(flirController.getI2CSpeed());
 
     SD.begin(cardCSPin);                // SD library using chip select pin D24
 

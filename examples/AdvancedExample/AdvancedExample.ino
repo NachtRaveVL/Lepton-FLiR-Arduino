@@ -23,6 +23,7 @@ void setup() {
     SPI.begin();
 #endif
     Wire.begin();
+    Wire.setClock(flirController.getI2CSpeed());
 
     // Setting use of fast enable/disable methods for chip select
     flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);

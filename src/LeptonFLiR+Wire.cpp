@@ -420,13 +420,6 @@ int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
     return _lastI2CError;
 }
 
-void LeptonFLiR::i2cWire_begin() {
-    _lastI2CError = 0;
-#ifndef LEPFLIR_USE_SOFTWARE_I2C
-    _i2cWire->setClock(getI2CSpeed());
-#endif
-}
-
 void LeptonFLiR::i2cWire_beginTransmission(uint8_t addr) {
     _lastI2CError = 0;
 #ifndef LEPFLIR_USE_SOFTWARE_I2C

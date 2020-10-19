@@ -14,7 +14,7 @@ Created by NachtRaveVL, August 1st, 2016.
 
 This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
-Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might want to ensure BUFFER_LENGTH (or I2C_BUFFER_LENGTH) and WIRE_INTERFACES_COUNT is properly defined for any architecture used.
+Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might want to ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` is properly defined for any architecture used.
 
 Dependencies include Scheduler if on a ARM/ARMD architecture (e.g. Due/Zero/etc.), but usage can be disabled via library setup header defines or custom build flags.
 
@@ -27,7 +27,7 @@ Additional interface documentation is available at <https://www.flir.com/globala
 
 ## Supported Microcontrollers
 
-Unfortunately during our testing back in 2016, largely due to SPI data transfer limitations, we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation. Additionally, we plan on experimenting with a faster custom SPI transfer interface to try and overcome speed limitations on slower microcontrollers.
+Unfortunately during our testing back in 2016, largely due to SPI data transfer limitations using the Arduino SPI library (which apparently is shite), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due. However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation. Additionally, we plan on experimenting with a faster custom SPI transfer interface to try and overcome speed limitations on slower microcontrollers, and might be able to look into DMA options available on the Arduino Zero and Arduino Portenta.
 
 As of this writing, we don't have an exact listing of which specific microcontrollers will work with this library, but we are currently rewriting core parts of the library as well as will be testing this library with various microcontrollers to see what kind of support we can muster. We will update this section in the future with boards we've tested and their support status of this library. A particular focus is being applied to Teensy 4+.
 
@@ -108,7 +108,7 @@ From LeptonFLiR.h, in class LeptonFLiR, when in software i2c mode (see examples 
 
 #### Device Initialization
 
-Additionally, a call is expected to be provided to the library class object's `init(...)` method, commonly called inside of the sketch's `setup()` function. This allows one to set the module's hardware camera type and temperature display mode. The module's hardware camera type must be explicitly provided. The remaining default init values of the library, if left unspecified, is `LeptonFLiR_TemperatureMode_Celsius`.
+Additionally, a call is expected to be provided to the library class object's `init(…)` method, commonly called inside of the sketch's `setup()` function. This allows one to set the module's hardware camera type and temperature display mode. The module's hardware camera type must be explicitly provided. The remaining default init values of the library, if left unspecified, is `LeptonFLiR_TemperatureMode_Celsius`.
 
 From LeptonFLiR.h, in class LeptonFLiR:
 ```Arduino

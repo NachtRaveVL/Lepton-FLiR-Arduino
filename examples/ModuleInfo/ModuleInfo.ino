@@ -29,6 +29,7 @@ void setup() {
     SPI.begin();
 #endif
     Wire.begin();
+    Wire.setClock(flirController.getI2CSpeed());
 
     // Initializes module using Lepton v1 camera, and default celsius temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
