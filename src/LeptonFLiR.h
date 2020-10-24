@@ -134,7 +134,7 @@ public:
     // Mode accessors
     byte getChipSelectPin();                                // CS pin
     byte getISRVSyncPin();                                  // ISR VSync pin
-    uint32_t getI2CSpeed();                                 // i2c clock speed (Hz)
+    int getI2CSpeed();                                      // i2c clock speed (Hz)
     LeptonFLiR_CameraType getCameraType();                  // Lepton camera type
     LeptonFLiR_TemperatureMode getTemperatureMode();        // Temperature mode
 

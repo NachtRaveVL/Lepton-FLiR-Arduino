@@ -193,7 +193,7 @@ byte LeptonFLiR::getISRVSyncPin() {
     return _isrVSyncPin;
 }
 
-uint32_t LeptonFLiR::getI2CSpeed() {
+int LeptonFLiR::getI2CSpeed() {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return _i2cSpeed;
 #else
@@ -659,7 +659,7 @@ bool LeptonFLiR::tryReadNextFrame() {
                     spiFrame = getSPIFrameDataRow(0) + 2;
                     uint_fast8_t size = LEPFLIR_SPI_FRAME_PACKET_SIZE16 - 2;
                     while (size--)
-                        *pxlData++ = (byte)min(max(*spiFrame++, 0), 0x00FF);
+                        *pxlData++ = (byte)min(max(*spiFrame++, (uint16_t)0), (uint16_t)0x00FF);
                 }
                 else {
                     spiFrame = getSPIFrameDataRow(0) + 2;
@@ -690,9 +690,9 @@ bool LeptonFLiR::tryReadNextFrame() {
                         total /= divisor;
 
                         if (imgBpp == 2)
-                            *((uint16_t *)pxlData) = (uint16_t)min(max(total, 0), clamp);
+                            *((uint16_t *)pxlData) = (uint16_t)min(max(total, (uint_fast32_t)0), clamp);
                         else
-                            *((byte *)pxlData) = (byte)min(max(total, 0), clamp);
+                            *((byte *)pxlData) = (byte)min(max(total, (uint_fast32_t)0), clamp);
                         pxlData += imgBpp;
                         spiFrame += spiRows;
                     }

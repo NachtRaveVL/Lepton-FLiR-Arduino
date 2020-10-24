@@ -34,7 +34,7 @@
     byte _isrVSyncPin;                                      // ISR vsync pin (Lepton FLiR Breakout v2+ only) (default: DISABLED)
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     TwoWire *_i2cWire;                                      // Wire class instance (unowned) (default: Wire)
-    uint32_t _i2cSpeed;                                     // Module's i2c clock speed (default: 400000)
+    int _i2cSpeed;                                          // Module's i2c clock speed (default: 400000)
 #endif
     SPISettings _spiSettings;                               // SPI port settings
     LeptonFLiR_CameraType _cameraType;                      // Lepton camera type
