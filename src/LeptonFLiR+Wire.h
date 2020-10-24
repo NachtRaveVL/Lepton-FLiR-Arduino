@@ -10,8 +10,8 @@
 #ifndef LEPFLIR_IN_PROTECTED
 #error "This file not meant to be directly included. Include LeptonFLiR.h instead."
 #endif
-// class LeptonFLiR {
-// protected:
+//class LeptonFLiR {
+//protected:
 
     bool waitCommandBegin(int timeout = 0);
     bool waitCommandFinish(int timeout = 0);

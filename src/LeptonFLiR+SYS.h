@@ -10,8 +10,8 @@
 #ifndef LEPFLIR_IN_PUBLIC
 #error "This file not meant to be directly included. Include LeptonFLiR.h instead."
 #endif
-// class LeptonFLiR {
-// public:
+//class LeptonFLiR {
+//public:
 
     void sys_getCameraStatus(LEP_SYS_CAM_STATUS *status);
     LEP_SYS_CAM_STATUS_STATES sys_getCameraStatus();

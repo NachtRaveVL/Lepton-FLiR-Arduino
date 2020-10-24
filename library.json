@@ -45,5 +45,5 @@
         }
     ],
     "frameworks": ["arduino", "espidf"],
-    "platforms": ["avr", "sam", "samd", "teensy", "espressif32"]
+    "platforms": ["avr", "sam", "samd", "teensy", "espressif8266", "espressif32"]
 }

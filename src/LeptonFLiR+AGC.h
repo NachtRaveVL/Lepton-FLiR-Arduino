@@ -11,8 +11,8 @@
 #ifndef LEPFLIR_IN_PUBLIC
 #error "This file not meant to be directly included. Include LeptonFLiR.h instead."
 #endif
-// class LeptonFLiR {
-// public:
+//class LeptonFLiR {
+//public:
 
     void agc_setAGCEnabled(bool enabled); // def:disabled
     bool agc_getAGCEnabled();

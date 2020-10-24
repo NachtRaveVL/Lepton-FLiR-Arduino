@@ -10,8 +10,8 @@
 #ifndef LEPFLIR_IN_PROTECTED
 #error "This file not meant to be directly included. Include LeptonFLiR.h instead."
 #endif
-// class LeptonFLiR {
-// protected:
+//class LeptonFLiR {
+//protected:
 
     static void SPI_transfer16(uint16_t *buffer, int count);
     static void SPI_ignore16(int count);
