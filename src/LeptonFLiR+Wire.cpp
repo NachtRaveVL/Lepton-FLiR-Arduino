@@ -103,8 +103,8 @@ uint16_t LeptonFLiR::cmdCode(uint16_t cmdID, uint16_t cmdType) {
     return (cmdID & LEP_I2C_COMMAND_MODULE_ID_BIT_MASK) |
            (cmdID & LEP_I2C_COMMAND_ID_BIT_MASK) |
            (cmdType & LEP_I2C_COMMAND_TYPE_BIT_MASK) |
-           (cmdID & LEP_I2C_COMMAND_MODULE_ID_BIT_MASK == LEP_OEM_MODULE_BASE ||
-            cmdID & LEP_I2C_COMMAND_MODULE_ID_BIT_MASK == LEP_RAD_MODULE_BASE ? LEP_I2C_COMMAND_PROT_BIT : 0);
+           ((cmdID & LEP_I2C_COMMAND_MODULE_ID_BIT_MASK) == LEP_OEM_MODULE_BASE ||
+            (cmdID & LEP_I2C_COMMAND_MODULE_ID_BIT_MASK) == LEP_RAD_MODULE_BASE ? LEP_I2C_COMMAND_PROT_BIT : (uint16_t)0);
 }
 
 void LeptonFLiR::sendCommand(uint16_t cmdCode) {

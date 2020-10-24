@@ -509,16 +509,16 @@ void LeptonFLiR::checkForErrors() {
 
 #endif // /ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
-static inline void byteToHexString(byte value, char *buffer) {
-    byte highNibble = value / 16;
-    byte lowNibble = value % 16;
+static inline void byteToHexString(const byte value, char *buffer) {
+    const byte highNibble = value / 16;
+    const byte lowNibble = value % 16;
     if (highNibble < 10) buffer[0] = '0' + highNibble;
     else buffer[0] = 'A' + (highNibble - 10);
     if (lowNibble < 10) buffer[1] = '0' + lowNibble;
     else buffer[1] = 'A' + (lowNibble - 10);
 }
 
-void LeptonFLiR::wordsToHexString(uint16_t *dataWords, int dataLength, char *buffer, int maxLength) {
+void LeptonFLiR::wordsToHexString(const uint16_t *dataWords, int dataLength, char *buffer, int maxLength) {
     bool insertColons = maxLength >= (dataLength * 4) + (dataLength - 1);
 
     while (dataLength-- > 0 && maxLength > 3) {

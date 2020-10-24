@@ -276,7 +276,7 @@ bool LeptonFLiR::getPseudoColorLUTEnabled() {
 }
 
 bool LeptonFLiR::isImageDataAvailable() {
-    return !_isReadingNextFrame && _lastFrame && _lastFrame->_imageData;
+    return !_isReadingNextFrame && _lastFrame && _lastFrame->imageData;
 }
 
 LeptonFLiR_ImageMode LeptonFLiR::getImageMode() {
@@ -298,6 +298,7 @@ int LeptonFLiR::getImageBpp() {
 
 LeptonFLiR_PixelData LeptonFLiR::getImagePixelData(int row, int col) {
     // TODO: Write get image pixel data. -NR
+    return LeptonFLiR_PixelData();
 }
 
 LeptonFLiR_ImageOutputMode LeptonFLiR::getImageOutputMode() {
@@ -328,6 +329,7 @@ int LeptonFLiR::getImageOutputTotalSize() {
 
 byte *LeptonFLiR::getImageOutputData() {
     // TODO: Write image output creation. -NR
+    return NULL;
 }
 
 void LeptonFLiR::getImageOutputData(byte *image, int pitch) {
@@ -365,13 +367,14 @@ bool LeptonFLiR::getTelemetryAGCEnabled() {
 
 LeptonFLiR_TelemetryData* LeptonFLiR::getTelemetryOutputData() {
     // TODO: Write telemetry output creation. -NR
+    return NULL;
 }
 
 void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
     if (!isTelemetryDataAvailable()) return;
     const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
-    const uint16_t *telemetryData_B = (const uint16_t *)getTelemetryData(1);
-    const uint16_t *telemetryData_C = (const uint16_t *)getTelemetryData(2);
+    //const uint16_t *telemetryData_B = (const uint16_t *)getTelemetryData(1);
+    //const uint16_t *telemetryData_C = (const uint16_t *)getTelemetryData(2);
     // TODO: Verify Telem B and C lines are always next to A line in SPI buffer memory. -NR
 
     telemetry->revisionMajor = lowByte(telemetryData_A[0]);
@@ -410,7 +413,7 @@ void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
 
     telemetry->log2FFC = telemetryData_A[74];
 
-    // TODO: Do remaining in this list. -NR
+    // TODO: Do Telem B and C line getters below. -NR
     // LEP_VID_VIDEO_OUTPUT_FORMAT vidFormat
     // uint16_t sceneEmissivity
     // uint16_t atmoTau
@@ -439,6 +442,8 @@ bool LeptonFLiR::tryReadNextFrame() {
         Serial.println("LeptonFLiR::tryReadNextFrame");
 #endif
 
+    // TODO: Everything beyond here needs rewritten. -NR
+/*
         bool agc8Enabled;
         LEP_SYS_TELEMETRY_LOCATION telemetryLocation;
 
@@ -708,4 +713,7 @@ bool LeptonFLiR::tryReadNextFrame() {
     }
 
     return true;
+    */
+    }
+    return false;
 }

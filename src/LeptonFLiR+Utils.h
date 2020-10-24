@@ -29,6 +29,6 @@
     void checkForErrors();
 #endif
 
-    static void wordsToHexString(uint16_t *dataWords, int dataLength, char *buffer, int maxLength);
+    static void wordsToHexString(const uint16_t *dataWords, int dataLength, char *buffer, int maxLength);
 
 #endif // /ifndef LeptonFLiR_Utils_H

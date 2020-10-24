@@ -75,8 +75,6 @@ void LeptonFLiR::updateNextFrame() {
                 break;
         }
 
-        
-
         // TODO: Continue update for other values. -NR
         // LeptonFLiR_TelemetryMode telemetryMode
         // bool agcEnabled
@@ -103,7 +101,7 @@ void LeptonFLiR::prepareNextFrame() {
     int frameDataSize = getSPIFrameTotalSize();
     int offsetTableSize = getSPIFrameImageLines();
 
-    if (frameDataSize && !_frameData_orig || _frameDataSize_orig != frameDataSize) {
+    if (frameDataSize && (!_frameData_orig || _frameDataSize_orig != frameDataSize)) {
         _frameData_orig = _frameData_orig ? roundUpRealloc16(_frameData_orig, frameDataSize) : roundUpMalloc16(frameDataSize);
         _frameDataSize_orig = frameDataSize;
         _frameData = roundUpPtr16(_frameData_orig);
