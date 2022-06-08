@@ -21,47 +21,50 @@ static void uDigWriteHighFuncDef(byte pin) {
 #endif
 }
 
+
 static void uDelayMillisFuncDef(unsigned int timeout) {
-#if defined(LEPFLIR_YIELD)
+#if defined(LEPFLIR_USE_SCHEDULER) || defined(LEPFLIR_USE_COOPTASK)
     if (timeout > 0) {
         unsigned long currTime = millis();
         unsigned long endTime = currTime + (unsigned long)timeout;
         if (currTime < endTime) { // not overflowing
             while (millis() < endTime)
-                LEPFLIR_YIELD();
+                yield();
         } else { // overflowing
             unsigned long begTime = currTime;
             while (currTime >= begTime || currTime < endTime) {
-                LEPFLIR_YIELD();
+                yield();
                 currTime = millis();
             }
         }
-    } else
-        LEPFLIR_YIELD();
+    } else {
+        yield();
+    }
 #else
     delay(timeout);
 #endif
 }
 
 static void uDelayMicrosFuncDef(unsigned int timeout) {
-#if defined(LEPFLIR_YIELD)
+#if defined(LEPFLIR_USE_SCHEDULER) || defined(LEPFLIR_USE_COOPTASK)
     if (timeout > 1000) {
         unsigned long currTime = micros();
         unsigned long endTime = currTime + (unsigned long)timeout;
         if (currTime < endTime) { // not overflowing
             while (micros() < endTime)
-                LEPFLIR_YIELD();
+                yield();
         } else { // overflowing
             unsigned long begTime = currTime;
             while (currTime >= begTime || currTime < endTime) {
-                LEPFLIR_YIELD();
+                yield();
                 currTime = micros();
             }
         }
-    } else if (timeout > 0)
+    } else if (timeout > 0) {
         delayMicroseconds(timeout);
-    else
-        LEPFLIR_YIELD();
+    } else {
+        yield();
+    }
 #else
     delayMicroseconds(timeout);
 #endif

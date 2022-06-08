@@ -2,7 +2,7 @@
 
 #include "LeptonFLiR.h"
 
-LeptonFLiR flirController;              // Library using default chip select pin D10, and default Wire @400kHz
+LeptonFLiR flirController;              // Library using default chip select pin SS, and default Wire @400kHz
 
 void setup() {
     Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces

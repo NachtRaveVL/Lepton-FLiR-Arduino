@@ -30,7 +30,7 @@
         const byte *telemetryData;                          // Raw telemetry data in VoSPI frame buffer, after 2B ID (unowned ptr, pitch of SPI frame line size)
     };
 
-    byte _spiCSPin;                                         // SPI chip select pin (default: 10)
+    byte _spiCSPin;                                         // SPI chip select pin (default: SS)
     byte _isrVSyncPin;                                      // ISR vsync pin (Lepton FLiR Breakout v2+ only) (default: DISABLED)
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     TwoWire *_i2cWire;                                      // Wire class instance (unowned) (default: Wire)

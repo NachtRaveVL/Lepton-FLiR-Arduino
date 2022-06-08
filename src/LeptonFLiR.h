@@ -85,19 +85,19 @@
 #define LEPFLIR_I2C_BUFFER_LENGTH   32
 #endif // /if BUFFER_LENGTH
 #else
-#include <avr/io.h>
+#define USE_SOFT_I2C_MASTER_H_AS_PLAIN_INCLUDE
+#include "SoftI2CMaster.h"
+#undef USE_SOFT_I2C_MASTER_H_AS_PLAIN_INCLUDE
 #define LEPFLIR_USE_SOFTWARE_I2C
 #endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 
 #if !defined(LEPFLIR_DISABLE_SCHEDULER) && (defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD))
 #include "Scheduler.h"
 #define LEPFLIR_USE_SCHEDULER
-#define LEPFLIR_YIELD()                 Scheduler.yield()
 #endif
 #if !defined(LEPFLIR_DISABLE_COOPTASK) && !defined(LEPFLIR_USE_SCHEDULER)
 #include "CoopTask.h"
 #define LEPFLIR_USE_COOPTASK
-#define LEPFLIR_YIELD()                 yield()
 #endif
 #ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
 #include "digitalWriteFast.h"
@@ -116,10 +116,10 @@ public:
     // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
     // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
-    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
+    LeptonFLiR(byte spiCSPin = SS, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
 
     // Convenience constructor for custom Wire instance. See main constructor.
-    LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+    LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = SS, byte isrVSyncPin = DISABLED);
 
 #else
 
@@ -129,7 +129,7 @@ public:
     // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minimum
     // processor speed is 16MHz+ running in i2c fast mode.
     // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
-    LeptonFLiR(byte spiCSPin = 10, byte isrVSyncPin = DISABLED);
+    LeptonFLiR(byte spiCSPin = SS, byte isrVSyncPin = DISABLED);
 
 #endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
     ~LeptonFLiR();
@@ -149,9 +149,7 @@ public:
     // Sets user delay functions to call when a delay has to occur for processing to
     // continue. User functions here can customize what this means - typically it would
     // mean to call into a thread barrier() or yield() mechanism. Default implementation
-    // simply calls standard delay() and delayMicroseconds(), unless on SAM/SAMD
-    // architectures where Scheduler is available, in which case when timeout > 1ms
-    // Scheduler.yield() is called until timeout expires.
+    // is to call yield() when timeout >= 1ms, unless Scheduler and CoopTask are disabled.
     void setUserDelayFuncs(UserDelayFunc delayMillisFunc, UserDelayFunc delayMicrosFunc);
 
     typedef void(*UserDigitalWriteFunc)(byte);              // Passes pin number
@@ -159,7 +157,7 @@ public:
     // to any pin. User functions here can customize what this means - typically it would
     // mean to set/unset a specific bit on the specific direct PORT interface. Default
     // implementation simply calls standard digitalWrite, unless digitalWriteFast library
-    // is available, in which case digitalWriteFast is called.
+    // is enaabled, in which case digitalWriteFast is called.
     void setUserDigitalWriteFuncs(UserDigitalWriteFunc digitalWriteLowFunc, UserDigitalWriteFunc digitalWriteHighFunc);
 
     // Image descriptors
