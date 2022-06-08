@@ -9,7 +9,7 @@
 //
 // In LeptonFLiR.h:
 // // Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
-// #define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+// #define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
 //
 // Alternatively, in platform[.local].txt:
 // build.extra_flags=-DLEPFLIR_ENABLE_SOFTWARE_I2C
