@@ -10,10 +10,6 @@
 const byte flirCSPin = 22;
 LeptonFLiR flirController(flirCSPin, Wire1); // Library using chip select pin D22, and Wire1 @400kHz
 
-// Fast CS enable/disable routines, using the digitalWriteFast library
-static void fastEnableCS(byte pin) { digitalWriteFast(pin, LOW); }
-static void fastDisableCS(byte pin) { digitalWriteFast(pin, HIGH); }
-
 void setup() {
     Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces
 #ifdef __SAM3X8E__
@@ -24,9 +20,6 @@ void setup() {
 #endif
     Wire.begin();
     Wire.setClock(flirController.getI2CSpeed());
-
-    // Setting use of fast enable/disable methods for chip select
-    flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
 
     // Initializes module using Lepton v1 camera, and default celsius temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
