@@ -14,9 +14,9 @@ Created by NachtRaveVL, August 1st, 2016.
 
 This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
-Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might want to ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` is properly defined for any architecture used.
+Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might experience turbulence until the bug reports get ironed out. Unknown architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
 
-Dependencies include Scheduler if on a ARM/ARMD architecture (e.g. Due/Zero/etc.), but usage can be disabled via library setup header defines or custom build flags.
+Dependencies include: CoopTask (alternate to Scheduler, disableable), Scheduler (SAM/SAMD only, disableable), SoftwareI2CLibrary (optional), and digitalWriteFast (optional).
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
@@ -63,11 +63,17 @@ Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=6
 
 From LeptonFLiR.h:
 ```Arduino
-// Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
+// Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 
 // Uncomment or -D this define to disable usage of the Scheduler library on SAM/SAMD architecures.
 //#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
+
+// Uncomment or -D this define to disable usage of the CoopTask library when Scheduler library not used.
+//#define LEPFLIR_DISABLE_COOPTASK                // https://github.com/dok-net/CoopTask
+
+// Uncomment or -D this define to enable usage of the digitalWriteFast library.
+//#define LEPFLIR_ENABLE_DIGITALWRITEFAST         // https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 // Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -204,7 +210,7 @@ If one uncomments the line below inside the main header file (or defines it via 
 
 In LeptonFLiR.h:
 ```Arduino
-// Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
+// Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 #define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 ```  
 Alternatively, in platform[.local].txt:

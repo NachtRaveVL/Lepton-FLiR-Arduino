@@ -6,7 +6,7 @@
 #include "LeptonFLiR.h"
 
 static void uDigWriteLowFuncDef(byte pin) {
-#ifdef LEPFLIR_USE_DIGITALWRITEFAST
+#ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
     digitalWriteFast(pin, LOW);
 #else
     digitalWrite(pin, LOW);
@@ -14,7 +14,7 @@ static void uDigWriteLowFuncDef(byte pin) {
 }
 
 static void uDigWriteHighFuncDef(byte pin) {
-#ifdef LEPFLIR_USE_DIGITALWRITEFAST
+#ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
     digitalWriteFast(pin, HIGH);
 #else
     digitalWrite(pin, HIGH);
@@ -22,50 +22,51 @@ static void uDigWriteHighFuncDef(byte pin) {
 }
 
 static void uDelayMillisFuncDef(unsigned int timeout) {
-#ifdef LEPFLIR_USE_SCHEDULER
+#if defined(LEPFLIR_YIELD)
     if (timeout > 0) {
         unsigned long currTime = millis();
         unsigned long endTime = currTime + (unsigned long)timeout;
         if (currTime < endTime) { // not overflowing
             while (millis() < endTime)
-                Scheduler.yield();
+                LEPFLIR_YIELD();
         } else { // overflowing
             unsigned long begTime = currTime;
             while (currTime >= begTime || currTime < endTime) {
-                Scheduler.yield();
+                LEPFLIR_YIELD();
                 currTime = millis();
             }
         }
     } else
-        Scheduler.yield();
+        LEPFLIR_YIELD();
 #else
     delay(timeout);
 #endif
 }
 
 static void uDelayMicrosFuncDef(unsigned int timeout) {
-#ifdef LEPFLIR_USE_SCHEDULER
+#if defined(LEPFLIR_YIELD)
     if (timeout > 1000) {
         unsigned long currTime = micros();
         unsigned long endTime = currTime + (unsigned long)timeout;
         if (currTime < endTime) { // not overflowing
             while (micros() < endTime)
-                Scheduler.yield();
+                LEPFLIR_YIELD();
         } else { // overflowing
             unsigned long begTime = currTime;
             while (currTime >= begTime || currTime < endTime) {
-                Scheduler.yield();
+                LEPFLIR_YIELD();
                 currTime = micros();
             }
         }
     } else if (timeout > 0)
         delayMicroseconds(timeout);
     else
-        Scheduler.yield();
+        LEPFLIR_YIELD();
 #else
     delayMicroseconds(timeout);
 #endif
 }
+
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
 
@@ -193,7 +194,7 @@ byte LeptonFLiR::getISRVSyncPin() {
     return _isrVSyncPin;
 }
 
-int LeptonFLiR::getI2CSpeed() {
+uint32_t LeptonFLiR::getI2CSpeed() {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return _i2cSpeed;
 #else

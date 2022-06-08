@@ -34,14 +34,17 @@
 // the Arduino IDE's limited custom build flag support. Editing this header file directly
 // will affect all projects compiled on your system using these library files.
 
-// Uncomment or -D this define to enable use of the software i2c library (min 4MHz+ processor).
+// Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // http://playground.arduino.cc/Main/SoftwareI2CLibrary
 
 // Uncomment or -D this define to disable usage of the Scheduler library on SAM/SAMD architecures.
 //#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
 
-// Uncomment or -D this define to disable usage of the digitalWriteFast library.
-//#define LEPFLIR_DISABLE_DIGITALWRITEFAST        // https://github.com/watterott/Arduino-Libs
+// Uncomment or -D this define to disable usage of the CoopTask library when Scheduler library not used.
+//#define LEPFLIR_DISABLE_COOPTASK                // https://github.com/dok-net/CoopTask
+
+// Uncomment or -D this define to enable usage of the digitalWriteFast library.
+//#define LEPFLIR_ENABLE_DIGITALWRITEFAST         // https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 // Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -68,16 +71,8 @@
 #else
 #include <WProgram.h>
 #endif
-
-#if !defined(LEPFLIR_DISABLE_SCHEDULER) && (defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD))
-#include "Scheduler.h"
-#define LEPFLIR_USE_SCHEDULER
-#endif
-
-#ifndef LEPFLIR_DISABLE_DIGITALWRITEFAST
-#include "digitalWriteFast.h"
-#define LEPFLIR_USE_DIGITALWRITEFAST
-#endif
+#include <assert.h>
+#include <SPI.h>
 
 #ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 #include <Wire.h>
@@ -94,7 +89,19 @@
 #define LEPFLIR_USE_SOFTWARE_I2C
 #endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 
-#include <SPI.h>
+#if !defined(LEPFLIR_DISABLE_SCHEDULER) && (defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD))
+#include "Scheduler.h"
+#define LEPFLIR_USE_SCHEDULER
+#define LEPFLIR_YIELD()                 Scheduler.yield()
+#endif
+#if !defined(LEPFLIR_DISABLE_COOPTASK) && !defined(LEPFLIR_USE_SCHEDULER)
+#include "CoopTask.h"
+#define LEPFLIR_USE_COOPTASK
+#define LEPFLIR_YIELD()                 yield()
+#endif
+#ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
+#include "digitalWriteFast.h"
+#endif
 
 #include "LeptonFLiRDefines.h"
 #include "LeptonFLiRInlines.hpp"
@@ -134,7 +141,7 @@ public:
     // Mode accessors
     byte getChipSelectPin();                                // CS pin
     byte getISRVSyncPin();                                  // ISR VSync pin
-    int getI2CSpeed();                                      // i2c clock speed (Hz)
+    uint32_t getI2CSpeed();                                 // i2c clock speed (Hz)
     LeptonFLiR_CameraType getCameraType();                  // Lepton camera type
     LeptonFLiR_TemperatureMode getTemperatureMode();        // Temperature mode
 
