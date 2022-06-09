@@ -6,7 +6,7 @@
 #include "LeptonFLiR.h"
 
 static void uDigWriteLowFuncDef(byte pin) {
-#ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
+#ifdef LEPFLIR_USE_DIGITALWRITEFAST
     digitalWriteFast(pin, LOW);
 #else
     digitalWrite(pin, LOW);
@@ -14,7 +14,7 @@ static void uDigWriteLowFuncDef(byte pin) {
 }
 
 static void uDigWriteHighFuncDef(byte pin) {
-#ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
+#ifdef LEPFLIR_USE_DIGITALWRITEFAST
     digitalWriteFast(pin, HIGH);
 #else
     digitalWrite(pin, HIGH);

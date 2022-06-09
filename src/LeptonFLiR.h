@@ -68,6 +68,8 @@
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
+#elif defined(__MBED__)
+#include <mbed.h>
 #else
 #include <WProgram.h>
 #endif
@@ -101,6 +103,7 @@
 #endif
 #ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
 #include "digitalWriteFast.h"
+#define LEPFLIR_USE_DIGITALWRITEFAST
 #endif
 
 #include "LeptonFLiRDefines.h"
