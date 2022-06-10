@@ -16,7 +16,7 @@ This library allows communication with boards running a Lepton FLiR thermal came
 
 Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might experience turbulence until the bug reports get ironed out. Unknown architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
 
-Dependencies include: CoopTask (alternate to Scheduler, disableable), Scheduler (SAM/SAMD only, disableable), SoftwareI2CLibrary (optional), and digitalWriteFast (optional).
+Dependencies include: Scheduler (SAM/SAMD only, disableable), TaskScheduler (alternate to Scheduler, disableable), CoopTask (alternate to TaskScheduler, optional), SoftI2CMaster (optional), and digitalWriteFast (optional).
 
 Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
 
@@ -57,7 +57,7 @@ The easiest way to install this library is to utilize the Arduino IDE library ma
 
 ### Header Defines
  
-There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them via custom build flags. While editing the main header file isn't ideal, it is often the easiest given the Arduino IDE's limited custom build flag support. Note that editing the library's main header file directly will affect all projects compiled on your system using those modified library files.
+There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them via custom build flags. While editing the main header file isn't ideal, it is often easiest. Note that editing the library's main header file directly will affect all projects compiled on your system using those modified library files.
 
 Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform[.local].txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files.
 
@@ -66,11 +66,17 @@ From LeptonFLiR.h:
 // Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
 
-// Uncomment or -D this define to disable usage of the Scheduler library on SAM/SAMD architecures.
+// Uncomment or -D this define to completely disable usage of any multitasking commands, such as yield().
+//#define LEPFLIR_DISABLE_MULTITASKING
+
+// Uncomment or -D this define to disable usage of the Scheduler library, for SAM/SAMD architechtures.
 //#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
 
-// Uncomment or -D this define to disable usage of the CoopTask library when Scheduler library not used.
-//#define LEPFLIR_DISABLE_COOPTASK                // https://github.com/dok-net/CoopTask
+// Uncomment or -D this define to disable usage of the TaskScheduler library, in place of Scheduler.
+//#define LEPFLIR_DISABLE_TASKSCHEDULER           // https://github.com/arkhipenko/TaskScheduler
+
+// Uncomment or -D this define to enable usage of the CoopTask library, in place of TaskScheduler and Scheduler.
+//#define LEPFLIR_ENABLE_COOPTASK                 // https://github.com/dok-net/CoopTask
 
 // Uncomment or -D this define to enable usage of the digitalWriteFast library.
 //#define LEPFLIR_ENABLE_DIGITALWRITEFAST         // https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
