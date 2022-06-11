@@ -5,7 +5,7 @@ Arduino Library for the Lepton FLiR Thermal Camera Module.
 
 **Lepton-FLiR-Arduino v0.9.92**
 
-**UNDER RENEWED DEVELOPMENT AS OF AUGUST 2020**
+**UNDER RENEWED DEVELOPMENT BUT DONT EXPECT ANY MIRACLES**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
@@ -14,13 +14,13 @@ Created by NachtRaveVL, August 1st, 2016.
 
 This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
 
-Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might experience turbulence until the bug reports get ironed out. Unknown architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
+Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might experience turbulence until the bug reports get ironed out. All architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
 
-Dependencies include: Scheduler (SAM/SAMD only, disableable), TaskScheduler (alternate to Scheduler, disableable), CoopTask (alternate to TaskScheduler, optional), SoftI2CMaster (optional), and digitalWriteFast (optional).
+Dependencies include: SoftI2CMaster (optional).
 
-Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
+Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems. These guys are really great (and sent us free cameras to test with) and so we ask that you check them out at: <https://lepton.flir.com/>.
 
-Note that this library *requires* a fast microcontroller - on the order of hundreds of MHz - in order to process the SPI-based image data transfer under the set frame period of 26fps, or 38.46ms. See Section 4.2.2.3.2 of the datasheet concerning VoSPI synchronization for more information.
+Note that this library *requires* a fast microcontroller - on the order of hundreds of MHz - in order to process the SPI-based image data transfer under the set frame period of 26fps, or 38.46ms (save nothing about actually doing the advanced image processing work on said image after capture). See Section 4.2.2.3.2 of the datasheet concerning VoSPI synchronization for more information on how to optimize frame reads.
 
 The datasheet for the IC is available at <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.  
 Additional interface documentation is available at <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
@@ -59,7 +59,7 @@ The easiest way to install this library is to utilize the Arduino IDE library ma
  
 There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them via custom build flags. While editing the main header file isn't ideal, it is often easiest. Note that editing the library's main header file directly will affect all projects compiled on your system using those modified library files.
 
-Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform[.local].txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files.
+Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform[.local].txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files, but at least you keep those changes to the same place.
 
 From LeptonFLiR.h:
 ```Arduino
@@ -68,18 +68,6 @@ From LeptonFLiR.h:
 
 // Uncomment or -D this define to completely disable usage of any multitasking commands, such as yield().
 //#define LEPFLIR_DISABLE_MULTITASKING
-
-// Uncomment or -D this define to disable usage of the Scheduler library, for SAM/SAMD architechtures.
-//#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
-
-// Uncomment or -D this define to disable usage of the TaskScheduler library, in place of Scheduler.
-//#define LEPFLIR_DISABLE_TASKSCHEDULER           // https://github.com/arkhipenko/TaskScheduler
-
-// Uncomment or -D this define to enable usage of the CoopTask library, in place of TaskScheduler and Scheduler.
-//#define LEPFLIR_ENABLE_COOPTASK                 // https://github.com/dok-net/CoopTask
-
-// Uncomment or -D this define to enable usage of the digitalWriteFast library.
-//#define LEPFLIR_ENABLE_DIGITALWRITEFAST         // https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
 
 // Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT

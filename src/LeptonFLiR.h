@@ -38,18 +38,6 @@
 // Uncomment or -D this define to completely disable usage of any multitasking commands, such as yield().
 //#define LEPFLIR_DISABLE_MULTITASKING
 
-// Uncomment or -D this define to disable usage of the Scheduler library, for SAM/SAMD architechtures.
-//#define LEPFLIR_DISABLE_SCHEDULER               // https://github.com/arduino-libraries/Scheduler
-
-// Uncomment or -D this define to disable usage of the TaskScheduler library, in place of Scheduler.
-//#define LEPFLIR_DISABLE_TASKSCHEDULER           // https://github.com/arkhipenko/TaskScheduler
-
-// Uncomment or -D this define to enable usage of the CoopTask library, in place of TaskScheduler and Scheduler.
-//#define LEPFLIR_ENABLE_COOPTASK                 // https://github.com/dok-net/CoopTask
-
-// Uncomment or -D this define to enable usage of the digitalWriteFast library.
-//#define LEPFLIR_ENABLE_DIGITALWRITEFAST         // https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
-
 // Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 
@@ -98,33 +86,7 @@
 #define LEPFLIR_USE_SOFTWARE_I2C
 #endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 
-#ifndef LEPFLIR_DISABLE_MULTITASKING
-#if !defined(LEPFLIR_DISABLE_SCHEDULER) && (defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD))
-#include "Scheduler.h"
-#define LEPFLIR_USE_SCHEDULER
-#endif
-#if !defined(LEPFLIR_DISABLE_TASKSCHEDULER) && !defined(LEPFLIR_USE_SCHEDULER)
-#include "TaskSchedulerDeclarations.h"
-#define LEPFLIR_USE_TASKSCHEDULER
-#define LEPFLIR_ENDLOOP(scheduler)     (scheduler).execute()
-#endif
-#if defined(LEPFLIR_ENABLE_COOPTASK) && !defined(LEPFLIR_USE_SCHEDULER) && !defined(LEPFLIR_USE_TASKSCHEDULER)
-#include "CoopTask.h"
-#define LEPFLIR_USE_COOPTASK
-#define LEPFLIR_ENDLOOP()              runCoopTasks()
-#endif
-#endif // /ifndef LEPFLIR_DISABLE_MULTITASKING
-#ifndef LEPFLIR_YIELD
-#define LEPFLIR_YIELD()                yield()
-#endif
-#ifndef LEPFLIR_ENDLOOP
-#define LEPFLIR_ENDLOOP()              yield()
-#endif
-
-#ifdef LEPFLIR_ENABLE_DIGITALWRITEFAST
-#include "digitalWriteFast.h"
-#define LEPFLIR_USE_DIGITALWRITEFAST
-#endif
+// TODO: Include for TURBO SPI library
 
 #include "LeptonFLiRDefines.h"
 #include "LeptonFLiRInlines.hpp"
@@ -172,7 +134,7 @@ public:
     // Sets user delay functions to call when a delay has to occur for processing to
     // continue. User functions here can customize what this means - typically it would
     // mean to call into a thread barrier() or yield() mechanism. Default implementation
-    // is to call yield() when timeout >= 1ms, unless disabled.
+    // is to call yield() when timeout >= 1ms, unless multitasking is disabled.
     void setUserDelayFuncs(UserDelayFunc delayMillisFunc, UserDelayFunc delayMicrosFunc);
 
     typedef void(*UserDigitalWriteFunc)(byte);              // Passes pin number
