@@ -7,7 +7,7 @@
 
 void LeptonFLiR::agc_setAGCEnabled(bool enabled) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setAGCEnabled");
+    Serial.println(F("LeptonFLiR::agc_setAGCEnabled"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
@@ -15,7 +15,7 @@ void LeptonFLiR::agc_setAGCEnabled(bool enabled) {
 
 bool LeptonFLiR::agc_getAGCEnabled() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getAGCEnabled");
+    Serial.println(F("LeptonFLiR::agc_getAGCEnabled"));
 #endif
 
     uint32_t enabled;
@@ -25,7 +25,7 @@ bool LeptonFLiR::agc_getAGCEnabled() {
 
 void LeptonFLiR::agc_setAGCPolicy(LEP_AGC_POLICY policy) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setAGCPolicy");
+    Serial.println(F("LeptonFLiR::agc_setAGCPolicy"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_POLICY, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)policy);
@@ -33,7 +33,7 @@ void LeptonFLiR::agc_setAGCPolicy(LEP_AGC_POLICY policy) {
 
 LEP_AGC_POLICY LeptonFLiR::agc_getAGCPolicy() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getAGCPolicy");
+    Serial.println(F("LeptonFLiR::agc_getAGCPolicy"));
 #endif
 
     uint32_t policy;
@@ -43,7 +43,7 @@ LEP_AGC_POLICY LeptonFLiR::agc_getAGCPolicy() {
 
 void LeptonFLiR::agc_setHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQScaleFactor");
+    Serial.println(F("LeptonFLiR::agc_setHEQScaleFactor"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_SCALE_FACTOR, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)factor);
@@ -51,7 +51,7 @@ void LeptonFLiR::agc_setHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor) {
 
 LEP_AGC_HEQ_SCALE_FACTOR LeptonFLiR::agc_getHEQScaleFactor() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQScaleFactor");
+    Serial.println(F("LeptonFLiR::agc_getHEQScaleFactor"));
 #endif
 
     uint32_t factor;
@@ -61,7 +61,7 @@ LEP_AGC_HEQ_SCALE_FACTOR LeptonFLiR::agc_getHEQScaleFactor() {
 
 void LeptonFLiR::agc_setAGCCalcEnabled(bool enabled) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setAGCCalcEnabled");
+    Serial.println(F("LeptonFLiR::agc_setAGCCalcEnabled"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_CALC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
@@ -69,7 +69,7 @@ void LeptonFLiR::agc_setAGCCalcEnabled(bool enabled) {
 
 bool LeptonFLiR::agc_getAGCCalcEnabled() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getAGCCalcEnabled");
+    Serial.println(F("LeptonFLiR::agc_getAGCCalcEnabled"));
 #endif
 
     uint32_t enabled;
@@ -81,7 +81,7 @@ void LeptonFLiR::agc_setHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region) {
     if (!region) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHistogramRegion");
+    Serial.println(F("LeptonFLiR::agc_setHistogramRegion"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_ROI, LEP_I2C_COMMAND_TYPE_SET), (uint16_t *)region, sizeof(LEP_AGC_HISTOGRAM_ROI) / 2);
@@ -91,7 +91,7 @@ void LeptonFLiR::agc_getHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region) {
     if (!region) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHistogramRegion");
+    Serial.println(F("LeptonFLiR::agc_getHistogramRegion"));
 #endif
 
     receiveCommand(cmdCode(LEP_CID_AGC_ROI, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)region, sizeof(LEP_AGC_HISTOGRAM_ROI) / 2);
@@ -101,7 +101,7 @@ void LeptonFLiR::agc_getHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statis
     if (!statistics) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHistogramStatistics");
+    Serial.println(F("LeptonFLiR::agc_getHistogramStatistics"));
 #endif
 
     receiveCommand(cmdCode(LEP_CID_AGC_STATISTICS, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)statistics, sizeof(LEP_AGC_HISTOGRAM_STATISTICS) / 2);
@@ -109,7 +109,7 @@ void LeptonFLiR::agc_getHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statis
 
 void LeptonFLiR::agc_setHistogramClipPercent(uint16_t percent) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHistogramClipPercent");
+    Serial.println(F("LeptonFLiR::agc_setHistogramClipPercent"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HISTOGRAM_CLIP_PERCENT, LEP_I2C_COMMAND_TYPE_SET), percent);
@@ -117,7 +117,7 @@ void LeptonFLiR::agc_setHistogramClipPercent(uint16_t percent) {
 
 uint16_t LeptonFLiR::agc_getHistogramClipPercent() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHistogramClipPercent");
+    Serial.println(F("LeptonFLiR::agc_getHistogramClipPercent"));
 #endif
 
     uint16_t percent;
@@ -127,7 +127,7 @@ uint16_t LeptonFLiR::agc_getHistogramClipPercent() {
 
 void LeptonFLiR::agc_setHistogramTailSize(uint16_t size) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHistogramTailSize");
+    Serial.println(F("LeptonFLiR::agc_setHistogramTailSize"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HISTOGRAM_TAIL_SIZE, LEP_I2C_COMMAND_TYPE_SET), size);
@@ -135,7 +135,7 @@ void LeptonFLiR::agc_setHistogramTailSize(uint16_t size) {
 
 uint16_t LeptonFLiR::agc_getHistogramTailSize() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHistogramTailSize");
+    Serial.println(F("LeptonFLiR::agc_getHistogramTailSize"));
 #endif
 
     uint16_t size;
@@ -145,7 +145,7 @@ uint16_t LeptonFLiR::agc_getHistogramTailSize() {
 
 void LeptonFLiR::agc_setLinearMaxGain(uint16_t gain) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setLinearMaxGain");
+    Serial.println(F("LeptonFLiR::agc_setLinearMaxGain"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_LINEAR_MAX_GAIN, LEP_I2C_COMMAND_TYPE_SET), gain);
@@ -153,7 +153,7 @@ void LeptonFLiR::agc_setLinearMaxGain(uint16_t gain) {
 
 uint16_t LeptonFLiR::agc_getLinearMaxGain() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getLinearMaxGain");
+    Serial.println(F("LeptonFLiR::agc_getLinearMaxGain"));
 #endif
 
     uint16_t gain;
@@ -163,7 +163,7 @@ uint16_t LeptonFLiR::agc_getLinearMaxGain() {
 
 void LeptonFLiR::agc_setLinearMidpoint(uint16_t midpoint) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setLinearMidpoint");
+    Serial.println(F("LeptonFLiR::agc_setLinearMidpoint"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_LINEAR_MIDPOINT, LEP_I2C_COMMAND_TYPE_SET), midpoint);
@@ -171,7 +171,7 @@ void LeptonFLiR::agc_setLinearMidpoint(uint16_t midpoint) {
 
 uint16_t LeptonFLiR::agc_getLinearMidpoint() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getLinearMidpoint");
+    Serial.println(F("LeptonFLiR::agc_getLinearMidpoint"));
 #endif
 
     uint16_t midpoint;
@@ -181,7 +181,7 @@ uint16_t LeptonFLiR::agc_getLinearMidpoint() {
 
 void LeptonFLiR::agc_setLinearDampeningFactor(uint16_t factor) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setLinearDampeningFactor");
+    Serial.println(F("LeptonFLiR::agc_setLinearDampeningFactor"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_LINEAR_DAMPENING_FACTOR, LEP_I2C_COMMAND_TYPE_SET), factor);
@@ -189,7 +189,7 @@ void LeptonFLiR::agc_setLinearDampeningFactor(uint16_t factor) {
 
 uint16_t LeptonFLiR::agc_getLinearDampeningFactor() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getLinearDampeningFactor");
+    Serial.println(F("LeptonFLiR::agc_getLinearDampeningFactor"));
 #endif
 
     uint16_t factor;
@@ -199,7 +199,7 @@ uint16_t LeptonFLiR::agc_getLinearDampeningFactor() {
 
 void LeptonFLiR::agc_setHEQDampeningFactor(uint16_t factor) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQDampeningFactor");
+    Serial.println(F("LeptonFLiR::agc_setHEQDampeningFactor"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_DAMPENING_FACTOR, LEP_I2C_COMMAND_TYPE_SET), factor);
@@ -207,7 +207,7 @@ void LeptonFLiR::agc_setHEQDampeningFactor(uint16_t factor) {
 
 uint16_t LeptonFLiR::agc_getHEQDampeningFactor() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQDampeningFactor");
+    Serial.println(F("LeptonFLiR::agc_getHEQDampeningFactor"));
 #endif
 
     uint16_t factor;
@@ -217,7 +217,7 @@ uint16_t LeptonFLiR::agc_getHEQDampeningFactor() {
 
 void LeptonFLiR::agc_setHEQMaxGain(uint16_t gain) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQMaxGain");
+    Serial.println(F("LeptonFLiR::agc_setHEQMaxGain"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_MAX_GAIN, LEP_I2C_COMMAND_TYPE_SET), gain);
@@ -225,7 +225,7 @@ void LeptonFLiR::agc_setHEQMaxGain(uint16_t gain) {
 
 uint16_t LeptonFLiR::agc_getHEQMaxGain() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQMaxGain");
+    Serial.println(F("LeptonFLiR::agc_getHEQMaxGain"));
 #endif
 
     uint16_t gain;
@@ -235,7 +235,7 @@ uint16_t LeptonFLiR::agc_getHEQMaxGain() {
 
 void LeptonFLiR::agc_setHEQClipLimitHigh(uint16_t limit) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQClipLimitHigh");
+    Serial.println(F("LeptonFLiR::agc_setHEQClipLimitHigh"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_CLIP_LIMIT_HIGH, LEP_I2C_COMMAND_TYPE_SET), limit);
@@ -243,7 +243,7 @@ void LeptonFLiR::agc_setHEQClipLimitHigh(uint16_t limit) {
 
 uint16_t LeptonFLiR::agc_getHEQClipLimitHigh() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQClipLimitHigh");
+    Serial.println(F("LeptonFLiR::agc_getHEQClipLimitHigh"));
 #endif
 
     uint16_t limit;
@@ -253,7 +253,7 @@ uint16_t LeptonFLiR::agc_getHEQClipLimitHigh() {
 
 void LeptonFLiR::agc_setHEQClipLimitLow(uint16_t limit) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQClipLimitLow");
+    Serial.println(F("LeptonFLiR::agc_setHEQClipLimitLow"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_CLIP_LIMIT_LOW, LEP_I2C_COMMAND_TYPE_SET), limit);
@@ -261,7 +261,7 @@ void LeptonFLiR::agc_setHEQClipLimitLow(uint16_t limit) {
 
 uint16_t LeptonFLiR::agc_getHEQClipLimitLow() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQClipLimitLow");
+    Serial.println(F("LeptonFLiR::agc_getHEQClipLimitLow"));
 #endif
 
     uint16_t limit;
@@ -271,7 +271,7 @@ uint16_t LeptonFLiR::agc_getHEQClipLimitLow() {
 
 void LeptonFLiR::agc_setHEQBinExtension(uint16_t extension) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQBinExtension");
+    Serial.println(F("LeptonFLiR::agc_setHEQBinExtension"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_BIN_EXTENSION, LEP_I2C_COMMAND_TYPE_SET), extension);
@@ -279,7 +279,7 @@ void LeptonFLiR::agc_setHEQBinExtension(uint16_t extension) {
 
 uint16_t LeptonFLiR::agc_getHEQBinExtension() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQBinExtension");
+    Serial.println(F("LeptonFLiR::agc_getHEQBinExtension"));
 #endif
 
     uint16_t extension;
@@ -289,7 +289,7 @@ uint16_t LeptonFLiR::agc_getHEQBinExtension() {
 
 void LeptonFLiR::agc_setHEQMidpoint(uint16_t midpoint) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQMidpoint");
+    Serial.println(F("LeptonFLiR::agc_setHEQMidpoint"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_MIDPOINT, LEP_I2C_COMMAND_TYPE_SET), midpoint);
@@ -297,7 +297,7 @@ void LeptonFLiR::agc_setHEQMidpoint(uint16_t midpoint) {
 
 uint16_t LeptonFLiR::agc_getHEQMidpoint() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQMidpoint");
+    Serial.println(F("LeptonFLiR::agc_getHEQMidpoint"));
 #endif
 
     uint16_t midpoint;
@@ -307,7 +307,7 @@ uint16_t LeptonFLiR::agc_getHEQMidpoint() {
 
 void LeptonFLiR::agc_setHEQEmptyCounts(uint16_t counts) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQEmptyCounts");
+    Serial.println(F("LeptonFLiR::agc_setHEQEmptyCounts"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_EMPTY_COUNTS, LEP_I2C_COMMAND_TYPE_SET), counts);
@@ -315,7 +315,7 @@ void LeptonFLiR::agc_setHEQEmptyCounts(uint16_t counts) {
 
 uint16_t LeptonFLiR::agc_getHEQEmptyCounts() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQEmptyCounts");
+    Serial.println(F("LeptonFLiR::agc_setHEQEmptyCounts"));
 #endif
 
     uint16_t counts;
@@ -325,7 +325,7 @@ uint16_t LeptonFLiR::agc_getHEQEmptyCounts() {
 
 void LeptonFLiR::agc_setHEQNormalizationFactor(uint16_t factor) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_setHEQNormalizationFactor");
+    Serial.println(F("LeptonFLiR::agc_setHEQNormalizationFactor"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_NORMALIZATION_FACTOR, LEP_I2C_COMMAND_TYPE_SET), factor);
@@ -333,7 +333,7 @@ void LeptonFLiR::agc_setHEQNormalizationFactor(uint16_t factor) {
 
 uint16_t LeptonFLiR::agc_getHEQNormalizationFactor() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::agc_getHEQNormalizationFactor");
+    Serial.println(F("LeptonFLiR::agc_getHEQNormalizationFactor"));
 #endif
 
     uint16_t factor;

@@ -261,19 +261,19 @@ uint16_t *LeptonFLiR::getSPIFrameData(int line) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 static void printSPIFrame(uint16_t *spiFrame) {
-    Serial.print("ID: 0x");
+    Serial.print(F("ID: 0x"));
     Serial.print(spiFrame[0], HEX);
-    Serial.print(" CRC: 0x");
+    Serial.print(F(" CRC: 0x"));
     Serial.print(spiFrame[1], HEX);
-    Serial.print(" Data: ");
+    Serial.print(F(" Data: "));
     for (int i = 0; i < 5; ++i) {
         Serial.print(i ? "-0x" : "0x");
         Serial.print(spiFrame[i + 2], HEX);
     }
-    Serial.print("...");
+    Serial.print(F("..."));
     int offset = getSPIFrameDataSize16() - 5;
     for (int i = 0; i < 5; ++i) {
-        Serial.print(i ? "-0x" : "0x");
+        Serial.print(i ? F("-0x") : F("0x"));
         Serial.print(spiFrame[offset + i + 2], HEX);
     }
     Serial.println("");

@@ -108,67 +108,67 @@ static const char *textForWireInterfaceNumber(int wireNum) {
 void LeptonFLiR::printModuleInfo() {
     char buffer[80];
 
-    Serial.println(""); Serial.println(" ~~~ LeptonFLiR Module Info ~~~");
+    Serial.println(""); Serial.println(F(" ~~~ LeptonFLiR Module Info ~~~"));
 
-    Serial.println(""); Serial.print("Chip Select Pin: ");
-    Serial.print("D"); Serial.print(_spiCSPin);
-    Serial.println(" <active-low>");
-    Serial.print("ISR VSync Pin: ");
+    Serial.println(""); Serial.print(F("Chip Select Pin: "));
+    Serial.print(F("D")); Serial.print(_spiCSPin);
+    Serial.println(F(" <active-low>"));
+    Serial.print(F("ISR VSync Pin: "));
     if (_isrVSyncPin != DISABLED) {
-        Serial.print("D"); Serial.print(_isrVSyncPin);
-        Serial.println(" <on-rising>");
+        Serial.print(F("D")); Serial.print(_isrVSyncPin);
+        Serial.println(F(" <on-rising>"));
     } else
-        Serial.println("<disabled>");
+        Serial.println(F("<disabled>"));
 
-    Serial.println(""); Serial.print("i2c Instance: ");
+    Serial.println(""); Serial.print(F("i2c Instance: "));
     Serial.println(textForWireInterfaceNumber(getWireInterfaceNumber()));
-    Serial.print("i2c Speed: ");
-    Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.println("kHz");
+    Serial.print(F("i2c Speed: "));
+    Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.println(F("kHz"));
 
-    Serial.println(""); Serial.print("SPI Speed: ");
+    Serial.println(""); Serial.print(F("SPI Speed: "));
     const int spiDivisor = getSPIClockDivisor();
     const float spiSpeed = F_CPU / (const float)spiDivisor;
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
-    Serial.print("MHz (SPI_CLOCK_DIV"); Serial.print(spiDivisor); Serial.print(")");
+    Serial.print(F("MHz (SPI_CLOCK_DIV")); Serial.print(spiDivisor); Serial.print(F(")"));
     if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
-        Serial.print(" <speed too slow>");
+        Serial.print(F(" <speed too slow>"));
     else if (spiSpeed > LEPFLIR_SPI_MAX_SPEED + FLT_EPSILON)
-        Serial.print(" <speed too high>");
+        Serial.print(F(" <speed too high>"));
     else if (spiSpeed < LEPFLIR_SPI_OPTIMAL_MIN_SPEED - FLT_EPSILON)
-        Serial.print(" <speed sub-optimal>");
+        Serial.print(F(" <speed sub-optimal>"));
     Serial.println("");
 
-    Serial.println(""); Serial.print("Camera Type: ");
-    Serial.print(_cameraType); Serial.print(": ");
+    Serial.println(""); Serial.print(F("Camera Type: "));
+    Serial.print(_cameraType); Serial.print(F(": "));
     switch (_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
-            Serial.println("LeptonFLiR_CameraType_Lepton1"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton1")); break;
         case LeptonFLiR_CameraType_Lepton1_5:
-            Serial.println("LeptonFLiR_CameraType_Lepton1_5"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton1_5")); break;
         case LeptonFLiR_CameraType_Lepton1_6:
-            Serial.println("LeptonFLiR_CameraType_Lepton1_6"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton1_6")); break;
         case LeptonFLiR_CameraType_Lepton2:
-            Serial.println("LeptonFLiR_CameraType_Lepton2"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton2")); break;
         case LeptonFLiR_CameraType_Lepton2_5:
-            Serial.println("LeptonFLiR_CameraType_Lepton2_5"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton2_5")); break;
         case LeptonFLiR_CameraType_Lepton3:
-            Serial.println("LeptonFLiR_CameraType_Lepton3"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton3")); break;
         case LeptonFLiR_CameraType_Lepton3_5:
-            Serial.println("LeptonFLiR_CameraType_Lepton3_5"); break;
+            Serial.println(F("LeptonFLiR_CameraType_Lepton3_5")); break;
         case LeptonFLiR_CameraType_Count:
         case LeptonFLiR_CameraType_Undefined:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.print("Temperature Mode: ");
-    Serial.print(_tempMode); Serial.print(": ");
+    Serial.println(""); Serial.print(F("Temperature Mode: "));
+    Serial.print(_tempMode); Serial.print(F(": "));
     switch (_tempMode) {
         case LeptonFLiR_TemperatureMode_Celsius:
-            Serial.println("LeptonFLiR_TemperatureMode_Celsius"); break;
+            Serial.println(F("LeptonFLiR_TemperatureMode_Celsius")); break;
         case LeptonFLiR_TemperatureMode_Fahrenheit:
-            Serial.println("LeptonFLiR_TemperatureMode_Fahrenheit"); break;
+            Serial.println(F("LeptonFLiR_TemperatureMode_Fahrenheit")); break;
         case LeptonFLiR_TemperatureMode_Kelvin:
-            Serial.println("LeptonFLiR_TemperatureMode_Kelvin"); break;
+            Serial.println(F("LeptonFLiR_TemperatureMode_Kelvin")); break;
         case LeptonFLiR_TemperatureMode_Count:
         case LeptonFLiR_TemperatureMode_Undefined:
             Serial.println(""); break;
@@ -176,41 +176,41 @@ void LeptonFLiR::printModuleInfo() {
 
     LeptonFLiR::FrameSettings* nextFrame = getNextFrame();
 
-    Serial.println(""); Serial.print("Image Storage Mode: ");
+    Serial.println(""); Serial.print(F("Image Storage Mode: "));
     LeptonFLiR_ImageMode imageMode = nextFrame ? nextFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
-    Serial.print(imageMode); Serial.print(": ");
+    Serial.print(imageMode); Serial.print(F(": "));
     switch (imageMode) {
         case LeptonFLiR_ImageMode_80x60_24bpp_244Brf:
-            Serial.println("LeptonFLiR_ImageMode_80x60_24bpp_244Brf"); break;
+            Serial.println(F("LeptonFLiR_ImageMode_80x60_24bpp_244Brf")); break;
         case LeptonFLiR_ImageMode_80x60_16bpp_164Brf:
-            Serial.println("LeptonFLiR_ImageMode_80x60_16bpp_164Brf"); break;
+            Serial.println(F("LeptonFLiR_ImageMode_80x60_16bpp_164Brf")); break;
         case LeptonFLiR_ImageMode_160x120_24bpp_244Brf:
-            Serial.println("LeptonFLiR_ImageMode_160x120_24bpp_244Brf"); break;
+            Serial.println(F("LeptonFLiR_ImageMode_160x120_24bpp_244Brf")); break;
         case LeptonFLiR_ImageMode_160x120_16bpp_164Brf:
-            Serial.println("LeptonFLiR_ImageMode_160x120_16bpp_164Brf"); break;
+            Serial.println(F("LeptonFLiR_ImageMode_160x120_16bpp_164Brf")); break;
         case LeptonFLiR_ImageMode_Count:
         case LeptonFLiR_ImageMode_Undefined:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.print("Image Output Mode: ");
+    Serial.println(""); Serial.print(F("Image Output Mode: "));
     LeptonFLiR_ImageOutputMode outputMode = nextFrame ? nextFrame->outputMode : LeptonFLiR_ImageOutputMode_Undefined;
-    Serial.print(outputMode); Serial.print(": ");
+    Serial.print(outputMode); Serial.print(F(": "));
     switch (outputMode) {
         case LeptonFLiR_ImageOutputMode_GS8:
-            Serial.println("LeptonFLiR_ImageOutputMode_GS8"); break;
+            Serial.println(F("LeptonFLiR_ImageOutputMode_GS8")); break;
         case LeptonFLiR_ImageOutputMode_GS16:
-            Serial.println("LeptonFLiR_ImageOutputMode_GS16"); break;
+            Serial.println(F("LeptonFLiR_ImageOutputMode_GS16")); break;
         case LeptonFLiR_ImageOutputMode_RGB565:
-            Serial.println("LeptonFLiR_ImageOutputMode_RGB565"); break;
+            Serial.println(F("LeptonFLiR_ImageOutputMode_RGB565")); break;
         case LeptonFLiR_ImageOutputMode_RGB888:
-            Serial.println("LeptonFLiR_ImageOutputMode_RGB888"); break;
+            Serial.println(F("LeptonFLiR_ImageOutputMode_RGB888")); break;
         case LeptonFLiR_ImageOutputMode_Count:
         case LeptonFLiR_ImageOutputMode_Undefined:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("Memory Footprint:");
+    Serial.println(""); Serial.println(F("Memory Footprint:"));
     const int mallocOffset = 15;
     const int classSize = sizeof(LeptonFLiR);
     const int frameBufferSize = _frameData ? _frameDataSize_orig + mallocOffset : 0;
@@ -218,183 +218,183 @@ void LeptonFLiR::printModuleInfo() {
     const int telemetryOutputSize = _telemetryOutput ? sizeof(LeptonFLiR_TelemetryData) : 0;
     const int lastFrameSize = _lastFrame ? sizeof(LeptonFLiR::FrameSettings) + (_lastFrame->offsetTable ? getSPIFrameImageLines() * sizeof(uint16_t) : 0) : 0;
     const int nextFrameSize = _nextFrame ? sizeof(LeptonFLiR::FrameSettings) + (_nextFrame->offsetTable ? getSPIFrameImageLines() * sizeof(uint16_t) : 0) : 0;
-    Serial.print("Class: ");
+    Serial.print(F("Class: "));
     Serial.print(classSize);
-    Serial.print("B, raw buffer: ");
+    Serial.print(F("B, raw buffer: "));
     Serial.print(frameBufferSize);
-    Serial.print("B, image output: ");
+    Serial.print(F("B, image output: "));
     Serial.print(imageOutputSize);
-    Serial.print("B, telemetry output: ");
+    Serial.print(F("B, telemetry output: "));
     Serial.print(telemetryOutputSize);
-    Serial.print("B, last frame: ");
+    Serial.print(F("B, last frame: "));
     Serial.print(lastFrameSize);
-    Serial.print("B, next frame: ");
+    Serial.print(F("B, next frame: "));
     Serial.print(nextFrameSize);
-    Serial.print("B, Total: ");
+    Serial.print(F("B, Total: "));
     Serial.print(classSize + frameBufferSize + imageOutputSize + telemetryOutputSize + lastFrameSize + nextFrameSize);
-    Serial.println("B");
+    Serial.println(F("B");
 
-    Serial.println(""); Serial.println("Power Register:");
+    Serial.println(""); Serial.println(F("Power Register:"));
     uint16_t powerReg; readRegister(LEP_I2C_POWER_REG, &powerReg);
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-    Serial.print("0x"); Serial.println(powerReg, HEX);
+    Serial.print(F("0x")); Serial.println(powerReg, HEX);
 
-    Serial.println(""); Serial.println("Status Register:");
+    Serial.println(""); Serial.println(F("Status Register:"));
     uint16_t statusReg; readRegister(LEP_I2C_STATUS_REG, &statusReg);
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     checkForErrors();
 #endif
-    Serial.print("0x"); Serial.println(statusReg, HEX);
+    Serial.print(F("0x")); Serial.println(statusReg, HEX);
 
-    Serial.println(""); Serial.println("AGC Enabled:");
-    Serial.println(agc_getAGCEnabled() ? "enabled" : "disabled");
+    Serial.println(""); Serial.println(F("AGC Enabled:"));
+    Serial.println(agc_getAGCEnabled() ? F("enabled") : F("disabled"));
 
-    Serial.println(""); Serial.println("AGC Policy:");
+    Serial.println(""); Serial.println(F("AGC Policy:"));
     LEP_AGC_POLICY policy = agc_getAGCPolicy();
-    Serial.print(policy); Serial.print(": ");
+    Serial.print(policy); Serial.print(F(": "));
     switch (policy) {
         case LEP_AGC_LINEAR:
-            Serial.println("LEP_AGC_LINEAR"); break;
+            Serial.println(F("LEP_AGC_LINEAR")); break;
         case LEP_AGC_HEQ:
-            Serial.println("LEP_AGC_HEQ"); break;
+            Serial.println(F("LEP_AGC_HEQ")); break;
         default:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("AGC HEQ Scale Factor:");
+    Serial.println(""); Serial.println(F("AGC HEQ Scale Factor:"));
     LEP_AGC_HEQ_SCALE_FACTOR factor = agc_getHEQScaleFactor();
-    Serial.print(factor); Serial.print(": ");
+    Serial.print(factor); Serial.print(F(": "));
     switch (factor) {
         case LEP_AGC_SCALE_TO_8_BITS:
-            Serial.println("LEP_AGC_SCALE_TO_8_BITS"); break;
+            Serial.println(F("LEP_AGC_SCALE_TO_8_BITS")); break;
         case LEP_AGC_SCALE_TO_14_BITS:
-            Serial.println("LEP_AGC_SCALE_TO_14_BITS"); break;
+            Serial.println(F("LEP_AGC_SCALE_TO_14_BITS")); break;
         default:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("AGC Calculation Enabled:");
-    Serial.println(agc_getAGCCalcEnabled() ? "enabled" : "disabled");
+    Serial.println(""); Serial.println(F("AGC Calculation Enabled:"));
+    Serial.println(agc_getAGCCalcEnabled() ? F("enabled") : F("disabled"));
 
-    Serial.println(""); Serial.println("SYS Camera Status:");
+    Serial.println(""); Serial.println(F("SYS Camera Status:"));
     LEP_SYS_CAM_STATUS_STATES camStatus = sys_getCameraStatus();
-    Serial.print(camStatus); Serial.print(": ");
+    Serial.print(camStatus); Serial.print(F(": "));
     switch (camStatus) {
         case LEP_SYSTEM_READY:
-            Serial.println("LEP_SYSTEM_READY"); break;
+            Serial.println(F("LEP_SYSTEM_READY")); break;
         case LEP_SYSTEM_INITIALIZING:
-            Serial.println("LEP_SYSTEM_INITIALIZING"); break;
+            Serial.println(F("LEP_SYSTEM_INITIALIZING")); break;
         case LEP_SYSTEM_IN_LOW_POWER_MODE:
-            Serial.println("LEP_SYSTEM_IN_LOW_POWER_MODE"); break;
+            Serial.println(F("LEP_SYSTEM_IN_LOW_POWER_MODE")); break;
         case LEP_SYSTEM_GOING_INTO_STANDBY:
-            Serial.println("LEP_SYSTEM_GOING_INTO_STANDBY"); break;
+            Serial.println(F("LEP_SYSTEM_GOING_INTO_STANDBY")); break;
         case LEP_SYSTEM_FLAT_FIELD_IN_PROCESS:
-            Serial.println("LEP_SYSTEM_FLAT_FIELD_IN_PROCESS"); break;
+            Serial.println(F("LEP_SYSTEM_FLAT_FIELD_IN_PROCESS")); break;
         default:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("FLiR Serial Number:");
+    Serial.println(""); Serial.println(F("FLiR Serial Number:"));
     sys_getFlirSerialNumber(buffer, 80);
     Serial.println(buffer);
 
-    Serial.println(""); Serial.println("Customer Serial Number:");
+    Serial.println(""); Serial.println(F("Customer Serial Number:"));
     sys_getCustomerSerialNumber(buffer, 80);
     Serial.println(buffer);
 
-    Serial.println(""); Serial.println("Camera Uptime:");
+    Serial.println(""); Serial.println(F("Camera Uptime:"));
     Serial.print(sys_getCameraUptime());
-    Serial.println(" ms");
+    Serial.println(F(" ms"));
 
-    Serial.println(""); Serial.println("Sys Aux Temperature:");
+    Serial.println(""); Serial.println(F("Sys Aux Temperature:"));
     Serial.print(sys_getAuxTemperature());
     Serial.println(getTemperatureSymbol());
 
-    Serial.println(""); Serial.println("Sys FPA Temperature:");
+    Serial.println(""); Serial.println(F("Sys FPA Temperature:"));
     Serial.print(sys_getFPATemperature());
     Serial.println(getTemperatureSymbol());
 
-    Serial.println(""); Serial.println("Telemetry Enabled:");
-    Serial.println(sys_getTelemetryEnabled() ? "enabled" : "disabled");
+    Serial.println(""); Serial.println(F("Telemetry Enabled:"));
+    Serial.println(sys_getTelemetryEnabled() ? F("enabled") : F("disabled"));
 
-    Serial.println(""); Serial.println("Vid Polarity:");
+    Serial.println(""); Serial.println(F("Vid Polarity:"));
     LEP_VID_POLARITY polarity = vid_getPolarity();
-    Serial.print(polarity); Serial.print(": ");
+    Serial.print(polarity); Serial.print(F(": "));
     switch (polarity) {
         case LEP_VID_WHITE_HOT:
-            Serial.println("LEP_VID_WHITE_HOT"); break;
+            Serial.println(F("LEP_VID_WHITE_HOT")); break;
         case LEP_VID_BLACK_HOT:
-            Serial.println("LEP_VID_BLACK_HOT"); break;
+            Serial.println(F("LEP_VID_BLACK_HOT")); break;
         default:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("Vid Pseudo Color Lookup Table:");
+    Serial.println(""); Serial.println(F("Vid Pseudo Color Lookup Table:"));
     LEP_VID_PCOLOR_LUT mode = vid_getPseudoColorLUT();
-    Serial.print(mode); Serial.print(": ");
+    Serial.print(mode); Serial.print(F(": "));
     switch (mode) {
         case LEP_VID_WHEEL6_LUT:
-            Serial.println("LEP_VID_WHEEL6_LUT"); break;
+            Serial.println(F("LEP_VID_WHEEL6_LUT")); break;
         case LEP_VID_FUSION_LUT:
-            Serial.println("LEP_VID_FUSION_LUT"); break;
+            Serial.println(F("LEP_VID_FUSION_LUT")); break;
         case LEP_VID_RAINBOW_LUT:
-            Serial.println("LEP_VID_RAINBOW_LUT"); break;
+            Serial.println(F("LEP_VID_RAINBOW_LUT")); break;
         case LEP_VID_GLOBOW_LUT:
-            Serial.println("LEP_VID_GLOBOW_LUT"); break;
+            Serial.println(F("LEP_VID_GLOBOW_LUT")); break;
         case LEP_VID_COLOR_LUT:
-            Serial.println("LEP_VID_COLOR_LUT"); break;
+            Serial.println(F("LEP_VID_COLOR_LUT")); break;
         case LEP_VID_ICE_FIRE_LUT:
-            Serial.println("LEP_VID_ICE_FIRE_LUT"); break;
+            Serial.println(F("LEP_VID_ICE_FIRE_LUT")); break;
         case LEP_VID_RAIN_LUT:
-            Serial.println("LEP_VID_RAIN_LUT"); break;
+            Serial.println(F("LEP_VID_RAIN_LUT")); break;
         case LEP_VID_USER_LUT:
-            Serial.println("LEP_VID_USER_LUT"); break;
+            Serial.println(F("LEP_VID_USER_LUT")); break;
         default:
             Serial.println(""); break;
     }
 
-    Serial.println(""); Serial.println("Vid Focus Calculation Enabled:");
-    Serial.println(vid_getFocusCalcEnabled() ? "<enabled>" : "<disabled>");
+    Serial.println(""); Serial.println(F("Vid Focus Calculation Enabled:"));
+    Serial.println(vid_getFocusCalcEnabled() ? F("<enabled>") : F("<disabled>"));
 
-    Serial.println(""); Serial.println("Vid Freeze Enabled:");
-    Serial.println(vid_getFreezeEnabled() ? "<enabled>" : "<disabled>");
+    Serial.println(""); Serial.println(F("Vid Freeze Enabled:"));
+    Serial.println(vid_getFreezeEnabled() ? F("<enabled>") : F("<disabled>"));
 
-    Serial.println(""); Serial.println("Vid Image Output Format:");
+    Serial.println(""); Serial.println(F("Vid Image Output Format:"));
     LEP_VID_VIDEO_OUTPUT_FORMAT format = vid_getOutputFormat();
-    Serial.print(format); Serial.print(": ");
+    Serial.print(format); Serial.print(F(": "));
     switch (format) {
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW10:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW10"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW10")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW12:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW12"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW12")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RGB888:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RGB888"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RGB888")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RGB666:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RGB666"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RGB666")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RGB565:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RGB565"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RGB565")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_YUV422_8BIT:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_YUV422_8BIT"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_YUV422_8BIT")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW14:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW14"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW14")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_YUV422_10BIT:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_YUV422_10BIT"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_YUV422_10BIT")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_USER_DEFINED:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_USER_DEFINED"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_USER_DEFINED")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_2:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_2"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_2")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_3:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_3"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_3")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_4:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_4"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_4")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_5:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_5"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_5")); break;
         case LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_6:
-            Serial.println("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_6"); break;
+            Serial.println(F("LEP_VID_VIDEO_OUTPUT_FORMAT_RAW8_6")); break;
         default:
             Serial.println(""); break;
     }
@@ -494,15 +494,15 @@ static const char *textForLepResult(LEP_RESULT errorCode) {
 
 void LeptonFLiR::checkForErrors() {
     if (_lastI2CError) {
-        Serial.print("  LeptonFLiR::checkErrors lastI2CError: ");
+        Serial.print(F("  LeptonFLiR::checkErrors lastI2CError: "));
         Serial.print(_lastI2CError);
-        Serial.print(": ");
+        Serial.print(F(": "));
         Serial.println(textForI2CError(getLastI2CError()));
     }
     if (_lastLepResult) {
-        Serial.print("  LeptonFLiR::checkErrors lastLepResult: ");
+        Serial.print(F("  LeptonFLiR::checkErrors lastLepResult: "));
         Serial.print(_lastLepResult);
-        Serial.print(": ");
+        Serial.print(F(": "));
         Serial.println(textForLepResult(getLastLepResult()));
     }
 }

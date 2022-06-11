@@ -15,13 +15,13 @@ uint8_t __attribute__((noinline)) i2c_read(bool last);
 
 bool LeptonFLiR::waitCommandBegin(int timeout) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("    LeptonFLiR::waitCommandBegin");
+    Serial.println(F("    LeptonFLiR::waitCommandBegin"));
 #endif
 
     _lastLepResult = 0;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  ");
+    Serial.print(F("  "));
 #endif
     uint16_t status;
     if (readRegister(LEP_I2C_STATUS_REG, &status))
@@ -40,7 +40,7 @@ bool LeptonFLiR::waitCommandBegin(int timeout) {
 #endif
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        Serial.print("  ");
+        Serial.print(F("  "));
 #endif
 
         if (readRegister(LEP_I2C_STATUS_REG, &status))
@@ -57,11 +57,11 @@ bool LeptonFLiR::waitCommandBegin(int timeout) {
 
 bool LeptonFLiR::waitCommandFinish(int timeout) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("    LeptonFLiR::waitCommandFinish");
+    Serial.println(F("    LeptonFLiR::waitCommandFinish"));
 #endif
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  ");
+    Serial.print(F("  "));
 #endif
     uint16_t status;
     if (readRegister(LEP_I2C_STATUS_REG, &status))
@@ -82,7 +82,7 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
 #endif
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        Serial.print("  ");
+        Serial.print(F("  "));
 #endif
 
         if (readRegister(LEP_I2C_STATUS_REG, &status))
@@ -109,7 +109,7 @@ uint16_t LeptonFLiR::cmdCode(uint16_t cmdID, uint16_t cmdType) {
 
 void LeptonFLiR::sendCommand(uint16_t cmdCode) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::sendCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::sendCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -128,7 +128,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode) {
 
 void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::sendCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::sendCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -147,7 +147,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t value) {
 
 void LeptonFLiR::sendCommand(uint16_t cmdCode, uint32_t value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::sendCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::sendCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -166,7 +166,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint32_t value) {
 
 void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t *dataWords, int dataLength) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::sendCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::sendCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -185,7 +185,7 @@ void LeptonFLiR::sendCommand(uint16_t cmdCode, uint16_t *dataWords, int dataLeng
 
 void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::receiveCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::receiveCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -207,7 +207,7 @@ void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
 
 void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::receiveCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::receiveCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -229,7 +229,7 @@ void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
 
 void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLength) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("  LeptonFLiR::receiveCommand cmdCode: 0x");
+    Serial.print(F("  LeptonFLiR::receiveCommand cmdCode: 0x"));
     Serial.println(cmdCode, HEX);
 #endif
 
@@ -251,13 +251,13 @@ void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLe
 
 int LeptonFLiR::writeCmdRegister(uint16_t cmdCode, uint16_t *dataWords, int dataLength) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::writeCmdRegister cmdCode: 0x");
+    Serial.print(F("    LeptonFLiR::writeCmdRegister cmdCode: 0x"));
     Serial.print(cmdCode, HEX);
-    Serial.print(", dataWords[");
+    Serial.print(F(", dataWords["));
     Serial.print(dataLength);
-    Serial.print("]: ");
+    Serial.print(F("]: "));
     for (int i = 0; i < dataLength; ++i) {
-        Serial.print(i > 0 ? "-0x" : "0x");
+        Serial.print(i > 0 ? F("-0x") : F("0x"));
         Serial.print(dataWords[i], HEX);
     }
     Serial.println("");
@@ -339,27 +339,27 @@ int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
         }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        Serial.print("      LeptonFLiR::readDataRegister readWords[");
+        Serial.print(F("      LeptonFLiR::readDataRegister readWords["));
         if (origWordsRead == origReadLength && origReadLength == origMaxLength) {
             Serial.print(origWordsRead);
         }
         else if (origWordsRead != origReadLength && origReadLength == origMaxLength) {
-            Serial.print("r:");
+            Serial.print(F("r:"));
             Serial.print(origWordsRead);
-            Serial.print(",lm:");
+            Serial.print(F(",lm:"));
             Serial.print(origReadLength);
         }
         else {
-            Serial.print("r:");
+            Serial.print(F("r:"));
             Serial.print(origWordsRead);
-            Serial.print(",l:");
+            Serial.print(F(",l:"));
             Serial.print(origReadLength);
-            Serial.print(",m:");
+            Serial.print(F(",m:"));
             Serial.print(origMaxLength);
         }
-        Serial.print("]: ");
+        Serial.print(F("]: "));
         for (int i = 0; i < origWordsRead; ++i) {
-            Serial.print(i > 0 ? "-0x" : "0x");
+            Serial.print(i > 0 ? F("-0x") : F("0x"));
             Serial.print(origReadWords[i], HEX);
         }
         Serial.println("");
@@ -380,9 +380,9 @@ int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
 
 int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::writeRegister regAddress: 0x");
+    Serial.print(F("    LeptonFLiR::writeRegister regAddress: 0x"));
     Serial.print(regAddress, HEX);
-    Serial.print(", value: 0x");
+    Serial.print(F(", value: 0x"));
     Serial.println(value, HEX);
 #endif
 
@@ -394,7 +394,7 @@ int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t value) {
 
 int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("    LeptonFLiR::readRegister regAddress: 0x");
+    Serial.print(F("    LeptonFLiR::readRegister regAddress: 0x"));
     Serial.println(regAddress, HEX);
 #endif
 
@@ -413,7 +413,7 @@ int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
     *value = i2cWire_read16();
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.print("      LeptonFLiR::readRegister retVal: 0x");
+    Serial.print(F("      LeptonFLiR::readRegister retVal: 0x"));
     Serial.println(*value, HEX);
 #endif
 

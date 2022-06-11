@@ -7,7 +7,7 @@
 
 void LeptonFLiR::sys_getCameraStatus(LEP_SYS_CAM_STATUS *status) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getCameraStatus");
+    Serial.println(F("LeptonFLiR::sys_getCameraStatus"));
 #endif
 
     receiveCommand(cmdCode(LEP_CID_SYS_CAM_STATUS, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)status, sizeof(LEP_SYS_CAM_STATUS) / 2);
@@ -23,7 +23,7 @@ void LeptonFLiR::sys_getFlirSerialNumber(char *buffer, int maxLength) {
     if (!buffer || maxLength < 16) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getFlirSerialNumber");
+    Serial.println(F("LeptonFLiR::sys_getFlirSerialNumber"));
 #endif
 
     uint16_t innerBuffer[4];
@@ -35,7 +35,7 @@ void LeptonFLiR::sys_getCustomerSerialNumber(char *buffer, int maxLength) {
     if (!buffer || maxLength < 64) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getCustomerSerialNumber");
+    Serial.println(F("LeptonFLiR::sys_getCustomerSerialNumber"));
 #endif
 
     uint16_t innerBuffer[16];
@@ -45,7 +45,7 @@ void LeptonFLiR::sys_getCustomerSerialNumber(char *buffer, int maxLength) {
 
 uint32_t LeptonFLiR::sys_getCameraUptime() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getCameraUptime");
+    Serial.println(F("LeptonFLiR::sys_getCameraUptime"));
 #endif
 
     uint32_t uptime;
@@ -55,7 +55,7 @@ uint32_t LeptonFLiR::sys_getCameraUptime() {
 
 float LeptonFLiR::sys_getAuxTemperature() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getAuxTemperature");
+    Serial.println(F("LeptonFLiR::sys_getAuxTemperature"));
 #endif
 
     uint16_t kelvin100;
@@ -65,7 +65,7 @@ float LeptonFLiR::sys_getAuxTemperature() {
 
 float LeptonFLiR::sys_getFPATemperature() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getFPATemperature");
+    Serial.println(F("LeptonFLiR::sys_getFPATemperature"));
 #endif
 
     uint16_t kelvin100;
@@ -75,7 +75,7 @@ float LeptonFLiR::sys_getFPATemperature() {
 
 void LeptonFLiR::sys_setTelemetryEnabled(bool enabled) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_setTelemetryEnabled");
+    Serial.println(F("LeptonFLiR::sys_setTelemetryEnabled"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
@@ -83,7 +83,7 @@ void LeptonFLiR::sys_setTelemetryEnabled(bool enabled) {
 
 bool LeptonFLiR::sys_getTelemetryEnabled() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getTelemetryEnabled");
+    Serial.println(F("LeptonFLiR::sys_getTelemetryEnabled"));
 #endif
 
     uint32_t enabled;
@@ -93,7 +93,7 @@ bool LeptonFLiR::sys_getTelemetryEnabled() {
 
 void LeptonFLiR::sys_setTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_setTelemetryLocation");
+    Serial.println(F("LeptonFLiR::sys_setTelemetryLocation"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)location);
@@ -101,7 +101,7 @@ void LeptonFLiR::sys_setTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location) {
 
 LEP_SYS_TELEMETRY_LOCATION LeptonFLiR::sys_getTelemetryLocation() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getTelemetryLocation");
+    Serial.println(F("LeptonFLiR::sys_getTelemetryLocation"));
 #endif
 
     uint32_t location;
@@ -111,7 +111,7 @@ LEP_SYS_TELEMETRY_LOCATION LeptonFLiR::sys_getTelemetryLocation() {
 
 void LeptonFLiR::sys_runFFCNormalization() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_runFFCNormalization");
+    Serial.println(F("LeptonFLiR::sys_runFFCNormalization"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_RUN_FFC, LEP_I2C_COMMAND_TYPE_RUN));
@@ -119,7 +119,7 @@ void LeptonFLiR::sys_runFFCNormalization() {
 
 void LeptonFLiR::sys_runPingCamera() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_runPingCamera");
+    Serial.println(F("LeptonFLiR::sys_runPingCamera"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_PING, LEP_I2C_COMMAND_TYPE_RUN));
@@ -127,7 +127,7 @@ void LeptonFLiR::sys_runPingCamera() {
 
 void LeptonFLiR::sys_runFrameAveraging() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_runFrameAveraging");
+    Serial.println(F("LeptonFLiR::sys_runFrameAveraging"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_EXECTUE_FRAME_AVERAGE, LEP_I2C_COMMAND_TYPE_RUN));
@@ -135,7 +135,7 @@ void LeptonFLiR::sys_runFrameAveraging() {
 
 void LeptonFLiR::sys_setNumFramesToAverage(LEP_SYS_FRAME_AVERAGE average) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_setNumFramesToAverage");
+    Serial.println(F("LeptonFLiR::sys_setNumFramesToAverage"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_NUM_FRAMES_TO_AVERAGE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)average);
@@ -143,7 +143,7 @@ void LeptonFLiR::sys_setNumFramesToAverage(LEP_SYS_FRAME_AVERAGE average) {
 
 LEP_SYS_FRAME_AVERAGE LeptonFLiR::sys_getNumFramesToAverage() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getNumFramesToAverage");
+    Serial.println(F("LeptonFLiR::sys_getNumFramesToAverage"));
 #endif
 
     uint32_t average;
@@ -155,7 +155,7 @@ void LeptonFLiR::sys_getSceneStatistics(LEP_SYS_SCENE_STATISTICS *statistics) {
     if (!statistics) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getSceneStatistics");
+    Serial.println(F("LeptonFLiR::sys_getSceneStatistics"));
 #endif
 
     receiveCommand(cmdCode(LEP_CID_SYS_SCENE_STATISTICS, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)statistics, sizeof(LEP_SYS_SCENE_STATISTICS) / 2);
@@ -165,7 +165,7 @@ void LeptonFLiR::sys_setSceneRegion(LEP_SYS_SCENE_ROI *region) {
     if (!region) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_setSceneRegion");
+    Serial.println(F("LeptonFLiR::sys_setSceneRegion"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_SCENE_ROI, LEP_I2C_COMMAND_TYPE_SET), (uint16_t *)region, sizeof(LEP_SYS_SCENE_ROI) / 2);
@@ -175,7 +175,7 @@ void LeptonFLiR::sys_getSceneRegion(LEP_SYS_SCENE_ROI *region) {
     if (!region) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getSceneRegion");
+    Serial.println(F("LeptonFLiR::sys_getSceneRegion"));
 #endif
 
     receiveCommand(cmdCode(LEP_CID_SYS_SCENE_ROI, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)region, sizeof(LEP_SYS_SCENE_ROI) / 2);
@@ -183,7 +183,7 @@ void LeptonFLiR::sys_getSceneRegion(LEP_SYS_SCENE_ROI *region) {
 
 uint16_t LeptonFLiR::sys_getThermalShutdownCount() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getThermalShutdownCount");
+    Serial.println(F("LeptonFLiR::sys_getThermalShutdownCount"));
 #endif
 
     uint16_t count;
@@ -193,7 +193,7 @@ uint16_t LeptonFLiR::sys_getThermalShutdownCount() {
 
 void LeptonFLiR::sys_setShutterPosition(LEP_SYS_SHUTTER_POSITION position) {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_setShutterPosition");
+    Serial.println(F("LeptonFLiR::sys_setShutterPosition"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_SHUTTER_POSITION, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)position);
@@ -201,7 +201,7 @@ void LeptonFLiR::sys_setShutterPosition(LEP_SYS_SHUTTER_POSITION position) {
 
 LEP_SYS_SHUTTER_POSITION LeptonFLiR::sys_getShutterPosition() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getShutterPosition");
+    Serial.println(F("LeptonFLiR::sys_getShutterPosition"));
 #endif
 
     uint32_t position;
@@ -213,7 +213,7 @@ void LeptonFLiR::sys_setFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode) {
     if (!mode) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_setFFCShutterMode");
+    Serial.println(F("LeptonFLiR::sys_setFFCShutterMode"));
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_FFC_SHUTTER_MODE, LEP_I2C_COMMAND_TYPE_SET), (uint16_t *)mode, sizeof(LEP_SYS_FFC_SHUTTER_MODE) / 2);
@@ -223,7 +223,7 @@ void LeptonFLiR::sys_getFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode) {
     if (!mode) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getFFCShutterMode");
+    Serial.println(F("LeptonFLiR::sys_getFFCShutterMode"));
 #endif
 
     receiveCommand(cmdCode(LEP_CID_SYS_FFC_SHUTTER_MODE, LEP_I2C_COMMAND_TYPE_GET), (uint16_t *)mode, sizeof(LEP_SYS_FFC_SHUTTER_MODE) / 2);
@@ -231,7 +231,7 @@ void LeptonFLiR::sys_getFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode) {
 
 LEP_SYS_FFC_STATUS LeptonFLiR::sys_getFFCNormalizationStatus() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println("LeptonFLiR::sys_getFFCNormalizationStatus");
+    Serial.println(F("LeptonFLiR::sys_getFFCNormalizationStatus"));
 #endif
 
     uint32_t status;

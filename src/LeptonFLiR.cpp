@@ -147,31 +147,31 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     const int spiDivisor = getSPIClockDivisor();
     const float spiSpeed = F_CPU / (const float)spiDivisor;
-    Serial.print("LeptonFLiR::init cameraType: v");
+    Serial.print(F("LeptonFLiR::init cameraType: v"));
     Serial.print(getCameraVersion(), 1);
-    Serial.print(", tempMode: ");
+    Serial.print(F(", tempMode: "));
     Serial.print(getTemperatureSymbol());
-    Serial.print(", spiCSPin: ");
+    Serial.print(F(", spiCSPin: "));
     Serial.print(_spiCSPin);
-    Serial.print(", isrVSyncPin: ");
+    Serial.print(F(", isrVSyncPin: "));
     if (_isrVSyncPin != DISABLED) {
         Serial.print(_isrVSyncPin);
-        Serial.print(" <on-rising>");
+        Serial.print(F(" <on-rising>"));
     } else
-        Serial.print("<disabled>");
-    Serial.print(", i2cWire#: ");
+        Serial.print(F("<disabled>"));
+    Serial.print(F(", i2cWire#: "));
     Serial.print(getWireInterfaceNumber());
-    Serial.print(", i2cSpeed: ");
-    Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.print("kHz");
-    Serial.print(", spiSpeed: ");
+    Serial.print(F(", i2cSpeed: "));
+    Serial.print(roundf(getI2CSpeed() / 1000.0f)); Serial.print(F("kHz"));
+    Serial.print(F(", spiSpeed: "));
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
-    Serial.print("MHz (SPI_CLOCK_DIV"); Serial.print(spiDivisor); Serial.print(")");
+    Serial.print(F("MHz (SPI_CLOCK_DIV")); Serial.print(spiDivisor); Serial.print(F(")"));
     if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
-        Serial.print(" <speed too low>");
+        Serial.print(F(" <speed too low>"));
     else if (spiSpeed > LEPFLIR_SPI_MAX_SPEED + FLT_EPSILON)
-        Serial.print(" <speed too high>");
+        Serial.print(F(" <speed too high>"));
     else if (spiSpeed < LEPFLIR_SPI_OPTIMAL_MIN_SPEED - FLT_EPSILON)
-        Serial.print(" <speed sub-optimal>");
+        Serial.print(F(" <speed sub-optimal>"));
     Serial.println("");
 #endif
 
@@ -442,7 +442,7 @@ bool LeptonFLiR::tryReadNextFrame() {
         _isReadingNextFrame = true;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        Serial.println("LeptonFLiR::tryReadNextFrame");
+        Serial.println(F("LeptonFLiR::tryReadNextFrame"));
 #endif
         // TODO
 
