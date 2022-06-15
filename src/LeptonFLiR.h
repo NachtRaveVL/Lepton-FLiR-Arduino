@@ -41,22 +41,6 @@
 // Uncomment or -D this define to enable debug output.
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 
-// Hookup Callouts
-// -PLEASE READ-
-// The recommended VCC power supply and logic level is 3.3v. The two issolated power pins
-// on the side of the FLiR v1.4 and v2 breakouts can safely be left disconnected. Make
-// sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS)
-// correctly. Teensy 3.x uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32[-S]
-// uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS. The module's MOSI line is optional and
-// can simply be grounded since the module only uses SPI for slave-out data transfers
-// (slave-in data transfers being ignored). The SS pin may be any digital output pin,
-// with usage being active-low. The minimum SPI transfer rate depends on the image
-// resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and
-// 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is
-// 20MHz. The actual SPI transfer rate selected will be the first rate equal to or below
-// 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
-// Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining
-// VoSPI syncronization.
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>

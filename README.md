@@ -138,17 +138,25 @@ enum LeptonFLiR_TemperatureMode {
 
 ## Hookup Callouts
 
-* The recommended VCC power supply and logic level is 3.3v.
+* The recommended Vcc power supply and logic level is 3.3v.
 * The two issolated power pins on the side of the FLiR v1.4 and v2 breakouts can safely be left disconnected.
 
-### SPI Data Line
+### SPI Bus
 
-* Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32[-S] uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS.
-* The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored).
-* The SS pin may be any digital output pin, with usage being active-low.
+SPI devices can be chained together on the same shared bus lines (no flipping of wires), and are typically labeled `MOSI`, `MISO`, and `SCK` (often with an additional `SS`). Each SPI device requires its own individual cable-select `CS` wire as only one SPI device may be active at any given time - accomplished by pulling its `CS` line low (aka active-low). SPI runs at MHz speeds and is useful for large data block transfers.
+
+* The `CS` pin may be connected to any digital output pin, but it's common to use `SS` for the first device. Additional devices are not restricted to what pin they can or should use.
+* The module's `MOSI` line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data being ignored).
 * The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
   * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
   * Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
+
+### I2C Bus
+
+I2C (aka I²C, IIC, TwoWire, TWI) devices can be chained together on the same shared bus lines (no flipping of wires), and are typically labeled `SCL` and `SDA`. Only different kinds of I2C devices can be used on the same bus line together using factory default settings, otherwise manual addressing must be done. I2C runs at mid to high KHz speeds and is useful for advanced device control.
+
+* When more than one I2C device of the same kind is to be used on the same bus line, each device must be set to use a different address. This is accomplished via the A0-A2 (sometimes A0-A5) pins/pads on the physical device that must be set either open or closed (typically via a de-solderable resistor, or by shorting a pin/pad). Check your specific breakout's datasheet for details.
+* Note that not all the I2C libraries used support multi-addressable I2C devices at this time. Currently, this restriction applies to RTC devices (read as: may only use one).
 
 ## Memory Callouts
 
