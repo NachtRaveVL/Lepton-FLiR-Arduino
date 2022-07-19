@@ -39,10 +39,6 @@
     SPISettings _spiSettings;                               // SPI port settings
     LeptonFLiR_CameraType _cameraType;                      // Lepton camera type
     LeptonFLiR_TemperatureMode _tempMode;                   // Temperature display mode (default: Celsius)
-    UserDigitalWriteFunc _uDigWriteLowFunc;                 // User digital write LOW function
-    UserDigitalWriteFunc _uDigWriteHighFunc;                // User digital write HIGH function
-    UserDelayFunc _uDelayMillisFunc;                        // User millisecond delay function
-    UserDelayFunc _uDelayMicrosFunc;                        // User microsecond delay function
 
     byte *_frameData;                                       // 16-byte-aligned SPI frame data (VoSPI packet) buffer (unowned)
     byte *_frameData_orig;                                  // Non-aligned SPI frame data (VoSPI packet) buffer (original alloc ptr, owned)

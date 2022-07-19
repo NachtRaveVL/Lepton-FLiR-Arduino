@@ -7,12 +7,12 @@ Arduino Library for the Lepton FLiR Thermal Camera Module.
 
 **UNDER RENEWED DEVELOPMENT BUT DONT EXPECT ANY MIRACLES**
 
-Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).  
+Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Portenta/Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
 
 Created by NachtRaveVL, August 1st, 2016.
 
-This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
+This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display modes to exposing the full functionality of the thermal camera itself.
 
 Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might experience turbulence until the bug reports get ironed out. All architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
 
@@ -24,6 +24,8 @@ Note that this library *requires* a fast microcontroller - on the order of hundr
 
 The datasheet for the IC is available at <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.  
 Additional interface documentation is available at <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
+
+*If you value the work that we do, our small team always appreciates a subscription to our [Patreon](www.patreon.com/nachtrave).*
 
 ## Supported Microcontrollers
 
@@ -143,9 +145,9 @@ enum LeptonFLiR_TemperatureMode {
 
 ### SPI Bus
 
-SPI devices can be chained together on the same shared bus lines (no flipping of wires), and are typically labeled `MOSI`, `MISO`, and `SCK` (often with an additional `SS`). Each SPI device requires its own individual cable-select `CS` wire as only one SPI device may be active at any given time - accomplished by pulling its `CS` line low (aka active-low). SPI runs at MHz speeds and is useful for large data block transfers.
+SPI devices can be chained together on the same shared bus lines (no flipping of wires), which are typically labeled `MOSI`, `MISO`, and `SCK` (often with an additional `SS`). Each SPI device requires its own individual cable-select `CS` wire as only one SPI device may be active at any given time - accomplished by pulling its `CS` line of that device low (aka active-low). SPI runs at MHz speeds and is useful for large data block transfers.
 
-* The `CS` pin may be connected to any digital output pin, but it's common to use `SS` for the first device. Additional devices are not restricted to what pin they can or should use.
+* The `CS` pin may be connected to any digital output pin, but it's common to use `SS` for the first device. Additional devices are not restricted to what pin they can or should use, but given it's a signal pin not using an interrupt-capable pin allows those to be used for interrupt driven mechanisms.
 * The module's `MOSI` line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data being ignored).
 * The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
   * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
@@ -153,7 +155,7 @@ SPI devices can be chained together on the same shared bus lines (no flipping of
 
 ### I2C Bus
 
-I2C (aka I²C, IIC, TwoWire, TWI) devices can be chained together on the same shared bus lines (no flipping of wires), and are typically labeled `SCL` and `SDA`. Only different kinds of I2C devices can be used on the same bus line together using factory default settings, otherwise manual addressing must be done. I2C runs at mid to high KHz speeds and is useful for advanced device control.
+I2C (aka I²C, IIC, TwoWire, TWI) devices can be chained together on the same shared bus lines (no flipping of wires), which are typically labeled `SCL` and `SDA`. Only different kinds of I2C devices can be used on the same bus line together using factory default settings, otherwise manual addressing must be done. I2C runs at mid to high KHz speeds and is useful for advanced device control.
 
 * When more than one I2C device of the same kind is to be used on the same bus line, each device must be set to use a different address. This is accomplished via the A0-A2 (sometimes A0-A5) pins/pads on the physical device that must be set either open or closed (typically via a de-solderable resistor, or by shorting a pin/pad). Check your specific breakout's datasheet for details.
 * Note that not all the I2C libraries used support multi-addressable I2C devices at this time. Currently, this restriction applies to RTC devices (read as: may only use one).

@@ -5,70 +5,35 @@
 
 #include "LeptonFLiR.h"
 
-static void uDigWriteLowFuncDef(byte pin) {
-#ifdef LEPFLIR_USE_DIGITALWRITEFAST
-    digitalWriteFast(pin, LOW);
-#else
-    digitalWrite(pin, LOW);
-#endif
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+
+static String LEPFLIR_makeAssertMsg(String msg, const char *file, const char *func, int line)
+{
+    return String(F("Assertion Failure: ")) + String(file) + String(':') + String(line) + String(F(" in ")) + String(func) + String(':') + String(' ') + msg;
 }
 
-static void uDigWriteHighFuncDef(byte pin) {
-#ifdef LEPFLIR_USE_DIGITALWRITEFAST
-    digitalWriteFast(pin, HIGH);
-#else
-    digitalWrite(pin, HIGH);
-#endif
-}
-
-
-static void uDelayMillisFuncDef(unsigned int timeout) {
-#ifndef LEPFLIR_DISABLE_MULTITASKING
-    if (timeout > 0) {
-        unsigned long currTime = millis();
-        unsigned long endTime = currTime + (unsigned long)timeout;
-        if (currTime < endTime) { // not overflowing
-            while (millis() < endTime)
-                yield();
-        } else { // overflowing
-            unsigned long begTime = currTime;
-            while (currTime >= begTime || currTime < endTime) {
-                yield();
-                currTime = millis();
-            }
-        }
-    } else {
-        yield();
+void LEPFLIR_softAssert(bool cond, String msg, const char *file, const char *func, int line)
+{
+    if (!cond) {
+        String message = LEPFLIR_makeAssertMsg(msg, file, func, line);
+        if (Serial) { Serial.println(message); }
     }
-#else
-    delay(timeout);
-#endif
 }
 
-static void uDelayMicrosFuncDef(unsigned int timeout) {
-#ifndef LEPFLIR_DISABLE_MULTITASKING
-    if (timeout > 1000) {
-        unsigned long currTime = micros();
-        unsigned long endTime = currTime + (unsigned long)timeout;
-        if (currTime < endTime) { // not overflowing
-            while (micros() < endTime)
-                yield();
-        } else { // overflowing
-            unsigned long begTime = currTime;
-            while (currTime >= begTime || currTime < endTime) {
-                yield();
-                currTime = micros();
-            }
+void LEPFLIR_hardAssert(bool cond, String msg, const char *file, const char *func, int line)
+{
+    if (!cond) {
+        String message = String(F("HARD ")) + LEPFLIR_makeAssertMsg(msg, file, func, line);
+        if (Serial) {
+            Serial.println(message);
+            Serial.flush();
         }
-    } else if (timeout > 0) {
-        delayMicroseconds(timeout);
-    } else {
-        yield();
+        yield(); delay(10);
+        abort();
     }
-#else
-    delayMicroseconds(timeout);
-#endif
 }
+
+#endif // /ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
@@ -80,8 +45,6 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
-      _uDigWriteLowFunc(uDigWriteLowFuncDef), _uDigWriteHighFunc(uDigWriteLowFuncDef),
-      _uDelayMillisFunc(uDelayMillisFuncDef), _uDelayMicrosFunc(uDelayMicrosFuncDef),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
       _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
       _telemetryOutput(NULL),
@@ -98,8 +61,6 @@ LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte 
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
-      _uDigWriteLowFunc(uDigWriteLowFuncDef), _uDigWriteHighFunc(uDigWriteLowFuncDef),
-      _uDelayMillisFunc(uDelayMillisFuncDef), _uDelayMicrosFunc(uDelayMicrosFuncDef),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
       _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
       _telemetryOutput(NULL),
@@ -117,8 +78,6 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
-      _uDigWriteLowFunc(uDigWriteLowFuncDef), _uDigWriteHighFunc(uDigWriteLowFuncDef),
-      _uDelayMillisFunc(uDelayMillisFuncDef), _uDelayMicrosFunc(uDelayMicrosFuncDef),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
       _imageOutput(NULL), _imageOutput_orig(NULL), _imageOutputSize_orig(0),
       _telemetryOutput(NULL),
@@ -179,10 +138,9 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     checkForErrors();
 #endif
 
-#ifndef __SAM3X8E__ // Arduino Due's SPI library handles its own CS latching
+    // Redundant in many cases, but done for safety
     pinMode(_spiCSPin, OUTPUT);
-    _uDigWriteHighFunc(_spiCSPin);
-#endif
+    digitalWrite(_spiCSPin, HIGH);
 
     if (_isrVSyncPin != DISABLED) {
         // TODO: Write/enable ISR. -NR
@@ -215,16 +173,6 @@ LeptonFLiR_CameraType LeptonFLiR::getCameraType() {
 
 LeptonFLiR_TemperatureMode LeptonFLiR::getTemperatureMode() {
     return _tempMode;
-}
-
-void LeptonFLiR::setUserDelayFuncs(UserDelayFunc delayMillisFunc, UserDelayFunc delayMicrosFunc) {
-    _uDelayMillisFunc = delayMillisFunc ? delayMillisFunc : uDelayMillisFuncDef;
-    _uDelayMicrosFunc = delayMicrosFunc ? delayMicrosFunc : uDelayMicrosFuncDef;
-}
-
-void LeptonFLiR::setUserDigitalWriteFuncs(UserDigitalWriteFunc digitalWriteLowFunc, UserDigitalWriteFunc digitalWriteHighFunc) {
-    _uDigWriteLowFunc = digitalWriteLowFunc ? digitalWriteLowFunc : uDigWriteLowFuncDef;
-    _uDigWriteHighFunc = digitalWriteHighFunc ? digitalWriteHighFunc : uDigWriteHighFuncDef;
 }
 
 int LeptonFLiR::getImageWidth() {

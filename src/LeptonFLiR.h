@@ -52,6 +52,19 @@
 #include <assert.h>
 #include <SPI.h>
 
+#if defined(NDEBUG) && defined(LEPFLIR_ENABLE_DEBUG_OUTPUT)
+#undef LEPFLIR_ENABLE_DEBUG_OUTPUT
+#endif
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+#define LEPFLIR_SOFT_ASSERT(cond,msg)   LEPFLIR_softAssert((bool)(cond), String((msg)), __FILE__, __func__, __LINE__)
+#define LEPFLIR_HARD_ASSERT(cond,msg)   LEPFLIR_hardAssert((bool)(cond), String((msg)), __FILE__, __func__, __LINE__)
+extern void LEPFLIR_softAssert(bool, String, const char *, const char *, int);
+extern void LEPFLIR_hardAssert(bool, String, const char *, const char *, int);
+#else
+#define LEPFLIR_SOFT_ASSERT(cond,msg)   ((void)0)
+#define LEPFLIR_HARD_ASSERT(cond,msg)   ((void)0)
+#endif
+
 #ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
 #include <Wire.h>
 #define LEPFLIR_USE_HARDWARE_I2C
@@ -72,6 +85,7 @@
 
 // TODO: Include for TURBO SPI library
 
+class LeptonFLiR;
 #include "LeptonFLiRDefines.h"
 #include "LeptonFLiRInlines.hpp"
 
