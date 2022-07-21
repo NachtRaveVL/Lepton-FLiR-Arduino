@@ -68,10 +68,7 @@ From LeptonFLiR.h:
 // Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
 
-// Uncomment or -D this define to completely disable usage of any multitasking commands, such as yield().
-//#define LEPFLIR_DISABLE_MULTITASKING
-
-// Uncomment or -D this define to enable debug output.
+// Uncomment or -D this define to enable debug output (treats Serial as attached to serial monitor).
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
