@@ -35,7 +35,7 @@
 // Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
 
-// Uncomment or -D this define to enable debug output (treats Serial as attached to serial monitor).
+// Uncomment or -D this define to enable debug output (treats Serial output as attached to serial monitor).
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 
@@ -125,28 +125,14 @@ public:
     LeptonFLiR_CameraType getCameraType();                  // Lepton camera type
     LeptonFLiR_TemperatureMode getTemperatureMode();        // Temperature mode
 
-    typedef void(*UserDelayFunc)(unsigned int);             // Passes delay timeout (where 0 indicates inside long blocking call / yield attempt suggested)
-    // Sets user delay functions to call when a delay has to occur for processing to
-    // continue. User functions here can customize what this means - typically it would
-    // mean to call into a thread barrier() or yield() mechanism. Default implementation
-    // is to call yield() when timeout >= 1ms, unless multitasking is disabled.
-    void setUserDelayFuncs(UserDelayFunc delayMillisFunc, UserDelayFunc delayMicrosFunc);
-
-    typedef void(*UserDigitalWriteFunc)(byte);              // Passes pin number
-    // Sets user digital write functions to call when a LOW or HIGH value needs written
-    // to any pin. User functions here can customize what this means - typically it would
-    // mean to set/unset a specific bit on the specific direct PORT interface. Default
-    // implementation simply calls standard digitalWrite, unless digitalWriteFast library
-    // is enaabled, in which case digitalWriteFast is called.
-    void setUserDigitalWriteFuncs(UserDigitalWriteFunc digitalWriteLowFunc, UserDigitalWriteFunc digitalWriteHighFunc);
-
     // Image descriptors
     int getImageWidth();                                    // Image pixel width
     int getImageHeight();                                   // Image pixel height
 
     // This method attempts to read the next image frame, taking up considerable processor time.
     // Returns a boolean indicating if next frame was successfully retrieved or not.
-    // This method will fail in the event of a desync upon frame read.
+    // This method will fail in the event of a desync upon frame read, mainly caused by
+    // too slow of reading speed.
     bool tryReadNextFrame();
 
 

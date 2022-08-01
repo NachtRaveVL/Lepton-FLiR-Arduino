@@ -14,7 +14,7 @@ Created by NachtRaveVL, August 1st, 2016.
 
 This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display modes to exposing the full functionality of the thermal camera itself.
 
-Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, and others - although one might experience turbulence until the bug reports get ironed out. All architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
+Made primarily for Arduino microcontrollers, but should work with PlatformIO, ESP32/8266, Teensy, RasPi Pico, and others - although one might experience turbulence until the bug reports get ironed out. All architectures must ensure `BUFFER_LENGTH` (or `I2C_BUFFER_LENGTH`) and `WIRE_INTERFACES_COUNT` are properly defined.
 
 Dependencies include: SoftI2CMaster (optional).
 
@@ -68,7 +68,7 @@ From LeptonFLiR.h:
 // Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
 //#define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
 
-// Uncomment or -D this define to enable debug output (treats Serial as attached to serial monitor).
+// Uncomment or -D this define to enable debug output (treats Serial output as attached to serial monitor).
 //#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
@@ -144,7 +144,7 @@ enum LeptonFLiR_TemperatureMode {
 
 SPI devices can be chained together on the same shared bus lines (no flipping of wires), which are typically labeled `MOSI`, `MISO`, and `SCK` (often with an additional `SS`). Each SPI device requires its own individual cable-select `CS` wire as only one SPI device may be active at any given time - accomplished by pulling its `CS` line of that device low (aka active-low). SPI runs at MHz speeds and is useful for large data block transfers.
 
-* The `CS` pin may be connected to any digital output pin, but it's common to use `SS` for the first device. Additional devices are not restricted to what pin they can or should use, but given it's a signal pin not using an interrupt-capable pin allows those to be used for interrupt driven mechanisms.
+* The `CS` pin may be connected to any digital output pin, but it's common to use the `SS` pin for the first device. Additional devices are not restricted to what pin they can or should use, but given it's a signal pin not using an interrupt-capable pin allows those to be used for interrupt driven mechanisms.
 * The module's `MOSI` line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data being ignored).
 * The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
   * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
