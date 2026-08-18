@@ -8,23 +8,29 @@
 #include <SD.h>
 
 const byte flirCSPin = 22;
-LeptonFLiR flirController(Wire, flirCSPin); // Library using Wire and chip select pin D22
+LeptonFLiR flirController(flirCSPin);   // Library using chip select pin D22, and default Wire @400kHz
 
 const byte cardCSPin = 24;
 
 void setup() {
-    Serial.begin(115200);
-
-    Wire.begin();                       // Wire must be started first
-    Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
+    Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces
+#ifdef __SAM3X8E__
+    // Arduino Due has SPI library that manages the CS pin for us
+    SPI.begin(flirController.getChipSelectPin());
+#else
+    SPI.begin();
+#endif
+    Wire.begin();
+    Wire.setClock(flirController.getI2CSpeed());
 
     SD.begin(cardCSPin);                // SD library using chip select pin D24
 
-    // Using memory allocation mode 80x60 8bpp and fahrenheit temperature mode
-    flirController.init(LeptonFLiR_ImageStorageMode_80x60_8bpp, LeptonFLiR_TemperatureMode_Fahrenheit);
+    // Initializes module using Lepton v1 camera, and fahrenheit temperature mode
+    // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
+    flirController.init(LeptonFLiR_CameraType_Lepton1,
+                        LeptonFLiR_TemperatureMode_Fahrenheit);
 
-    // Setting use of AGC for histogram equalization (since we only have 8-bit per pixel data anyways)
+    // Setting use of AGC for histogram equalization (image output will be 8bpp grayscale)
     flirController.agc_setAGCEnabled(ENABLED);
 
     flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
@@ -35,7 +41,7 @@ void setup() {
 uint32_t lastFrameNumber = -1;          // Tracks for when a new frame is available
 
 void loop() {
-    if (flirController.readNextFrame()) { // Read next frame and store result into internal imageData
+    if (flirController.tryReadNextFrame()) { // Establishes sync, then reads next frame into raw data buffer
         uint32_t frameNumber = flirController.getTelemetryFrameCounter();
 
         if (frameNumber > lastFrameNumber) { // Frame counter increments every 3rd frame due to export restrictions
@@ -43,16 +49,16 @@ void loop() {
 
             char fileName[] = "FLIR/IMG0000.BMP";
             uint16_t fileNumber = (uint16_t)(frameNumber / 3);
-            wordsToHexString((uint16_t *)&fileNumber, 1, &fileName[8], 4);
+            LeptonFLiR::wordsToHexString((uint16_t *)&fileNumber, 1, &fileName[8], 4);
 
             File bmpFile = SD.open(fileName, FILE_WRITE);
 
             if (bmpFile) {
                 writeBMPFile(bmpFile,
-                             flirController.getImageData(),
+                             flirController.getImageOutputData(),
                              flirController.getImageWidth(),
                              flirController.getImageHeight(),
-                             flirController.getImagePitch());
+                             flirController.getImageOutputPitch());
 
                 bmpFile.close();
 
@@ -62,7 +68,7 @@ void loop() {
         }
 
         // Occasionally flat field correction normalization needs ran
-        if (flirController.getShouldRunFFCNormalization())
+        if (flirController.getTelemetryShouldRunFFCNormalization())
             flirController.sys_runFFCNormalization();
     }
 }

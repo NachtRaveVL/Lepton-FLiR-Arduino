@@ -1,86 +1,163 @@
 # Lepton-FLiR-Arduino
 Arduino Library for the Lepton FLiR Thermal Camera Module.
 
-**NOTE: SPI data transfer mechanism is still being ironed out. Check back later when v1.0 releases.**
+**Lepton-FLiR-Arduino v2.0.0**
 
-**Lepton-FLiR-Arduino v0.9.91**
-
-**UNDER RENEWED DEVELOPMENT AS OF AUGUST 2020**
-
-Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Teensy 3+/ESP32+ minimum).  
+Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Portenta/Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
 
 Created by NachtRaveVL, August 1st, 2016.
 
-This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display mode, fast chip select enable/disable routines, to exposing the full functionality of the thermal camera itself.
+This library allows communication with boards running a Lepton FLiR thermal camera module. It provides a wide range of functionality from adjustable temperature display modes to exposing the full functionality of the thermal camera itself.
 
-Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems.
+Made primarily for Arduino microcontrollers, but should work with PlatformIO, Espressif, Teensy, STM32, Pico, and others - although one might experience turbulence until the bug reports get ironed out.
 
-The datasheet for the IC is available from <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.  
-Additional interface documentation is available from <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
+Dependencies include: SoftI2CMaster (optional).
+
+Parts of this library are derived from the Lepton FLiR software development SDK, Copyright 2011,2012,2013,2014 FLIR Systems - Commercial Vision Systems. These guys are really great (and sent us free cameras to test with) and so we ask that you check them out at: <https://lepton.flir.com/>.
+
+Note that this library *requires* a fast microcontroller - on the order of hundreds of MHz - in order to process the SPI-based image data transfer under the set frame period of 26fps, or 38.46ms (save nothing about actually doing the advanced image processing work on said image after capture). See Section 4.2.2.3.2 of the datasheet concerning VoSPI synchronization for more information on how to optimize frame reads.
+
+The datasheet for the IC is available at <https://lepton.flir.com/wp-content/uploads/2019/02/flir-lepton-engineering-datasheet-203.pdf>.  
+Additional interface documentation is available at <https://www.flir.com/globalassets/imported-assets/document/flir-lepton-software-interface-description-document.pdf>.
+
+*If you value the work that we do, our small team always appreciates a subscription to our [Patreon](www.patreon.com/nachtrave).*
 
 ## Supported Microcontrollers
 
-Unfortunately during our testing, largely due to SPI data transfer limitations, we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due (_sad face_). However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation.
+Unfortunately during our testing back in 2016, largely due to SPI data transfer limitations using the Arduino SPI library (which apparently could be better), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due. However, as of more recently there seems to be a renewed interest in this library for the Teensy 3/4+, and now particularly the impressive Pico. As well, the ESP32 and ESP32-S are also slated for experimentation. V2 now includes an optional asynchronous SPI capture path for platforms whose SPI implementation exposes `SPI_HAS_TRANSFER_ASYNC`. On Teensy this uses the SPI library's DMA-backed asynchronous transfer support while keeping the existing blocking SPI reader as the default and fallback path.
 
-As of this writing, we don't have the exact list of which specific microcontrollers will work with this library, but we are currently testing this library under those systems and seeing what supported we can muster. We will update this section in the future with boards we've tested this library on.
+As of this writing, we don't have an exact listing of which specific microcontrollers will work with this library, but we are currently rewriting core parts of the library as well as will be testing this library with various microcontrollers to see what kind of support we can muster. We will update this section in the future with boards we've tested and their support status of this library. A particular focus is being applied to Teensy 4+.
+
+| Microcontroller | Clock Speed | SPI Clock Divisor | SPI Data Speed | Library Support? |
+| :--- | :--- | :--- | :--- | :--- |
+| Arduino Uno  | 8MHz | /2 | 4MHz | Not supported. |
+| Arduino Mega | 16MHz | /2 | 8MHz | Not supported. |
+| Arduino Nano | 16MHz | /2 | 8MHz | Not supported. |
+| Arduino Zero | 48MHz | /4 | 12MHz | _tbt_ (Likely not supported) |
+| Teensy LC | 48MHz | /4 | 12MHz | _tbt_ (Likely not supported) |
+| Arduino Nano 33 | 64MHz | /4 | 16MHz |  _tbt_ |
+| Teensy 3.2 | 72MHz | /4 | 18MHz | _tbt_ |
+| Arduino Due | 84MHz | /5 <sup>1</sup> | 16.8MHz | _tbt_ |
+| Teensy 3.5 | 120MHz | /8 | 15MHz | _tbt_ |
+| ESP32 | 160MHz | /8 | 20MHz | _tbt_ |
+| Teensy 3.6 | 180MHz | /16 | 11.25 MHz | _tbt_ |
+| ESP32/ESP32-S | 240MHz | /8 | 15MHz | _tbt_ (Possibly supported?) |
+| Teensy 4.0/4.1 | 600MHz | /32 | 18.75 | _tbt_ (Likely supported?) |
+
+Note<sup>1</sup>: Arduino Due allows for non-power-of-2 clock divisors.
 
 ## Library Setup
 
+### Installation
+
+The easiest way to install this library is to utilize the Arduino IDE library manager, or through a package manager such as PlatformIO. Otherwise, simply download this library and extract its files into a `Lepton-FLiR-Arduino` folder in your Arduino custom libraries folder, typically found in your `[My ]Documents\Arduino\libraries` folder (Windows), or `~/Documents/Arduino/libraries/` folder (Linux/OSX).
+
 ### Header Defines
+ 
+There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them via custom build flags. While editing the main header file isn't ideal, it is often easiest. Note that editing the library's main header file directly will affect all projects compiled on your system using those modified library files.
 
-There are several defines inside of the library's main header file that allow for more fine-tuned control of the library. You may edit and uncomment these lines directly, or supply them as a compilation flag via custom build system. While editing the main header file isn't the most ideal, it is often the easiest way when using the Arduino IDE, as it doesn't support custom build flags. Be aware that editing this header file directly will affect all projects on your system using this library.
+Alternatively, you may also refer to <https://forum.arduino.cc/index.php?topic=602603.0> on how to define custom build flags manually via modifying the platform[.local].txt file. Note that editing such directly will affect all other projects compiled on your system using those modified platform framework files, but at least you keep those changes to the same place.
 
-In LeptonFLiR.h:
+From LeptonFLiR.h:
 ```Arduino
-// Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-//#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+// Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
+//#define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
 
-// Uncomment this define to disable 16 byte aligned memory allocations (may hinder performance).
-//#define LEPFLIR_DISABLE_ALIGNED_MALLOC  1
-
-// Uncomment this define if wanting to exclude extended i2c functions from compilation.
-//#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS   1
-
-// Uncomment this define to enable debug output.
-//#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
+// Uncomment or -D this define to enable debug output (treats Serial output as attached to serial monitor).
+//#define LEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
 ### Library Initialization
 
-There are several initialization mode flags exposed through this library that are used for more fine-tuned control. These flags are expected to be provided to the library's `init(...)` function, commonly called inside of the sketch's `setup()` function.
+There are several initialization mode settings exposed through this library that are used for more fine-tuned control.
 
-From LeptonFLiR.h:
+#### Class Instantiation
+
+The library's class object must first be instantiated, commonly at the top of the sketch where pin setups are defined (or exposed through some other mechanism), which makes a call to the library's class constructor. The constructor allows one to set the module's SPI CS pin, ISR VSync pin, i2c Wire class instance, and lastly i2c clock speed (all i2c parameters being ommitted when in software i2c mode). The default constructor values of the library, if left unspecified, is SPI CS pin `SS`, ISR VSync pin `DISABLED`, and i2c Wire class instance `Wire` @`400k`Hz.
+
+From LeptonFLiR.h, in class LeptonFLiR, when in hardware i2c mode:
 ```Arduino
-typedef enum {
-    // Full 16bpp image mode, 9600 bytes for image data, 164 bytes for read frame (9604 bytes total, 9806 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_80x60_16bpp,
-    // Full 8bpp image mode, 4800 bytes for image data, 164 bytes for read frame (4964 bytes total, 5006 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_80x60_8bpp,
+    // Library constructor. Typically called during class instantiation, before setup().
+    // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
+    // Boards with more than one i2c line (e.g. Due/Teensy/etc.) can supply a different
+    // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
+    // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
+    // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
+    LeptonFLiR(byte spiCSPin = SS, byte isrVSyncPin = DISABLED, TwoWire& i2cWire = Wire, uint32_t i2cSpeed = 400000);
 
-    // Halved 16bpp image mode, 2400 bytes for image data, 328 bytes for read frame (2728 bytes total, 2782 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_40x30_16bpp,
-    // Halved 8bpp image mode, 1200 bytes for image data, 328 bytes for read frame (1528 bytes total, 1814 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_40x30_8bpp,
+    // Convenience constructor for custom Wire instance. See main constructor.
+    LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed = 400000, byte spiCSPin = SS, byte isrVSyncPin = DISABLED);
+```
 
-    // Quartered 16bpp image mode, 600 bytes for image data, 656 bytes for read frame (1256 bytes total, 1446 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_20x15_16bpp,
-    // Quartered 8bpp image mode, 300 bytes for image data, 656 bytes for read frame (956 bytes total, 1202 bytes if aligned)
-    LeptonFLiR_ImageStorageMode_20x15_8bpp,
-} LeptonFLiR_ImageStorageMode;
+From LeptonFLiR.h, in class LeptonFLiR, when in software i2c mode (see examples for sample usage):
+```Arduino
+    // Library constructor. Typically called during class instantiation, before setup().
+    // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
+    // Minimum supported i2c clock speed is 100kHz, which sets minimum processor speed at
+    // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minimum
+    // processor speed is 16MHz+ running in i2c fast mode.
+    // Supported SPI clock speeds are ~2.2MHz(@80x60)/~8.8MHz(@160x120) to 20MHz.
+    LeptonFLiR(byte spiCSPin = SS, byte isrVSyncPin = DISABLED);
+```
 
-typedef enum {
-    LeptonFLiR_TemperatureMode_Celsius,
-    LeptonFLiR_TemperatureMode_Fahrenheit,
-    LeptonFLiR_TemperatureMode_Kelvin,
-} LeptonFLiR_TemperatureMode;
+#### Device Initialization
+
+Additionally, a call is expected to be provided to the library class object's `init(…)` method, commonly called inside of the sketch's `setup()` function. This allows one to set the module's hardware camera type and temperature display mode. The module's hardware camera type must be explicitly provided. The remaining default init values of the library, if left unspecified, is `LeptonFLiR_TemperatureMode_Celsius`.
+
+From LeptonFLiR.h, in class LeptonFLiR:
+```Arduino
+    // Initializes module. Typically called in setup().
+    // See individual enums for more info.
+    void init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMode tempMode = LeptonFLiR_TemperatureMode_Celsius);
+```
+
+From LeptonFLiRDefines.h:
+```Arduino
+enum LeptonFLiR_CameraType {
+    LeptonFLiR_CameraType_Lepton1,              // Lepton v1 camera, running at 80x60
+    LeptonFLiR_CameraType_Lepton1_5,            // Lepton v1.5 camera, running at 80x60
+    LeptonFLiR_CameraType_Lepton1_6,            // Lepton v1.6 camera, running at 80x60
+    LeptonFLiR_CameraType_Lepton2,              // Lepton v2 camera, running at 80x60
+    LeptonFLiR_CameraType_Lepton2_5,            // Lepton v2.5 camera, running at 80x60
+    LeptonFLiR_CameraType_Lepton3,              // Lepton v3 camera, running at 160x120
+    LeptonFLiR_CameraType_Lepton3_5,            // Lepton v3.5 camera, running at 160x120
+};
+
+enum LeptonFLiR_TemperatureMode {
+    LeptonFLiR_TemperatureMode_Celsius,         // Celsius temperature mode
+    LeptonFLiR_TemperatureMode_Fahrenheit,      // Fahrenheit temperature mode
+    LeptonFLiR_TemperatureMode_Kelvin,          // Kelvin temperature mode
+};
 ```
 
 ## Hookup Callouts
 
-### SPI Data Line
+* The recommended Vcc power supply and logic level is 3.3v.
+* The two issolated power pins on the side of the FLiR v1.4 and v2 breakouts can safely be left disconnected.
 
-Make sure to hookup the module's SPI lines MISO, MOSI, CLK (aka SCK), and CS (aka SS) correctly. Teensy 3.X uses pins 12=MISO, 11=MOSI, 13=SCK, and 10=SS, while ESP32X uses pins 19=MISO, 23=MOSI, 16=SCK, and 5=SS. The module's MOSI line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data transfers being ignored). The SS pin may be any digital output pin, with usage being active-low. The recommended VCC power supply and logic level is 3.3v. The two issolated power pins on the side of the FLiR v1.4 breakout can safely be left disconnected. The minimum SPI transfer rate is ~2.2MHz, while the maximum SPI transfer rate is 20MHz. The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
+### SPI Bus
+
+SPI devices can be chained together on the same shared data lines, which are typically labeled `COPI` (or `MOSI`), `CIPO` (or `MISO`), and `SCK`, often with an additional `CS` (or `SS`). Each SPI device requires its own individual cable-select `CS` wire as only one SPI device may be active at any given time - accomplished by pulling its `CS` line of that device low (aka active-low). SPI runs at MHz speeds and is useful for large data block transfers.
+
+* The `CS` pin may be connected to any digital output pin, but it's common to use the `CS` (or `SS`) pin for the first device. Additional devices are not restricted to what pin they can or should use, but given it's not a data pin not using a choice interrupt-capable pin allows those to be used for interrupt driven mechanisms.
+* The module's `MOSI` line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data being ignored).
+* The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 160x120 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
+  * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
+  * Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
+
+### DMA SPI Capture
+
+Boards whose SPI library exposes `SPI_HAS_TRANSFER_ASYNC` can use the alternate DMA-backed packet reader. Call `setSPIDMAEnabled()` after `init()`. If asynchronous SPI is unavailable, the method returns `false` and the existing blocking SPI path remains unchanged. If a DMA transfer cannot be started at runtime, capture automatically falls back to blocking SPI.
+
+See [`examples/DMACaptureExample/DMACaptureExample.ino`](examples/DMACaptureExample/DMACaptureExample.ino) for a minimal setup.
+
+### I2C Bus
+
+I2C (aka I²C, IIC, TwoWire, TWI) devices can be chained together on the same shared bus lines (no flipping of wires), which are typically labeled `SCL` and `SDA`. Only different kinds of I2C devices can be used on the same bus line together using factory default settings, otherwise manual addressing must be done. I2C runs at mid to high kHz speeds and is useful for advanced device control.
+
+* When more than one I2C device of the same kind is to be used on the same bus line, each device must be set to use a different address. This is accomplished via the A0-A2 (sometimes A0-A5) pins/pads on the physical device that must be set either open or closed (typically via a de-solderable resistor, or by shorting a pin/pad). Check your specific breakout's datasheet for details.
+* Note that not all the I2C libraries used support multi-addressable I2C devices at this time. Currently, this restriction applies to RTC devices (read as: may only use one).
 
 ## Memory Callouts
 
@@ -96,17 +173,7 @@ The various ways in which image data is stored, and thus accessed, is based on t
 * When AGC (automatic gain correction) mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
 * When pseudo-color LUT (aka palettized) mode is enabled, the image data will be 24bpp RGB888 (created from either the selected preset LUT or user-supplied LUT).
 
-Due to the packet-nature of the VoSPI transfer, transfering the image data out of the storage buffers requires special handling. _Future versions of this library will provide a more robust way of supporting final image access._
-
-### Extended Functions
-
-This library has an extended list of functionality for those who care to dive into such, but isn't always particularly the most useful for various general use cases. If one uncomments the line below inside the main header file (or defines it via custom build flag), this extended functionality can be manually compiled-out.
-
-In LeptonFLiR.h:
-```Arduino
-// Uncomment this define if wanting to exclude extended i2c functions from compilation.
-#define LEPFLIR_EXCLUDE_EXT_I2C_FUNCS   1
-```
+Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transferring the image data out of the storage buffers requires special handling. Image data should be accessed through the supplied library functions so packet layout, telemetry, and Lepton v3+ segmented 160x120 frames are handled consistently.
 
 ## Example Usage
 
@@ -114,86 +181,15 @@ Below are several examples of library usage.
 
 ### Simple Example
 
-```Arduino
-#include "LeptonFLiR.h"
-
-LeptonFLiR flirController();            // Library using default Wire and default chip select pin D53
-
-void setup() {
-    Serial.begin(115200);
-
-    Wire.begin();                       // Wire must be started first
-    Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
-
-    // Using 40x30 8bpp memory allocation mode and default celsius temperature mode
-    flirController.init(LeptonFLiR_ImageStorageMode_40x30_8bpp);
-}
-
-void loop() {
-    flirController.readNextFrame();     // Read next frame and store result into internal imageData
-}
-
-```
+See [`examples/SimpleExample/SimpleExample.ino`](examples/SimpleExample/SimpleExample.ino) for the complete sketch.
 
 ### Advanced Example
 
 In this example, we will utilize various features of the library.
 
-We will be using Wire1, which is only available on boards with SDA1/SCL1 (Due, Zero, etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at: https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
+We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Teensy/etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at <https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast>.
 
-```Arduino
-#include "LeptonFLiR.h"
-#include "digitalWriteFast.h"
-
-const byte flirCSPin = 22;
-LeptonFLiR flirController(Wire1, flirCSPin); // Library using Wire1 and chip select pin D22
-
-// Fast CS enable/disable routines, using the digitalWriteFast library
-static void fastEnableCS(byte pin) { digitalWriteFast(pin, LOW); }
-static void fastDisableCS(byte pin) { digitalWriteFast(pin, HIGH); }
-
-void setup() {
-    Serial.begin(115200);
-
-    Wire1.begin();                      // Wire1 must be started first
-    Wire1.setClock(400000);             // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
-
-    // Using default memory allocation mode 80x60 16bpp and default celsius temperature mode
-    flirController.init();
-
-    // Setting use of fast enable/disable methods for chip select
-    flirController.setFastCSFuncs(fastEnableCS, fastDisableCS);
-
-    flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
-}
-
-void loop() {
-    if (flirController.readNextFrame()) { // Read next frame and store result into internal imageData
-        // Find the hottest spot on the frame
-        int hotVal = 0; hotX, hotY;
-
-        for (int y = 0; y < flirController.getImageHeight(); ++y) {
-            for (int x = 0; x < flirController.getImageWidth(); ++x) {
-                int val = flirController.getImageDataRowCol(y, x);
-
-                if (val > hotVal) {
-                    hotVal = val;
-                    hotX = x; hotY = y;
-                }
-            }
-        }
-
-        Serial.print("Hottest point: [");
-        Serial.print(hotX);
-        Serial.print(",");
-        Serial.print(hotY);
-        Serial.println("]");
-    }
-}
-
-```
+See [`examples/AdvancedExample/AdvancedExample.ino`](examples/AdvancedExample/AdvancedExample.ino) for the complete sketch.
 
 ### Image Capture Example
 
@@ -201,437 +197,44 @@ In this example, we will copy out thermal image frames to individual BMP files l
 
 Note that you will need a MicroSD card reader module for this example to work. Both the FLiR module and MicroSD card reader module will be on the same SPI lines, just using different chip enable pins/wires.
 
-```Arduino
-#include "LeptonFLiR.h"
-#include <SD.h>
+See [`examples/ImageCaptureExample/ImageCaptureExample.ino`](examples/ImageCaptureExample/ImageCaptureExample.ino) for the complete sketch.
 
-const byte flirCSPin = 22;
-LeptonFLiR flirController(Wire, flirCSPin); // Library using Wire and chip select pin D22
+### Software i2c Example
 
-const byte cardCSPin = 24;
+In this example, we utilize a popular software i2c library for chips that do not have a hardware i2c bus, available at <https://github.com/felias-fogg/SoftI2CMaster>.
 
-void setup() {
-    Serial.begin(115200);
-
-    Wire.begin();                       // Wire must be started first
-    Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
-
-    SD.begin(cardCSPin);                // SD library using chip select pin D24
-
-    // Using memory allocation mode 80x60 8bpp and fahrenheit temperature mode
-    flirController.init(LeptonFLiR_ImageStorageMode_80x60_8bpp, LeptonFLiR_TemperatureMode_Fahrenheit);
-
-    // Setting use of AGC for histogram equalization (since we only have 8-bit per pixel data anyways)
-    flirController.agc_setAGCEnabled(ENABLED);
-
-    flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
-
-    SD.rmdir("FLIR");                   // Starting fresh with new frame captures
-}
-
-uint32_t lastFrameNumber = -1;          // Tracks for when a new frame is available
-
-void loop() {
-    if (flirController.readNextFrame()) { // Read next frame and store result into internal imageData
-        uint32_t frameNumber = flirController.getTelemetryFrameCounter();
-
-        if (frameNumber > lastFrameNumber) { // Frame counter increments every 3rd frame due to export restrictions
-            lastFrameNumber = frameNumber;
-
-            char fileName[] = "FLIR/IMG0000.BMP";
-            uint16_t fileNumber = (uint16_t)(frameNumber / 3);
-            wordsToHexString((uint16_t *)&fileNumber, 1, &fileName[8], 4);
-
-            File bmpFile = SD.open(fileName, FILE_WRITE);
-
-            if (bmpFile) {
-                writeBMPFile(bmpFile,
-                             flirController.getImageData(),
-                             flirController.getImageWidth(),
-                             flirController.getImageHeight(),
-                             flirController.getImagePitch());
-
-                bmpFile.close();
-
-                Serial.print(fileName);
-                Serial.println(" written...");
-            }
-        }
-
-        // Occasionally flat field correction normalization needs ran
-        if (flirController.getShouldRunFFCNormalization())
-            flirController.sys_runFFCNormalization();
-    }
-}
-
-// Writes a BMP file out, code from: http://stackoverflow.com/questions/2654480/writing-bmp-image-in-pure-c-c-without-other-libraries
-void writeBMPFile(File &bmpFile, byte *imageData, int width, int height, int pitch) {
-    byte file[14] = {
-        'B','M', // magic
-        0,0,0,0, // size in bytes
-        0,0, // app data
-        0,0, // app data
-        40+14,0,0,0 // start of data offset
-    };
-    byte info[40] = {
-        40,0,0,0, // info hd size
-        0,0,0,0, // width
-        0,0,0,0, // heigth
-        1,0, // number color planes
-        24,0, // bits per pixel
-        0,0,0,0, // compression is none
-        0,0,0,0, // image bits size
-        0x13,0x0B,0,0, // horz resoluition in pixel / m
-        0x13,0x0B,0,0, // vert resolutions (0x03C3 = 96 dpi, 0x0B13 = 72 dpi)
-        0,0,0,0, // #colors in pallete
-        0,0,0,0, // #important colors
-    };
-
-    uint32_t padSize  = (4-(width*3)%4)%4;
-    uint32_t sizeData = width*height*3 + height*padSize;
-    uint32_t sizeAll  = sizeData + sizeof(file) + sizeof(info);
-
-    file[ 2] = (byte)((sizeAll      ) & 0xFF);
-    file[ 3] = (byte)((sizeAll >>  8) & 0xFF);
-    file[ 4] = (byte)((sizeAll >> 16) & 0xFF);
-    file[ 5] = (byte)((sizeAll >> 24) & 0xFF);
-    info[ 4] = (byte)((width      ) & 0xFF);
-    info[ 5] = (byte)((width >>  8) & 0xFF);
-    info[ 6] = (byte)((width >> 16) & 0xFF);
-    info[ 7] = (byte)((width >> 24) & 0xFF);
-    info[ 8] = (byte)((height      ) & 0xFF);
-    info[ 9] = (byte)((height >>  8) & 0xFF);
-    info[10] = (byte)((height >> 16) & 0xFF);
-    info[11] = (byte)((height >> 24) & 0xFF);
-    info[20] = (byte)((sizeData      ) & 0xFF);
-    info[21] = (byte)((sizeData >>  8) & 0xFF);
-    info[22] = (byte)((sizeData >> 16) & 0xFF);
-    info[23] = (byte)((sizeData >> 24) & 0xFF);
-
-    bmpFile.write((byte *)file, sizeof(file));
-    bmpFile.write((byte *)info, sizeof(info));
-
-    byte pad[3] = {0,0,0};
-    imageData += (height - 1) * pitch;
-
-    for (int y = height - 1; y >= 0; --y) {
-        for (int x = 0; x < width; ++x) {
-            byte pixel[3]; // blue green red
-            pixel[0] = pixel[1] = pixel[2] = imageData[x];
-
-            bmpFile.write((byte *)pixel, 3);
-        }
-
-        bmpFile.write((byte *)pad, padSize);
-        imageData -= pitch;
-    }
-}
-
-```
-
-### Software I2C Example
-
-In this example, we utilize the software I2C functionality for chips that do not have a hardware I2C bus.
-
-If one uncomments the line below inside the main header file (or defines it via custom build flag), software I2C mode for the library will be enabled.
+If one uncomments the line below inside the main header file (or defines it via custom build flag), software i2c mode for the library will be enabled. Additionally, you will need to correctly define SCL_PIN, SCL_PORT, SDA_PIN, and SDA_PORT according to your setup. I2C_FASTMODE=1 should be set for 16MHz+ processors. Lastly note that, while in software i2c mode, the i2c clock speed returned by the library (via `getI2CSpeed()`) is only an upper bound and may not represent the actual i2c clock speed set nor achieved.
 
 In LeptonFLiR.h:
 ```Arduino
-// Uncomment this define to enable use of the software i2c library (min 4MHz+ processor required).
-#define LEPFLIR_ENABLE_SOFTWARE_I2C     1   // http://playground.arduino.cc/Main/SoftwareI2CLibrary
+// Uncomment or -D this define to enable usage of the software i2c library (min 4MHz+ processor).
+#define LEPFLIR_ENABLE_SOFTWARE_I2C             // https://github.com/felias-fogg/SoftI2CMaster
+```  
+Alternatively, in platform[.local].txt:
+```Arduino
+build.extra_flags=-DLEPFLIR_ENABLE_SOFTWARE_I2C
 ```
 
 In main sketch:
-```Arduino
-#include "LeptonFLiR.h"
-
-#define SCL_PIN 2                       // Setup defines are written before library include
-#define SCL_PORT PORTD 
-#define SDA_PIN 0 
-#define SDA_PORT PORTC 
-
-#if F_CPU >= 16000000
-#define I2C_FASTMODE 1                  // Running a 16MHz processor allows us to use I2C fast mode
-#endif
-
-#include "SoftI2CMaster.h"              // Include must come after setup defines
-
-const byte csPin = 4;
-LeptonFLiR flirController(csPin);       // Library using chip select pin 4
-
-void setup() {
-    Serial.begin(115200);
-
-    i2c_init();                         // Software I2C must be started first
-    SPI.begin();                        // SPI must be started first as well
-
-    // Using lowest memory allocation mode 20x15 8bpp and default celsius temperature mode
-    flirController.init(LeptonFLiR_ImageStorageMode_20x15_8bpp);
-
-    flirController.sys_setTelemetryEnabled(DISABLED); // Default mode is enabled
-}
-
-void loop() {
-    flirController.readNextFrame();     // Reads next frame and stores result into internal imageData
-}
-
-```
+See [`examples/SoftwareI2CExample/SoftwareI2CExample.ino`](examples/SoftwareI2CExample/SoftwareI2CExample.ino) for the complete sketch.
 
 ## Module Info
 
-In this example, we enable debug output support.
+In this example, we enable debug output support to print out module diagnostic information.
 
 If one uncomments the line below inside the main header file (or defines it via custom build flag), debug output support will be enabled and the printModuleInfo() method will become available. Calling this method will display information about the module itself, including initalized states, register values, current settings, etc. Additionally, all library calls being made will display internal debug information about the structure of the call itself. An example of this output is shown below.
 
 In LeptonFLiR.h:
 ```Arduino
-// Uncomment this define to enable debug output.
-#define LEPFLIR_ENABLE_DEBUG_OUTPUT     1
+// Uncomment or -D this define to enable debug output.
+#define LEPFLIR_ENABLE_DEBUG_OUTPUT
+```  
+Alternatively, in platform[.local].txt:
+```Arduino
+build.extra_flags=-DLEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
 In main sketch:
-```Arduino
-#include "LeptonFLiR.h"
+See [`examples/ModuleInfo/ModuleInfo.ino`](examples/ModuleInfo/ModuleInfo.ino) for the complete sketch.
 
-LeptonFLiR flirController;
-
-void setup() {
-    Serial.begin(115200);
-
-    Wire.begin();                       // Wire must be started first
-    Wire.setClock(400000);              // Supported baud rates are 100kHz, 400kHz, and 1000kHz
-    SPI.begin();                        // SPI must be started first as well
-
-    // Using 40x30 8bpp memory allocation mode and default celsius temperature mode
-    flirController.init(LeptonFLiR_ImageStorageMode_40x30_8bpp);
-
-    flirController.printModuleInfo();
-}
-
-```
-
-In serial monitor:
-```
- ~~~ LeptonFLiR Module Info ~~~
-
-Chip Select Pin:
-D34 (active-low)
-
-SPI Port Speed:
-10.50MHz (SPI_CLOCK_DIV8)
-
-Image Storage Mode:
-1: LeptonFLiR_ImageStorageMode_80x60_8bpp
-
-Temperature Mode:
-1: LeptonFLiR_TemperatureMode_Fahrenheit
-
-Memory Footprint:
-Image Data: 4815B, SPI Frame Data: 191B, Telemetry Data: 164B, Total: 5170B
-
-Power Register:
-    LeptonFLiR::readRegister regAddress: 0x0
-      LeptonFLiR::readRegister retVal: 0x0
-0x0
-
-Status Register:
-    LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-0x6
-
-AGC Enabled:
-LeptonFLiR::agc_getAGCEnabled
-  LeptonFLiR::receiveCommand cmdCode: 0x100
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x100
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
-enabled
-
-AGC Policy:
-LeptonFLiR::agc_getAGCPolicy
-  LeptonFLiR::receiveCommand cmdCode: 0x104
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x104
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
-1: LEP_AGC_HEQ
-
-AGC HEQ Scale Factor:
-LeptonFLiR::agc_getHEQScaleFactor
-  LeptonFLiR::receiveCommand cmdCode: 0x144
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x144
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
-0: LEP_AGC_SCALE_TO_8_BITS
-
-AGC Calculation Enabled:
-LeptonFLiR::agc_getAGCCalcEnabled
-  LeptonFLiR::receiveCommand cmdCode: 0x148
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x148
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
-enabled
-
-SYS Camera Status:
-LeptonFLiR::sys_getCameraStatus
-  LeptonFLiR::receiveCommand cmdCode: 0x204
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x204
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[4]: 0x0-0x0-0x0-0x0
-0: LEP_SYSTEM_READY
-
-FLiR Serial Number:
-LeptonFLiR::sys_getFlirSerialNumber
-  LeptonFLiR::receiveCommand cmdCode: 0x208
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x208
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[4]: 0x1111-0x2222-0x3333-0x4444
-1111:2222:3333:4444
-
-Customer Serial Number:
-LeptonFLiR::sys_getCustomerSerialNumber
-  LeptonFLiR::receiveCommand cmdCode: 0x228
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x228
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[16]: 0x1111-0x2222-0x3333-0x4444-0x5555-0x6666-0x7777-0x8888-0x9999-0xAAAA-0xBBBB-0xCCCC-0xDDDD-0xEEEE-0xFFFF-0xABCD
-1111:2222:3333:4444:5555:6666:7777:8888:9999:AAAA:BBBB:CCCC:DDDD:EEEE:FFFF:ABCD
-
-Camera Uptime:
-LeptonFLiR::sys_getCameraUptime
-  LeptonFLiR::receiveCommand cmdCode: 0x20C
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x20C
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x6FE4-0x64
-6582244 ms
-
-Sys Aux Temperature:
-LeptonFLiR::sys_getAuxTemperature
-  LeptonFLiR::receiveCommand cmdCode: 0x210
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x210
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[1]: 0x778B
-91.18�F
-
-Sys FPA Temperature:
-LeptonFLiR::sys_getFPATemperature
-  LeptonFLiR::receiveCommand cmdCode: 0x214
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x214
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[1]: 0x788D
-95.83�F
-
-Telemetry Enabled:
-LeptonFLiR::sys_getTelemetryEnabled
-  LeptonFLiR::receiveCommand cmdCode: 0x218
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x218
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
-enabled
-
-Vid Polarity:
-LeptonFLiR::vid_getPolarity
-  LeptonFLiR::receiveCommand cmdCode: 0x300
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x300
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
-0: LEP_VID_WHITE_HOT
-
-Vid Pseudo Color Lookup Table:
-LeptonFLiR::vid_getPseudoColorLUT
-  LeptonFLiR::receiveCommand cmdCode: 0x304
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x304
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x1-0x0
-1: LEP_VID_FUSION_LUT
-
-Vid Focus Calculation Enabled:
-LeptonFLiR::vid_getFocusCalcEnabled
-  LeptonFLiR::receiveCommand cmdCode: 0x30C
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x30C
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
-disabled
-
-Vid Freeze Enabled:
-LeptonFLiR::vid_getFreezeEnabled
-  LeptonFLiR::receiveCommand cmdCode: 0x324
-    LeptonFLiR::waitCommandBegin
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-    LeptonFLiR::writeRegister regAddress: 0x4, value: 0x324
-    LeptonFLiR::waitCommandFinish
-      LeptonFLiR::readRegister regAddress: 0x2
-      LeptonFLiR::readRegister retVal: 0x6
-      LeptonFLiR::readDataRegister readWords[2]: 0x0-0x0
-disabled
-```
+The serial monitor will show the camera configuration, AGC/SYS/VID state, OEM part and software information, and radiometry state on supported radiometric models.
