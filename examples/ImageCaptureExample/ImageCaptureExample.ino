@@ -55,10 +55,10 @@ void loop() {
 
             if (bmpFile) {
                 writeBMPFile(bmpFile,
-                             flirController.getImageData(),
+                             flirController.getImageOutputData(),
                              flirController.getImageWidth(),
                              flirController.getImageHeight(),
-                             flirController.getImagePitch());
+                             flirController.getImageOutputPitch());
 
                 bmpFile.close();
 
@@ -68,7 +68,7 @@ void loop() {
         }
 
         // Occasionally flat field correction normalization needs ran
-        if (flirController.getShouldRunFFCNormalization())
+        if (flirController.getTelemetryShouldRunFFCNormalization())
             flirController.sys_runFFCNormalization();
     }
 }

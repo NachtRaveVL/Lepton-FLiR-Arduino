@@ -127,6 +127,7 @@ struct LeptonFLiR_TelemetryData {
     float radGainModeSwitchHtLTemp;             // Gain mode threshold high-to-low temperature, when auto mode should switch from high to low mode (tlinear-disabled)
     float radGainModeSwitchLtHTemp;             // Gain mode threshold low-to-high temperature, when auto mode should switch from low to high mode (tlinear-disabled)
     float tlinearGainModeSwitchHtLTemp;         // Gain mode threshold high-to-low temperature, when auto mode should switch from high to low mode (tlinear-enabled)
+    float tlinearGainModeSwitchLtHTemp;         // Gain mode threshold low-to-high temperature, when auto mode should switch from low to high mode (tlinear-enabled)
 };
 
 union LeptonFLiR_PixelData {

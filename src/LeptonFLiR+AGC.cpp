@@ -11,6 +11,7 @@ void LeptonFLiR::agc_setAGCEnabled(bool enabled) {
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
+    _nextFrameNeedsUpdate = true;
 }
 
 bool LeptonFLiR::agc_getAGCEnabled() {
@@ -18,7 +19,7 @@ bool LeptonFLiR::agc_getAGCEnabled() {
     Serial.println(F("LeptonFLiR::agc_getAGCEnabled"));
 #endif
 
-    uint32_t enabled;
+    uint32_t enabled = 0;
     receiveCommand(cmdCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
     return enabled;
 }
@@ -315,7 +316,7 @@ void LeptonFLiR::agc_setHEQEmptyCounts(uint16_t counts) {
 
 uint16_t LeptonFLiR::agc_getHEQEmptyCounts() {
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-    Serial.println(F("LeptonFLiR::agc_setHEQEmptyCounts"));
+    Serial.println(F("LeptonFLiR::agc_getHEQEmptyCounts"));
 #endif
 
     uint16_t counts;
@@ -339,4 +340,22 @@ uint16_t LeptonFLiR::agc_getHEQNormalizationFactor() {
     uint16_t factor;
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_NORMALIZATION_FACTOR, LEP_I2C_COMMAND_TYPE_GET), &factor);
     return factor;
+}
+
+void LeptonFLiR::agc_setHEQLinearPercent(uint16_t percent) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::agc_setHEQLinearPercent"));
+#endif
+
+    sendCommand(cmdCode(LEP_CID_AGC_HEQ_LINEAR_PERCENT, LEP_I2C_COMMAND_TYPE_SET), percent);
+}
+
+uint16_t LeptonFLiR::agc_getHEQLinearPercent() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::agc_getHEQLinearPercent"));
+#endif
+
+    uint16_t percent = 0;
+    receiveCommand(cmdCode(LEP_CID_AGC_HEQ_LINEAR_PERCENT, LEP_I2C_COMMAND_TYPE_GET), &percent);
+    return percent;
 }

@@ -43,6 +43,7 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32
       _i2cWire(&i2cWire),
       _i2cSpeed(i2cSpeed),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
+      _spiDMAEnabled(false),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
@@ -59,6 +60,7 @@ LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte 
       _i2cWire(&i2cWire),
       _i2cSpeed(i2cSpeed),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
+      _spiDMAEnabled(false),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
@@ -74,8 +76,8 @@ LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte 
 
 LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
     : _spiCSPin(spiCSPin), _isrVSyncPin(isrVSyncPin),
-      _readBytes(0),
       _spiSettings(SPISettings(LEPFLIR_SPI_MAX_SPEED, MSBFIRST, SPI_MODE3)),
+      _spiDMAEnabled(false),
       _cameraType(LeptonFLiR_CameraType_Undefined),
       _tempMode(LeptonFLiR_TemperatureMode_Undefined),
       _frameData(NULL), _frameData_orig(NULL), _frameDataSize_orig(0),
@@ -84,7 +86,8 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
       _frameCounter(0),
       _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
       _isReadingNextFrame(false),
-      _lastI2CError(0), _lastLepResult(0)
+      _lastI2CError(0), _lastLepResult(0),
+      _readBytes(0)
 { }
 
 #endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
@@ -105,7 +108,7 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     const int spiDivisor = getSPIClockDivisor();
-    const float spiSpeed = F_CPU / (const float)spiDivisor;
+    const float spiSpeed = F_CPU / (float)spiDivisor;
     Serial.print(F("LeptonFLiR::init cameraType: v"));
     Serial.print(getCameraVersion(), 1);
     Serial.print(F(", tempMode: "));
@@ -143,7 +146,9 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     digitalWrite(_spiCSPin, HIGH);
 
     if (_isrVSyncPin != DISABLED) {
-        // TODO: Write/enable ISR. -NR
+        // Keep the optional VSYNC signal available to sketches without installing a
+        // process-wide ISR. VoSPI packet IDs remain the authoritative frame sync.
+        pinMode(_isrVSyncPin, INPUT);
     }
 }
 
@@ -189,6 +194,28 @@ int LeptonFLiR::getImageWidth() {
         default:
             return 0;
     }
+}
+
+bool LeptonFLiR::setSPIDMAEnabled(bool enabled) {
+#ifdef SPI_HAS_TRANSFER_ASYNC
+    _spiDMAEnabled = enabled;
+    return true;
+#else
+    _spiDMAEnabled = false;
+    return !enabled;
+#endif
+}
+
+bool LeptonFLiR::getSPIDMAEnabled() {
+    return _spiDMAEnabled;
+}
+
+bool LeptonFLiR::isSPIDMAAvailable() {
+#ifdef SPI_HAS_TRANSFER_ASYNC
+    return true;
+#else
+    return false;
+#endif
 }
 
 int LeptonFLiR::getImageHeight() {
@@ -248,9 +275,49 @@ int LeptonFLiR::getImageBpp() {
     }
 }
 
+static byte getSPIDataByte(const byte *data, int offset) {
+    const uint16_t *words = (const uint16_t *)data;
+    const uint16_t word = words[offset >> 1];
+    return (offset & 1) ? lowByte(word) : highByte(word);
+}
+
 LeptonFLiR_PixelData LeptonFLiR::getImagePixelData(int row, int col) {
-    // TODO: Write get image pixel data. -NR
-    return LeptonFLiR_PixelData();
+    LeptonFLiR_PixelData pixel = {};
+    if (!isImageDataAvailable() || row < 0 || row >= getImageHeight() || col < 0 || col >= getImageWidth())
+        return pixel;
+
+    const int section = getImageWidth() == 160 ? col / 80 : 0;
+    const int sectionCol = getImageWidth() == 160 ? col % 80 : col;
+    const byte *imageData = getImageData(row, section);
+    if (!imageData) return pixel;
+
+    switch (getImageMode()) {
+        case LeptonFLiR_ImageMode_80x60_16bpp_164Brf:
+        case LeptonFLiR_ImageMode_160x120_16bpp_164Brf: {
+            const uint16_t value = ((const uint16_t *)imageData)[sectionCol];
+            if (getAGCEnabled()) {
+                pixel.agc._res = highByte(value);
+                pixel.agc.value = lowByte(value);
+            }
+            else if (getTLinearEnabled())
+                pixel.tlinear.value = value;
+            else
+                pixel.std.value = value;
+        } break;
+
+        case LeptonFLiR_ImageMode_80x60_24bpp_244Brf:
+        case LeptonFLiR_ImageMode_160x120_24bpp_244Brf: {
+            const int offset = sectionCol * 3;
+            pixel.pclut.red = getSPIDataByte(imageData, offset);
+            pixel.pclut.green = getSPIDataByte(imageData, offset + 1);
+            pixel.pclut.blue = getSPIDataByte(imageData, offset + 2);
+        } break;
+
+        default:
+            break;
+    }
+
+    return pixel;
 }
 
 LeptonFLiR_ImageOutputMode LeptonFLiR::getImageOutputMode() {
@@ -264,6 +331,7 @@ int LeptonFLiR::getImageOutputBpp() {
         case LeptonFLiR_ImageOutputMode_GS16:
             return 2;
         case LeptonFLiR_ImageOutputMode_RGB565:
+            return 2;
         case LeptonFLiR_ImageOutputMode_RGB888:
             return 3;
         default:
@@ -280,12 +348,65 @@ int LeptonFLiR::getImageOutputTotalSize() {
 }
 
 byte *LeptonFLiR::getImageOutputData() {
-    // TODO: Write image output creation. -NR
-    return NULL;
+    if (!isImageDataAvailable()) return NULL;
+
+    const int outputSize = getImageOutputTotalSize();
+    if (outputSize <= 0) return NULL;
+
+    if (!_imageOutput_orig || _imageOutputSize_orig != outputSize) {
+        byte *newOutput = _imageOutput_orig ? roundUpRealloc16(_imageOutput_orig, outputSize) : roundUpMalloc16(outputSize);
+        if (!newOutput) return NULL;
+        _imageOutput_orig = newOutput;
+        _imageOutputSize_orig = outputSize;
+        _imageOutput = roundUpPtr16(_imageOutput_orig);
+    }
+
+    memset(_imageOutput, 0, (size_t)outputSize);
+    getImageOutputData(_imageOutput, getImageOutputPitch());
+    return _imageOutput;
 }
 
 void LeptonFLiR::getImageOutputData(byte *image, int pitch) {
-    // TODO: Write image output copy. -NR
+    if (!image || !isImageDataAvailable()) return;
+
+    const int width = getImageWidth();
+    const int height = getImageHeight();
+    const int bpp = getImageOutputBpp();
+    const int rowBytes = width * bpp;
+    if (!width || !height || !bpp || pitch < rowBytes) return;
+
+    for (int row = 0; row < height; ++row) {
+        byte *dst = image + row * pitch;
+        for (int col = 0; col < width; ++col) {
+            const LeptonFLiR_PixelData pixel = getImagePixelData(row, col);
+            switch (getImageOutputMode()) {
+                case LeptonFLiR_ImageOutputMode_GS8:
+                    dst[col] = pixel.agc.value;
+                    break;
+
+                case LeptonFLiR_ImageOutputMode_GS16: {
+                    const uint16_t value = getTLinearEnabled() ? pixel.tlinear.value : pixel.std.value;
+                    memcpy(dst + col * 2, &value, sizeof(value));
+                } break;
+
+                case LeptonFLiR_ImageOutputMode_RGB565: {
+                    const uint16_t value = (uint16_t)(((uint16_t)(pixel.pclut.red & 0xF8) << 8) |
+                                                      ((uint16_t)(pixel.pclut.green & 0xFC) << 3) |
+                                                      ((uint16_t)pixel.pclut.blue >> 3));
+                    memcpy(dst + col * 2, &value, sizeof(value));
+                } break;
+
+                case LeptonFLiR_ImageOutputMode_RGB888:
+                    dst[col * 3] = pixel.pclut.red;
+                    dst[col * 3 + 1] = pixel.pclut.green;
+                    dst[col * 3 + 2] = pixel.pclut.blue;
+                    break;
+
+                default:
+                    return;
+            }
+        }
+    }
 }
 
 bool LeptonFLiR::isTelemetryDataAvailable() {
@@ -318,16 +439,20 @@ bool LeptonFLiR::getTelemetryAGCEnabled() {
 }
 
 LeptonFLiR_TelemetryData* LeptonFLiR::getTelemetryOutputData() {
-    // TODO: Write telemetry output creation. -NR
-    return NULL;
+    if (!isTelemetryDataAvailable()) return NULL;
+    if (!_telemetryOutput)
+        _telemetryOutput = new (std::nothrow) LeptonFLiR_TelemetryData();
+    if (!_telemetryOutput) return NULL;
+    getTelemetryOutputData(_telemetryOutput);
+    return _telemetryOutput;
 }
 
 void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
-    if (!isTelemetryDataAvailable()) return;
+    if (!telemetry || !isTelemetryDataAvailable()) return;
+    memset(telemetry, 0, sizeof(*telemetry));
     const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
     //const uint16_t *telemetryData_B = (const uint16_t *)getTelemetryData(1);
     //const uint16_t *telemetryData_C = (const uint16_t *)getTelemetryData(2);
-    // TODO: Verify Telem B and C lines are always next to A line in SPI buffer memory. -NR
 
     telemetry->revisionMajor = lowByte(telemetryData_A[0]);
     telemetry->revisionMinor = highByte(telemetryData_A[0]);
@@ -363,37 +488,245 @@ void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
     telemetry->agcClipHigh = telemetryData_A[38];
     telemetry->agcClipLow = telemetryData_A[39];
 
+    telemetry->vidFormat = (LEP_VID_VIDEO_OUTPUT_FORMAT)(((uint32_t)telemetryData_A[72] << 16) | (uint32_t)telemetryData_A[73]);
     telemetry->log2FFC = telemetryData_A[74];
 
-    // TODO: Do Telem B and C line getters below. -NR
-    // LEP_VID_VIDEO_OUTPUT_FORMAT vidFormat
-    // uint16_t sceneEmissivity
-    // uint16_t atmoTau
-    // uint16_t windowTau
-    // uint16_t windowReflTau
-    // float bgTemperature
-    // float atmoTemperature
-    // float windowTemperature
-    // float windowReflTemperature
-    // LeptonFLiR_TelemetryGainMode gainMode
-    // LeptonFLiR_TelemetryGainMode effGainMode
-    // bool gainModeSwitchDesired
-    // float radGainModeSwitchHtLTemp
-    // float radGainModeSwitchLtHTemp
-    // float tlinearGainModeSwitchHtLTemp
+    const uint16_t *telemetryData_B = (const uint16_t *)getTelemetryData(1);
+    if (telemetryData_B) {
+        telemetry->sceneEmissivity = telemetryData_B[19];
+        telemetry->bgTemperature = kelvin100ToTemperature(telemetryData_B[20]);
+        telemetry->atmoTau = telemetryData_B[21];
+        telemetry->atmoTemperature = kelvin100ToTemperature(telemetryData_B[22]);
+        telemetry->windowTau = telemetryData_B[23];
+        telemetry->windowReflTau = telemetryData_B[24];
+        telemetry->windowTemperature = kelvin100ToTemperature(telemetryData_B[25]);
+        telemetry->windowReflTemperature = kelvin100ToTemperature(telemetryData_B[26]);
+    }
+
+    const uint16_t *telemetryData_C = (const uint16_t *)getTelemetryData(2);
+    if (telemetryData_C) {
+        telemetry->gainMode = (LeptonFLiR_TelemetryGainMode)telemetryData_C[5];
+        telemetry->effGainMode = (LeptonFLiR_TelemetryGainMode)telemetryData_C[6];
+        telemetry->gainModeSwitchDesired = telemetryData_C[7] != 0;
+        telemetry->radGainModeSwitchHtLTemp = kelvin100ToTemperature(celsiusToKelvin100((float)telemetryData_C[8]));
+        telemetry->radGainModeSwitchLtHTemp = kelvin100ToTemperature(celsiusToKelvin100((float)telemetryData_C[9]));
+        telemetry->tlinearGainModeSwitchHtLTemp = kelvin100ToTemperature(kelvinToKelvin100((float)telemetryData_C[10]));
+        telemetry->tlinearGainModeSwitchLtHTemp = kelvin100ToTemperature(kelvinToKelvin100((float)telemetryData_C[11]));
+    }
 }
 
 //#define LEPFLIR_ENABLE_FRAME_PACKET_DEBUG_OUTPUT    1
 
 bool LeptonFLiR::tryReadNextFrame() {
-    if (!_isReadingNextFrame) {
-        _isReadingNextFrame = true;
+    if (_isReadingNextFrame) return false;
+
+    prepareNextFrame();
+    FrameSettings *nextFrame = _nextFrame;
+    const int lineSize = getSPIFrameLineSize();
+    const int lineSize16 = getSPIFrameLineSize16();
+    const int imageLines = getSPIFrameImageLines();
+    const int telemetryLines = getSPIFrameTelemetryLines();
+
+    if (!nextFrame || !_frameData || !nextFrame->offsetTable || !lineSize || !lineSize16 || !imageLines)
+        return false;
+
+    _isReadingNextFrame = true;
+    nextFrame->imageData = NULL;
+    nextFrame->telemetryData = NULL;
+    if (_lastFrame) {
+        _lastFrame->imageData = NULL;
+        _lastFrame->telemetryData = NULL;
+    }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        Serial.println(F("LeptonFLiR::tryReadNextFrame"));
+    Serial.println(F("LeptonFLiR::tryReadNextFrame"));
 #endif
-        // TODO
 
+    const bool segmented = getImageWidth() == 160;
+    const int segmentCount = segmented ? 4 : 1;
+    const int packetsPerSegment = segmented ? 60 + (telemetryLines ? 1 : 0) : 60 + telemetryLines;
+    bool success = false;
+
+    SPI.beginTransaction(_spiSettings);
+    digitalWrite(_spiCSPin, HIGH);
+
+    // Work from the current stream position first. A hard re-sync is only needed
+    // if packet sequencing is actually lost.
+    for (int attempt = 0; attempt < 2 && !success; ++attempt) {
+        if (attempt)
+            delay(186);
+
+        success = true;
+        int packetBudget = 2048;
+        digitalWrite(_spiCSPin, LOW);
+
+        if (segmented) {
+            for (int expectedSegment = 1; expectedSegment <= segmentCount && success; ++expectedSegment) {
+                bool segmentFound = false;
+
+                while (!segmentFound && packetBudget > 0) {
+                    const int baseLine = (expectedSegment - 1) * packetsPerSegment;
+                    uint16_t *spiFrame = getSPIFrameData(baseLine);
+                    if (!spiFrame) {
+                        success = false;
+                        break;
+                    }
+
+                    // Packet zero marks the start of a segment. Discard packets and
+                    // the tail of any segment already in progress are ignored here.
+                    bool packetZeroFound = false;
+                    while (packetBudget-- > 0) {
+                        SPI_transfer16(spiFrame, lineSize16);
+                        const uint16_t id = spiFrame[0];
+                        if ((id & 0x0F00) != 0x0F00 && (id & 0x0FFF) == 0) {
+                            packetZeroFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!packetZeroFound) {
+                        success = false;
+                        break;
+                    }
+
+                    int segmentNumber = -1;
+                    for (int packet = 1; packet < packetsPerSegment; ++packet) {
+                        spiFrame = getSPIFrameData(baseLine + packet);
+                        if (!spiFrame || packetBudget-- <= 0) {
+                            success = false;
+                            break;
+                        }
+
+                        SPI_transfer16(spiFrame, lineSize16);
+                        const uint16_t id = spiFrame[0];
+                        if ((id & 0x0F00) == 0x0F00 || (id & 0x0FFF) != (uint16_t)packet) {
+                            success = false;
+                            break;
+                        }
+
+                        if (packet == 20)
+                            segmentNumber = (id >> 12) & 0x7;
+                    }
+
+                    if (!success)
+                        break;
+
+                    if (segmentNumber < 0 || segmentNumber > 4) {
+                        success = false;
+                        break;
+                    }
+
+                    if (expectedSegment == 1) {
+                        // Lepton 3 inserts invalid segments with TTT=0 between
+                        // unique frames. Segments 2-4 can also be encountered if
+                        // the read started partway through a valid frame.
+                        segmentFound = segmentNumber == 1;
+                    }
+                    else {
+                        if (segmentNumber != expectedSegment) {
+                            success = false;
+                            break;
+                        }
+                        segmentFound = true;
+                    }
+                }
+
+                if (!segmentFound)
+                    success = false;
+            }
+        }
+        else {
+            uint16_t *spiFrame = getSPIFrameData(0);
+            bool packetZeroFound = false;
+
+            while (spiFrame && packetBudget-- > 0) {
+                SPI_transfer16(spiFrame, lineSize16);
+                const uint16_t id = spiFrame[0];
+                if ((id & 0x0F00) != 0x0F00 && (id & 0x0FFF) == 0) {
+                    packetZeroFound = true;
+                    break;
+                }
+            }
+
+            if (!packetZeroFound)
+                success = false;
+
+            for (int packet = 1; packet < packetsPerSegment && success; ++packet) {
+                spiFrame = getSPIFrameData(packet);
+                if (!spiFrame || packetBudget-- <= 0) {
+                    success = false;
+                    break;
+                }
+
+                SPI_transfer16(spiFrame, lineSize16);
+                const uint16_t id = spiFrame[0];
+                if ((id & 0x0F00) == 0x0F00 || (id & 0x0FFF) != (uint16_t)packet)
+                    success = false;
+            }
+        }
+
+        digitalWrite(_spiCSPin, HIGH);
+
+        if (success) {
+            int imageIndex = 0;
+            int telemetryIndex = 0;
+            uint16_t telemetryOffset = 0;
+
+            for (int segment = 1; segment <= segmentCount; ++segment) {
+                for (int packet = 0; packet < packetsPerSegment; ++packet) {
+                    const int bufferLine = (segment - 1) * packetsPerSegment + packet;
+                    const uint16_t *spiFrame = getSPIFrameData(bufferLine);
+                    if (!spiFrame) {
+                        success = false;
+                        break;
+                    }
+
+                    bool isTelemetry = false;
+                    if (telemetryLines) {
+                        if (!segmented)
+                            isTelemetry = nextFrame->telemetryMode == LeptonFLiR_TelemetryMode_Header ? packet < 3 : packet >= 60;
+                        else if (nextFrame->telemetryMode == LeptonFLiR_TelemetryMode_Header)
+                            isTelemetry = segment == 1 && packet < 4;
+                        else
+                            isTelemetry = segment == 4 && packet >= 57;
+                    }
+
+                    const byte *payload = (const byte *)(spiFrame + 2);
+                    const uint16_t payloadOffset = (uint16_t)(payload - (_frameData + 4));
+                    if (isTelemetry) {
+                        if (telemetryIndex == 0) telemetryOffset = payloadOffset;
+                        ++telemetryIndex;
+                    }
+                    else {
+                        if (imageIndex >= imageLines) {
+                            success = false;
+                            break;
+                        }
+                        nextFrame->offsetTable[imageIndex++] = payloadOffset;
+                    }
+                }
+
+                if (!success)
+                    break;
+            }
+
+            if (imageIndex != imageLines || telemetryIndex != telemetryLines)
+                success = false;
+
+            if (success) {
+                nextFrame->imageData = _frameData + 4;
+                if (telemetryLines)
+                    nextFrame->telemetryData = _frameData + 4 + telemetryOffset;
+            }
+        }
     }
-    return false;
+
+    SPI.endTransaction();
+    _isReadingNextFrame = false;
+
+    if (!success)
+        return false;
+
+    advanceNextFrame();
+    return true;
 }

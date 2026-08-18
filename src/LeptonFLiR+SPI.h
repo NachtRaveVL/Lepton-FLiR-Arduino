@@ -13,7 +13,10 @@
 //class LeptonFLiR {
 //protected:
 
-    static void SPI_transfer16(uint16_t *buffer, int count);
-    static void SPI_ignore16(int count);
+    void SPI_transfer16(uint16_t *buffer, int count);
+    void SPI_ignore16(int count);
+#ifdef SPI_HAS_TRANSFER_ASYNC
+    bool SPI_transfer16DMA(uint16_t *buffer, int count, bool store);
+#endif
 
 #endif // /ifndef LeptonFLiR_SPI_H

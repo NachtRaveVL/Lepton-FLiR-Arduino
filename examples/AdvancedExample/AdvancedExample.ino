@@ -8,7 +8,7 @@
 #include "digitalWriteFast.h"
 
 const byte flirCSPin = 22;
-LeptonFLiR flirController(flirCSPin, Wire1); // Library using chip select pin D22, and Wire1 @400kHz
+LeptonFLiR flirController(Wire1, 400000, flirCSPin); // Library using chip select pin D22, and Wire1 @400kHz
 
 void setup() {
     Serial.begin(115200);               // Begin Serial, SPI, and Wire interfaces
@@ -18,8 +18,8 @@ void setup() {
 #else
     SPI.begin();
 #endif
-    Wire.begin();
-    Wire.setClock(flirController.getI2CSpeed());
+    Wire1.begin();
+    Wire1.setClock(flirController.getI2CSpeed());
 
     // Initializes module using Lepton v1 camera, and default celsius temperature mode
     // NOTE: Make sure to change this to what hardware camera version you're using! (see manufacturer website)
@@ -31,11 +31,11 @@ void setup() {
 void loop() {
     if (flirController.tryReadNextFrame()) { // Establishes sync, then reads next frame into raw data buffer
         // Find the hottest spot on the frame
-        int hotVal = 0; hotX, hotY;
+        int hotVal = 0, hotX = 0, hotY = 0;
 
         for (int y = 0; y < flirController.getImageHeight(); ++y) {
             for (int x = 0; x < flirController.getImageWidth(); ++x) {
-                int val = flirController.getImageDataRowCol(y, x);
+                int val = flirController.getImagePixelData(y, x).std.value;
 
                 if (val > hotVal) {
                     hotVal = val;

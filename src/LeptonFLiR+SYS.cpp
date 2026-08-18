@@ -79,6 +79,7 @@ void LeptonFLiR::sys_setTelemetryEnabled(bool enabled) {
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)enabled);
+    _nextFrameNeedsUpdate = true;
 }
 
 bool LeptonFLiR::sys_getTelemetryEnabled() {
@@ -86,7 +87,7 @@ bool LeptonFLiR::sys_getTelemetryEnabled() {
     Serial.println(F("LeptonFLiR::sys_getTelemetryEnabled"));
 #endif
 
-    uint32_t enabled;
+    uint32_t enabled = 0;
     receiveCommand(cmdCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
     return enabled;
 }
@@ -97,6 +98,7 @@ void LeptonFLiR::sys_setTelemetryLocation(LEP_SYS_TELEMETRY_LOCATION location) {
 #endif
 
     sendCommand(cmdCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)location);
+    _nextFrameNeedsUpdate = true;
 }
 
 LEP_SYS_TELEMETRY_LOCATION LeptonFLiR::sys_getTelemetryLocation() {
@@ -104,7 +106,7 @@ LEP_SYS_TELEMETRY_LOCATION LeptonFLiR::sys_getTelemetryLocation() {
     Serial.println(F("LeptonFLiR::sys_getTelemetryLocation"));
 #endif
 
-    uint32_t location;
+    uint32_t location = 0;
     receiveCommand(cmdCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_GET), &location);
     return (LEP_SYS_TELEMETRY_LOCATION)location;
 }
@@ -237,4 +239,54 @@ LEP_SYS_FFC_STATUS LeptonFLiR::sys_getFFCNormalizationStatus() {
     uint32_t status;
     receiveCommand(cmdCode(LEP_CID_SYS_FFC_STATUS, LEP_I2C_COMMAND_TYPE_GET), &status);
     return (LEP_SYS_FFC_STATUS)status;
+}
+
+void LeptonFLiR::sys_setGainMode(LEP_SYS_GAIN_MODE mode) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::sys_setGainMode"));
+#endif
+
+    sendCommand(cmdCode(LEP_CID_SYS_GAIN_MODE, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)mode);
+}
+
+LEP_SYS_GAIN_MODE LeptonFLiR::sys_getGainMode() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::sys_getGainMode"));
+#endif
+
+    uint32_t mode = 0;
+    receiveCommand(cmdCode(LEP_CID_SYS_GAIN_MODE, LEP_I2C_COMMAND_TYPE_GET), &mode);
+    return (LEP_SYS_GAIN_MODE)mode;
+}
+
+LEP_SYS_FFC_STATES LeptonFLiR::sys_getFFCState() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::sys_getFFCState"));
+#endif
+
+    uint32_t state = 0;
+    receiveCommand(cmdCode(LEP_CID_SYS_FFC_STATES, LEP_I2C_COMMAND_TYPE_GET), &state);
+    return (LEP_SYS_FFC_STATES)state;
+}
+
+void LeptonFLiR::sys_setGainModeObject(LEP_SYS_GAIN_MODE_OBJ *object) {
+    if (!object) return;
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::sys_setGainModeObject"));
+#endif
+
+    sendCommand(cmdCode(LEP_CID_SYS_GAIN_MODE_OBJ, LEP_I2C_COMMAND_TYPE_SET),
+                (uint16_t *)object, sizeof(LEP_SYS_GAIN_MODE_OBJ) / 2);
+}
+
+void LeptonFLiR::sys_getGainModeObject(LEP_SYS_GAIN_MODE_OBJ *object) {
+    if (!object) return;
+
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::sys_getGainModeObject"));
+#endif
+
+    receiveCommand(cmdCode(LEP_CID_SYS_GAIN_MODE_OBJ, LEP_I2C_COMMAND_TYPE_GET),
+                   (uint16_t *)object, sizeof(LEP_SYS_GAIN_MODE_OBJ) / 2);
 }

@@ -83,6 +83,7 @@ void LeptonFLiR::vid_setOutputFormat(LEP_VID_VIDEO_OUTPUT_FORMAT format) {
 #endif
 
     sendCommand(cmdCode(LEP_CID_VID_OUTPUT_FORMAT, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)format);
+    _nextFrameNeedsUpdate = true;
 }
 
 LEP_VID_VIDEO_OUTPUT_FORMAT LeptonFLiR::vid_getOutputFormat() {
@@ -90,7 +91,7 @@ LEP_VID_VIDEO_OUTPUT_FORMAT LeptonFLiR::vid_getOutputFormat() {
     Serial.println(F("LeptonFLiR::vid_getOutputFormat"));
 #endif
 
-    uint32_t format;
+    uint32_t format = 0;
     receiveCommand(cmdCode(LEP_CID_VID_OUTPUT_FORMAT, LEP_I2C_COMMAND_TYPE_GET), &format);
     return (LEP_VID_VIDEO_OUTPUT_FORMAT)format;
 }
@@ -197,4 +198,22 @@ uint32_t LeptonFLiR::vid_getGamma() {
     uint32_t gamma;
     receiveCommand(cmdCode(LEP_CID_VID_GAMMA_SELECT, LEP_I2C_COMMAND_TYPE_GET), &gamma);
     return gamma;
+}
+
+void LeptonFLiR::vid_setLowGainPseudoColorLUT(LEP_VID_PCOLOR_LUT mode) {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::vid_setLowGainPseudoColorLUT"));
+#endif
+
+    sendCommand(cmdCode(LEP_CID_VID_LOW_GAIN_LUT_SELECT, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)mode);
+}
+
+LEP_VID_PCOLOR_LUT LeptonFLiR::vid_getLowGainPseudoColorLUT() {
+#ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
+    Serial.println(F("LeptonFLiR::vid_getLowGainPseudoColorLUT"));
+#endif
+
+    uint32_t mode = 0;
+    receiveCommand(cmdCode(LEP_CID_VID_LOW_GAIN_LUT_SELECT, LEP_I2C_COMMAND_TYPE_GET), &mode);
+    return (LEP_VID_PCOLOR_LUT)mode;
 }

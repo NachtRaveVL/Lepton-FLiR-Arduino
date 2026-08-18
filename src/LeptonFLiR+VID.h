@@ -30,10 +30,8 @@
     void vid_setOutputFormat(LEP_VID_VIDEO_OUTPUT_FORMAT format); // def:LEP_VID_VIDEO_OUTPUT_FORMAT_RAW14
     LEP_VID_VIDEO_OUTPUT_FORMAT vid_getOutputFormat();
 
-    // TODO: Check to make sure we have all the VID module commands up to v3.5. -NR
-
-    void vid_setUserColorLUT(LEP_VID_LUT_BUFFER *mode); // These two methods may not work as intended, possibly leaving the I2C bus on the
-    void vid_getUserColorLUT(LEP_VID_LUT_BUFFER *mode); // FLiR in a non-responding state. A full power cycle may be needed to reset.
+    void vid_setUserColorLUT(LEP_VID_LUT_BUFFER *mode);
+    void vid_getUserColorLUT(LEP_VID_LUT_BUFFER *mode);
 
     void vid_setFocusRegion(LEP_VID_FOCUS_ROI *region); // min:1,1/end>beg+1, max:78,58/beg<end-1 def:{1,1,78,58} (pixels)
     void vid_getFocusRegion(LEP_VID_FOCUS_ROI *region);
@@ -48,5 +46,8 @@
 
     void vid_setGamma(uint32_t gamma); // def:58
     uint32_t vid_getGamma();
+
+    void vid_setLowGainPseudoColorLUT(LEP_VID_PCOLOR_LUT mode);
+    LEP_VID_PCOLOR_LUT vid_getLowGainPseudoColorLUT();
 
 #endif // /ifndef LeptonFLiR_VID_H

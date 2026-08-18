@@ -26,8 +26,6 @@
     void agc_setAGCCalcEnabled(bool enabled); // def:disabled
     bool agc_getAGCCalcEnabled();
 
-    // TODO: Check to make sure we have all the AGC module commands up to v3.5. -NR
-
     void agc_setHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
     void agc_getHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region);
 
@@ -71,5 +69,8 @@
 
     void agc_setHEQNormalizationFactor(uint16_t factor); // def:1
     uint16_t agc_getHEQNormalizationFactor();
+
+    void agc_setHEQLinearPercent(uint16_t percent); // min:0 max:100 def:20
+    uint16_t agc_getHEQLinearPercent();
 
 #endif // /ifndef LeptonFLiR_AGC_H

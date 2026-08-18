@@ -26,8 +26,8 @@
         // Values valid only after frame prepare
         uint16_t *offsetTable;                              // Raw image data segment # (line/section) -> raw image data offset table (owned ptr)
         // Remaining values valid only after read
-        const byte *imageData;                              // Raw image data in VoSPI frame buffer, after 2B ID (unowned ptr, pitch of SPI frame line size)
-        const byte *telemetryData;                          // Raw telemetry data in VoSPI frame buffer, after 2B ID (unowned ptr, pitch of SPI frame line size)
+        const byte *imageData;                              // Base VoSPI payload pointer used with offsetTable (unowned ptr)
+        const byte *telemetryData;                          // First telemetry payload in VoSPI frame buffer (unowned ptr)
     };
 
     byte _spiCSPin;                                         // SPI chip select pin (default: SS)
@@ -37,6 +37,7 @@
     int _i2cSpeed;                                          // Module's i2c clock speed (default: 400000)
 #endif
     SPISettings _spiSettings;                               // SPI port settings
+    bool _spiDMAEnabled;                                    // Use async/DMA SPI packet transfers when supported
     LeptonFLiR_CameraType _cameraType;                      // Lepton camera type
     LeptonFLiR_TemperatureMode _tempMode;                   // Temperature display mode (default: Celsius)
 

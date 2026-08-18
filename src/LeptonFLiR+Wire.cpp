@@ -191,7 +191,8 @@ void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *value) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
+        if (writeRegister(LEP_I2C_DATA_LENGTH_REG, 1) == 0 &&
+            writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
@@ -213,7 +214,8 @@ void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint32_t *value) {
 
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
+        if (writeRegister(LEP_I2C_DATA_LENGTH_REG, 2) == 0 &&
+            writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
@@ -233,9 +235,15 @@ void LeptonFLiR::receiveCommand(uint16_t cmdCode, uint16_t *readWords, int maxLe
     Serial.println(cmdCode, HEX);
 #endif
 
+    if (!readWords || maxLength <= 0) {
+        _lastI2CError = 4;
+        return;
+    }
+
     if (waitCommandBegin(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
-        if (writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
+        if (writeRegister(LEP_I2C_DATA_LENGTH_REG, (uint16_t)maxLength) == 0 &&
+            writeRegister(LEP_I2C_COMMAND_REG, cmdCode) == 0) {
 
             if (waitCommandFinish(LEPFLIR_GEN_CMD_TIMEOUT)) {
 
@@ -263,119 +271,86 @@ int LeptonFLiR::writeCmdRegister(uint16_t cmdCode, uint16_t *dataWords, int data
     Serial.println("");
 #endif
 
-    // In avr/libraries/Wire.h and avr/libraries/utility/twi.h, BUFFER_LENGTH controls
-    // how many words can be written at once. Therefore, we loop around until all words
-    // have been written out into their registers.
+    if (dataLength < 0 || (dataLength > 0 && !dataWords))
+        return (_lastI2CError = 4);
 
-    if (dataWords && dataLength) {
-        i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-        i2cWire_write16(LEP_I2C_DATA_LENGTH_REG);
-        i2cWire_write16(dataLength);
-        if (i2cWire_endTransmission())
-            return _lastI2CError;
+    // DATA_LENGTH is expressed in 16-bit words. FLIR's CCI protocol requires it
+    // to be written for every command, including zero-length RUN commands.
+    if (writeRegister(LEP_I2C_DATA_LENGTH_REG, (uint16_t)dataLength))
+        return _lastI2CError;
 
-        int maxLength = LEPFLIR_I2C_BUFFER_LENGTH / 2;
-        int writeLength = min(maxLength, dataLength);
+    if (dataLength > 0) {
+        const int maxWordsPerTransfer = max(1, LEPFLIR_I2C_BUFFER_LENGTH / 2 - 1);
         uint16_t regAddress = dataLength <= 16 ? LEP_I2C_DATA_0_REG : LEP_I2C_DATA_BUFFER;
+        int remaining = dataLength;
 
-        while (dataLength > 0) {
+        while (remaining > 0) {
+            const int writeLength = min(maxWordsPerTransfer, remaining);
+
             i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
             i2cWire_write16(regAddress);
 
-            while (writeLength-- > 0)
+            for (int i = 0; i < writeLength; ++i)
                 i2cWire_write16(*dataWords++);
 
             if (i2cWire_endTransmission())
                 return _lastI2CError;
 
-            regAddress += maxLength * 0x02;
-            dataLength -= maxLength;
-            writeLength = min(maxLength, dataLength);
+            regAddress += (uint16_t)(writeLength * 2);
+            remaining -= writeLength;
         }
     }
 
-    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-    i2cWire_write16(LEP_I2C_COMMAND_REG);
-    i2cWire_write16(cmdCode);
-    return i2cWire_endTransmission();
+    return writeRegister(LEP_I2C_COMMAND_REG, cmdCode);
 }
 
 int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
-    i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
-    i2cWire_write16(LEP_I2C_DATA_LENGTH_REG);
-    if (i2cWire_endTransmission())
-        return _lastI2CError;
-
-    int bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, 2);
-    if (bytesRead != 2) {
-        while (bytesRead-- > 0)
-            i2cWire_read();
-        return (_lastI2CError = 4);
-    }
-
-    int readLength = i2cWire_read16();
-
-    if (readLength == 0)
+    if (!readWords || maxLength <= 0)
         return (_lastI2CError = 4);
 
-    // In avr/libraries/Wire.h and avr/libraries/utility/twi.h, BUFFER_LENGTH controls
-    // how many channels can be written at once. Therefore, we loop around until all
-    // channels have been written out into their registers. I2C_BUFFER_LENGTH is also
-    // used in other architectures, all of which goes into LEPFLIR_I2C_BUFFER_LENGTH.
+    const int maxWordsPerTransfer = max(1, LEPFLIR_I2C_BUFFER_LENGTH / 2);
+    uint16_t regAddress = maxLength <= 16 ? LEP_I2C_DATA_0_REG : LEP_I2C_DATA_BUFFER;
+    int remaining = maxLength;
 
-    bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(LEPFLIR_I2C_BUFFER_LENGTH, readLength));
+    while (remaining > 0) {
+        const int readLength = min(maxWordsPerTransfer, remaining);
+        const int byteLength = readLength * 2;
 
-    while (bytesRead > 0 && readLength > 0) {
+        i2cWire_beginTransmission(LEP_I2C_DEVICE_ADDRESS);
+        i2cWire_write16(regAddress);
+        if (i2cWire_endTransmission())
+            return _lastI2CError;
+
+        int bytesRead = i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, (uint8_t)byteLength);
+        if (bytesRead != byteLength) {
+            while (bytesRead-- > 0)
+                i2cWire_read();
+            return (_lastI2CError = 4);
+        }
+
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
-        int origWordsRead = bytesRead / 2;
-        int origReadLength = readLength / 2;
-        int origMaxLength = maxLength;
         uint16_t *origReadWords = readWords;
 #endif
 
-        while (bytesRead > 1 && readLength > 1 && maxLength > 0) {
+        for (int i = 0; i < readLength; ++i)
             *readWords++ = i2cWire_read16();
-            bytesRead -= 2; readLength -= 2; --maxLength;
-        }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
         Serial.print(F("      LeptonFLiR::readDataRegister readWords["));
-        if (origWordsRead == origReadLength && origReadLength == origMaxLength) {
-            Serial.print(origWordsRead);
-        }
-        else if (origWordsRead != origReadLength && origReadLength == origMaxLength) {
-            Serial.print(F("r:"));
-            Serial.print(origWordsRead);
-            Serial.print(F(",lm:"));
-            Serial.print(origReadLength);
-        }
-        else {
-            Serial.print(F("r:"));
-            Serial.print(origWordsRead);
-            Serial.print(F(",l:"));
-            Serial.print(origReadLength);
-            Serial.print(F(",m:"));
-            Serial.print(origMaxLength);
-        }
+        Serial.print(readLength);
         Serial.print(F("]: "));
-        for (int i = 0; i < origWordsRead; ++i) {
+        for (int i = 0; i < readLength; ++i) {
             Serial.print(i > 0 ? F("-0x") : F("0x"));
             Serial.print(origReadWords[i], HEX);
         }
         Serial.println("");
 #endif
 
-        if (readLength > 0)
-            bytesRead += i2cWire_requestFrom(LEP_I2C_DEVICE_ADDRESS, min(LEPFLIR_I2C_BUFFER_LENGTH, readLength));
+        regAddress += (uint16_t)(readLength * 2);
+        remaining -= readLength;
     }
 
-    while (bytesRead-- > 0)
-        i2cWire_read();
-
-    while (maxLength-- > 0)
-        *readWords++ = 0;
-
-    return (_lastI2CError = readLength ? 4 : 0);
+    return (_lastI2CError = 0);
 }
 
 int LeptonFLiR::writeRegister(uint16_t regAddress, uint16_t value) {
@@ -468,7 +443,7 @@ uint8_t LeptonFLiR::i2cWire_read(void) {
     return (uint8_t)(_i2cWire->read() & 0xFF);
 #else
     if (_readBytes > 1) {
-        _readByes -= 1;
+        _readBytes -= 1;
         return (uint8_t)(i2c_read(false) & 0xFF);
     }
     else {
@@ -483,7 +458,7 @@ uint16_t LeptonFLiR::i2cWire_read16(void) {
     return ((uint16_t)(_i2cWire->read() & 0xFF) << 8) | (uint16_t)(_i2cWire->read() & 0xFF);
 #else
     if (_readBytes > 2) {
-        readBytes -= 2;
+        _readBytes -= 2;
         return ((uint16_t)(i2c_read(false) & 0xFF) << 8) | (uint16_t)(i2c_read(false) & 0xFF);
     }
     else {

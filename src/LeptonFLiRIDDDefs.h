@@ -129,6 +129,7 @@
 #define LEP_CID_AGC_HEQ_NORMALIZATION_FACTOR    (uint16_t)(LEP_AGC_MODULE_BASE + 0x0040)
 #define LEP_CID_AGC_HEQ_SCALE_FACTOR            (uint16_t)(LEP_AGC_MODULE_BASE + 0x0044)
 #define LEP_CID_AGC_CALC_ENABLE_STATE           (uint16_t)(LEP_AGC_MODULE_BASE + 0x0048)
+#define LEP_CID_AGC_HEQ_LINEAR_PERCENT          (uint16_t)(LEP_AGC_MODULE_BASE + 0x004C)
 
 enum LEP_AGC_POLICY {
     LEP_AGC_LINEAR = 0,
@@ -165,7 +166,8 @@ enum LEP_AGC_HEQ_SCALE_FACTOR {
 #define LEP_CID_SYS_FPA_TEMPERATURE_KELVIN      (uint16_t)(LEP_SYS_MODULE_BASE + 0x0014)
 #define LEP_CID_SYS_TELEMETRY_ENABLE_STATE      (uint16_t)(LEP_SYS_MODULE_BASE + 0x0018)
 #define LEP_CID_SYS_TELEMETRY_LOCATION          (uint16_t)(LEP_SYS_MODULE_BASE + 0x001C)
-#define LEP_CID_SYS_EXECTUE_FRAME_AVERAGE       (uint16_t)(LEP_SYS_MODULE_BASE + 0x0020)
+#define LEP_CID_SYS_EXECUTE_FRAME_AVERAGE       (uint16_t)(LEP_SYS_MODULE_BASE + 0x0020)
+#define LEP_CID_SYS_EXECTUE_FRAME_AVERAGE       LEP_CID_SYS_EXECUTE_FRAME_AVERAGE
 #define LEP_CID_SYS_NUM_FRAMES_TO_AVERAGE       (uint16_t)(LEP_SYS_MODULE_BASE + 0x0024)
 #define LEP_CID_SYS_CUST_SERIAL_NUMBER          (uint16_t)(LEP_SYS_MODULE_BASE + 0x0028)
 #define LEP_CID_SYS_SCENE_STATISTICS            (uint16_t)(LEP_SYS_MODULE_BASE + 0x002C)
@@ -173,8 +175,12 @@ enum LEP_AGC_HEQ_SCALE_FACTOR {
 #define LEP_CID_SYS_THERMAL_SHUTDOWN_COUNT      (uint16_t)(LEP_SYS_MODULE_BASE + 0x0034)
 #define LEP_CID_SYS_SHUTTER_POSITION            (uint16_t)(LEP_SYS_MODULE_BASE + 0x0038)
 #define LEP_CID_SYS_FFC_SHUTTER_MODE            (uint16_t)(LEP_SYS_MODULE_BASE + 0x003C)
+#define LEP_CID_SYS_FFC_SHUTTER_MODE_OBJ        LEP_CID_SYS_FFC_SHUTTER_MODE
 #define LEP_CID_SYS_RUN_FFC                     (uint16_t)(LEP_SYS_MODULE_BASE + 0x0042)
 #define LEP_CID_SYS_FFC_STATUS                  (uint16_t)(LEP_SYS_MODULE_BASE + 0x0044)
+#define LEP_CID_SYS_GAIN_MODE                   (uint16_t)(LEP_SYS_MODULE_BASE + 0x0048)
+#define LEP_CID_SYS_FFC_STATES                  (uint16_t)(LEP_SYS_MODULE_BASE + 0x004C)
+#define LEP_CID_SYS_GAIN_MODE_OBJ               (uint16_t)(LEP_SYS_MODULE_BASE + 0x0050)
 
 enum LEP_SYS_CAM_STATUS_STATES {
     LEP_SYSTEM_READY = 0,
@@ -260,6 +266,44 @@ enum LEP_SYS_FFC_STATUS {
     LEP_SYS_FRAME_AVERAGE_COLLECTING_FRAMES
 };
 
+enum LEP_SYS_GAIN_MODE {
+    LEP_SYS_GAIN_MODE_HIGH = 0,
+    LEP_SYS_GAIN_MODE_LOW,
+    LEP_SYS_GAIN_MODE_AUTO
+};
+
+enum LEP_SYS_FFC_STATES {
+    LEP_SYS_FFC_NEVER_COMMANDED = 0,
+    LEP_SYS_FFC_IMMINENT,
+    LEP_SYS_FFC_IN_PROCESS,
+    LEP_SYS_FFC_DONE
+};
+
+struct LEP_SYS_GAIN_MODE_ROI {
+    uint16_t startCol;
+    uint16_t startRow;
+    uint16_t endCol;
+    uint16_t endRow;
+};
+
+struct LEP_SYS_GAIN_MODE_THRESHOLDS {
+    uint16_t sys_P_high_to_low;
+    uint16_t sys_P_low_to_high;
+    uint16_t sys_C_high_to_low;
+    uint16_t sys_C_low_to_high;
+    uint16_t sys_T_high_to_low;
+    uint16_t sys_T_low_to_high;
+};
+
+struct LEP_SYS_GAIN_MODE_OBJ {
+    LEP_SYS_GAIN_MODE_ROI sysGainModeROI;
+    LEP_SYS_GAIN_MODE_THRESHOLDS sysGainModeThresholds;
+    uint16_t sysGainRoiPopulation;
+    uint16_t sysGainModeTempEnabled;
+    uint16_t sysGainModeFluxThresholdLowToHigh;
+    uint16_t sysGainModeFluxThresholdHighToLow;
+};
+
 // VID
 
 #define LEP_VID_MODULE_BASE                     (uint16_t)0x0300
@@ -274,6 +318,7 @@ enum LEP_SYS_FFC_STATUS {
 #define LEP_CID_VID_GAMMA_SELECT                (uint16_t)(LEP_VID_MODULE_BASE + 0x0020)
 #define LEP_CID_VID_FREEZE_ENABLE               (uint16_t)(LEP_VID_MODULE_BASE + 0x0024)
 #define LEP_CID_VID_OUTPUT_FORMAT               (uint16_t)(LEP_VID_MODULE_BASE + 0x0030)
+#define LEP_CID_VID_LOW_GAIN_LUT_SELECT          (uint16_t)(LEP_VID_MODULE_BASE + 0x0034)
 
 enum LEP_VID_POLARITY {
     LEP_VID_WHITE_HOT = 0,
@@ -332,10 +377,12 @@ enum LEP_VID_VIDEO_OUTPUT_FORMAT {
 
 #define LEP_OEM_MODULE_BASE                     (uint16_t)0x0800
 #define LEP_CID_OEM_POWER_MODE                  (uint16_t)(LEP_OEM_MODULE_BASE + 0x0000)
-#define LEP_CID_OEM_FLIR_SERIAL_NUMBER          (uint16_t)(LEP_OEM_MODULE_BASE + 0x001C)
+#define LEP_CID_OEM_FLIR_PART_NUMBER            (uint16_t)(LEP_OEM_MODULE_BASE + 0x001C)
+#define LEP_CID_OEM_FLIR_SERIAL_NUMBER          LEP_CID_OEM_FLIR_PART_NUMBER
 #define LEP_CID_OEM_SOFTWARE_REVISION           (uint16_t)(LEP_OEM_MODULE_BASE + 0x0020)
 #define LEP_CID_OEM_VID_OUTPUT_ENABLE           (uint16_t)(LEP_OEM_MODULE_BASE + 0x0024)
 #define LEP_CID_OEM_VID_OUTPUT_FORMAT           (uint16_t)(LEP_OEM_MODULE_BASE + 0x0028)
+#define LEP_CID_OEM_VID_OUTPUT_SOURCE           (uint16_t)(LEP_OEM_MODULE_BASE + 0x002C)
 #define LEP_CID_OEM_CUST_PART_NUMBER            (uint16_t)(LEP_OEM_MODULE_BASE + 0x0038)
 #define LEP_CID_OEM_OUTPUT_SOURCE_CONST         (uint16_t)(LEP_OEM_MODULE_BASE + 0x003C)
 #define LEP_CID_OEM_CAMERA_REBOOT               (uint16_t)(LEP_OEM_MODULE_BASE + 0x0040)
@@ -352,25 +399,40 @@ enum LEP_VID_VIDEO_OUTPUT_FORMAT {
 #define LEP_CID_OEM_TEMPORAL_FILTER_ENABLE      (uint16_t)(LEP_OEM_MODULE_BASE + 0x0070)
 #define LEP_CID_OEM_COL_NOISE_FILTER_ENABLE     (uint16_t)(LEP_OEM_MODULE_BASE + 0x0074)
 #define LEP_CID_OEM_PX_NOISE_FILTER_ENABLE      (uint16_t)(LEP_OEM_MODULE_BASE + 0x0078)
-#define LEP_CID_OEM_FFC_NORMALIZATION           (uint16_t)(LEP_OEM_MODULE_BASE + 0x007C)
+
+enum LEP_OEM_VIDEO_OUTPUT_FORMAT {
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW8 = 0,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW10,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW12,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RGB888,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RGB666,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RGB565,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_YUV422_8BIT,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW14,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_YUV422_10BIT,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_USER_DEFINED,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW8_2,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW8_3,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW8_4,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW8_5,
+    LEP_OEM_VIDEO_OUTPUT_FORMAT_RAW8_6
+};
 
 enum LEP_OEM_VIDEO_OUTPUT_SOURCE {
-    LEP_VIDEO_OUTPUT_SOURCE_RAW = 0,            // Before video processing.
-    LEP_VIDEO_OUTPUT_SOURCE_COOKED,             // Post video processing -NORMAL MODE
-    LEP_VIDEO_OUTPUT_SOURCE_RAMP,               // Software Ramp pattern -increase in X, Y
-    LEP_VIDEO_OUTPUT_SOURCE_CONSTANT,           // Software Constant value pattern
-    LEP_VIDEO_OUTPUT_SOURCE_RAMP_H,             // Software Ramp pattern -increase in X only
-    LEP_VIDEO_OUTPUT_SOURCE_RAMP_V,             // Software Ramp pattern -increase in Y only
-    LEP_VIDEO_OUTPUT_SOURCE_RAMP_CUSTOM,        // Software Ramp pattern -uses custom settings
-    // Additions to support frame averaging, freeze frame, and data buffers
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_CAPTURE,      // Average, Capture frame
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_FREEZE,       // Freeze-Frame Buffer
-    // Reserved buffers
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_0,            // Reserved DATA Buffer
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_1,            // Reserved DATA Buffer
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_2,            // Reserved DATA Buffer
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_3,            // Reserved DATA Buffer
-    LEP_VIDEO_OUTPUT_SOURCE_FRAME_4             // Reserved DATA Buffer
+    LEP_VIDEO_OUTPUT_SOURCE_RAW = 0,
+    LEP_VIDEO_OUTPUT_SOURCE_COOKED,
+    LEP_VIDEO_OUTPUT_SOURCE_RAMP,
+    LEP_VIDEO_OUTPUT_SOURCE_CONSTANT,
+    LEP_VIDEO_OUTPUT_SOURCE_RAMP_H,
+    LEP_VIDEO_OUTPUT_SOURCE_RAMP_V,
+    LEP_VIDEO_OUTPUT_SOURCE_RAMP_CUSTOM,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_CAPTURE,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_FREEZE,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_0,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_1,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_2,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_3,
+    LEP_VIDEO_OUTPUT_SOURCE_FRAME_4
 };
 
 enum LEP_OEM_STATUS {
@@ -405,23 +467,33 @@ enum LEP_OEM_USER_PARAMS_STATE {
     LEP_OEM_USER_PARAMS_STATE_WRITTEN
 };
 
-struct LEP_OEM_SHUTTER_PROFILE {
-    uint16_t closePeriodInFrames;               // in frame counts x1
-    uint16_t openPeriodInFrames;                // in frame counts x1
+struct LEP_OEM_SW_VERSION {
+    uint8_t gpp_major;
+    uint8_t gpp_minor;
+    uint8_t gpp_build;
+    uint8_t dsp_major;
+    uint8_t dsp_minor;
+    uint8_t dsp_build;
+    uint16_t reserved;
 };
 
+struct LEP_OEM_SHUTTER_PROFILE {
+    uint16_t closePeriodInFrames;
+    uint16_t openPeriodInFrames;
+};
 
 // RAD
 
 #define LEP_RAD_MODULE_BASE                     (uint16_t)0x0E00
-#define LEP_CID_RAD_RFBO_PARAMS                 (uint16_t)(LEP_RAD_MODULE_BASE + 0x0004)
-#define LEP_CID_RAD_RAD_ENABLE                  (uint16_t)(LEP_RAD_MODULE_BASE + 0x0010)
+#define LEP_CID_RAD_RBFO_PARAMS                 (uint16_t)(LEP_RAD_MODULE_BASE + 0x0004)
+#define LEP_CID_RAD_RFBO_PARAMS                 LEP_CID_RAD_RBFO_PARAMS
+#define LEP_CID_RAD_RADIOMETRY_ENABLE           (uint16_t)(LEP_RAD_MODULE_BASE + 0x0010)
 #define LEP_CID_RAD_TSHUTTER_MODE               (uint16_t)(LEP_RAD_MODULE_BASE + 0x0024)
 #define LEP_CID_RAD_TSHUTTER_TEMP               (uint16_t)(LEP_RAD_MODULE_BASE + 0x0028)
 #define LEP_CID_RAD_FFC_NORMALIZATION           (uint16_t)(LEP_RAD_MODULE_BASE + 0x002C)
-#define LEP_CID_RAD_STATUS                      (uint16_t)(LEP_RAD_MODULE_BASE + 0x0030)
+#define LEP_CID_RAD_RUN_STATUS                  (uint16_t)(LEP_RAD_MODULE_BASE + 0x0030)
 #define LEP_CID_RAD_FLUX_LINEAR_PARAMS          (uint16_t)(LEP_RAD_MODULE_BASE + 0x00BC)
-#define LEP_CID_RAD_TLINEAR_ENABLE              (uint16_t)(LEP_RAD_MODULE_BASE + 0x00C0)
+#define LEP_CID_RAD_TLINEAR_ENABLE_STATE        (uint16_t)(LEP_RAD_MODULE_BASE + 0x00C0)
 #define LEP_CID_RAD_TLINEAR_RESOLUTION          (uint16_t)(LEP_RAD_MODULE_BASE + 0x00C4)
 #define LEP_CID_RAD_TLINEAR_AUTO_RESOLUTION     (uint16_t)(LEP_RAD_MODULE_BASE + 0x00C8)
 #define LEP_CID_RAD_SPOTMETER_ROI               (uint16_t)(LEP_RAD_MODULE_BASE + 0x00CC)
@@ -460,7 +532,7 @@ struct LEP_RAD_FLUX_LINEAR_PARAMS {
 };
 
 enum LEP_RAD_TLINEAR_RESOLUTION {
-    LEP_RAD_RESOLUTION_0_1 = 0,                 // TLinear 0.1 resolution, min pixel:0 max pixel:65535 units:K100 scale:100 (65535 = 655.35K)
+    LEP_RAD_RESOLUTION_0_1 = 0,                 // TLinear 0.1 resolution, min pixel:0 max pixel:65535 units:K10 scale:10 (65535 = 6553.5K)
     LEP_RAD_RESOLUTION_0_01                     // TLinear 0.01 resolution, min pixel:0 max pixel:65535 units:K100 scale:100 (65535 = 655.35K)
 };
 
@@ -473,8 +545,8 @@ struct LEP_RAD_ROI {
 
 struct LEP_RAD_SPOTMETER_VALUES {
     uint16_t radSpotmeterValue;                 // Value (mean?), min:0 max:65535 units:{K10,K100} scale:{10,100} (based on TLinear resolution)
-    uint16_t radSpotmeterMaxValue;              // Min value, min:0 max:65535 units:{K10,K100} scale:{10,100} (based on TLinear resolution)
-    uint16_t radSpotmeterMinValue;              // Max value, min:0 max:65535 units:{K10,K100} scale:{10,100} (based on TLinear resolution)
+    uint16_t radSpotmeterMaxValue;              // Max value, min:0 max:65535 units:{K10,K100} scale:{10,100} (based on TLinear resolution)
+    uint16_t radSpotmeterMinValue;              // Min value, min:0 max:65535 units:{K10,K100} scale:{10,100} (based on TLinear resolution)
     uint16_t radSpotmeterPopulation;            // Population count, min:0 max:4800 units:pixels scale:1 (Lepton v1-v2.5), max:19200 (Lepton v3+)
 };
 

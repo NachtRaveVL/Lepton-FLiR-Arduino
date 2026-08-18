@@ -1,11 +1,7 @@
 # Lepton-FLiR-Arduino
 Arduino Library for the Lepton FLiR Thermal Camera Module.
 
-**NOTE: SPI data transfer mechanism is still being ironed out. Check back later when v1.0 releases.**
-
-**Lepton-FLiR-Arduino v0.9.92**
-
-**UNDER RENEWED DEVELOPMENT BUT DONT EXPECT ANY MIRACLES**
+**Lepton-FLiR-Arduino v2.0.0**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Portenta/Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
@@ -29,7 +25,7 @@ Additional interface documentation is available at <https://www.flir.com/globala
 
 ## Supported Microcontrollers
 
-Unfortunately during our testing back in 2016, largely due to SPI data transfer limitations using the Arduino SPI library (which apparently is shite), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due. However, as of more recently there seems to be a renewed interest in this library for the Teensy 3, and now particularly the impressive 600MHz Teensy 4. As well, the ESP32 and ESP32-S are also slated for experimentation. Additionally, we plan on experimenting with a faster custom SPI transfer interface to try and overcome speed limitations on slower microcontrollers, and might be able to look into DMA options available on the Arduino Zero and Arduino Portenta.
+Unfortunately during our testing back in 2016, largely due to SPI data transfer limitations using the Arduino SPI library (which apparently could be better), we were unable to successfully utilize any Arduino-specific microcontrollers, including the Due. However, as of more recently there seems to be a renewed interest in this library for the Teensy 3/4+, and now particularly the impressive Pico. As well, the ESP32 and ESP32-S are also slated for experimentation. V2 now includes an optional asynchronous SPI capture path for platforms whose SPI implementation exposes `SPI_HAS_TRANSFER_ASYNC`. On Teensy this uses the SPI library's DMA-backed asynchronous transfer support while keeping the existing blocking SPI reader as the default and fallback path.
 
 As of this writing, we don't have an exact listing of which specific microcontrollers will work with this library, but we are currently rewriting core parts of the library as well as will be testing this library with various microcontrollers to see what kind of support we can muster. We will update this section in the future with boards we've tested and their support status of this library. A particular focus is being applied to Teensy 4+.
 
@@ -146,9 +142,15 @@ SPI devices can be chained together on the same shared data lines, which are typ
 
 * The `CS` pin may be connected to any digital output pin, but it's common to use the `CS` (or `SS`) pin for the first device. Additional devices are not restricted to what pin they can or should use, but given it's not a data pin not using a choice interrupt-capable pin allows those to be used for interrupt driven mechanisms.
 * The module's `MOSI` line is optional and can simply be grounded since the module only uses SPI for slave-out data transfers (slave-in data being ignored).
-* The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 120x60 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
+* The minimum SPI transfer rate depends on the image resolution used by the camera, with 80x60 displays requiring ~2.2MHz minimum, and 160x120 displays requiring ~8.8MHz minimum, while the maximum SPI transfer rate is 20MHz.
   * The actual SPI transfer rate selected will be the first rate equal to or below 20MHz given the SPI clock divider (i.e. processor speed /2, /4, /8, ..., /128).
   * Anything below 12MHz is considered sub-optimal, and may have difficulty maintaining VoSPI syncronization.
+
+### DMA SPI Capture
+
+Boards whose SPI library exposes `SPI_HAS_TRANSFER_ASYNC` can use the alternate DMA-backed packet reader. Call `setSPIDMAEnabled()` after `init()`. If asynchronous SPI is unavailable, the method returns `false` and the existing blocking SPI path remains unchanged. If a DMA transfer cannot be started at runtime, capture automatically falls back to blocking SPI.
+
+See [`examples/DMACaptureExample/DMACaptureExample.ino`](examples/DMACaptureExample/DMACaptureExample.ino) for a minimal setup.
 
 ### I2C Bus
 
@@ -171,7 +173,7 @@ The various ways in which image data is stored, and thus accessed, is based on t
 * When AGC (automatic gain correction) mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
 * When pseudo-color LUT (aka palettized) mode is enabled, the image data will be 24bpp RGB888 (created from either the selected preset LUT or user-supplied LUT).
 
-Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transfering the image data out of the storage buffers requires special handling. Image row data must be accessed via the supplied library functions, largely since SPI packet data may arrive out-of-order. In 160x120 frame size mode (Lepton v3+), rows are split into two sections and which section being accessed must be specified. _Future versions of this library will provide a more robust way of supporting final image access, as well as support for Lepton v3+ running 160x120 frame size mode._
+Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transferring the image data out of the storage buffers requires special handling. Image data should be accessed through the supplied library functions so packet layout, telemetry, and Lepton v3+ segmented 160x120 frames are handled consistently.
 
 ## Example Usage
 
@@ -179,9 +181,7 @@ Below are several examples of library usage.
 
 ### Simple Example
 
-```Arduino
-// TODO: Reinclude this example after modifications completed. -NR
-```
+See [`examples/SimpleExample/SimpleExample.ino`](examples/SimpleExample/SimpleExample.ino) for the complete sketch.
 
 ### Advanced Example
 
@@ -189,9 +189,7 @@ In this example, we will utilize various features of the library.
 
 We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Teensy/etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at <https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast>.
 
-```Arduino
-// TODO: Reinclude this example after modifications completed. -NR
-```
+See [`examples/AdvancedExample/AdvancedExample.ino`](examples/AdvancedExample/AdvancedExample.ino) for the complete sketch.
 
 ### Image Capture Example
 
@@ -199,9 +197,7 @@ In this example, we will copy out thermal image frames to individual BMP files l
 
 Note that you will need a MicroSD card reader module for this example to work. Both the FLiR module and MicroSD card reader module will be on the same SPI lines, just using different chip enable pins/wires.
 
-```Arduino
-// TODO: Reinclude this example after modifications completed. -NR
-```
+See [`examples/ImageCaptureExample/ImageCaptureExample.ino`](examples/ImageCaptureExample/ImageCaptureExample.ino) for the complete sketch.
 
 ### Software i2c Example
 
@@ -220,9 +216,7 @@ build.extra_flags=-DLEPFLIR_ENABLE_SOFTWARE_I2C
 ```
 
 In main sketch:
-```Arduino
-// TODO: Reinclude this example after modifications completed. -NR
-```
+See [`examples/SoftwareI2CExample/SoftwareI2CExample.ino`](examples/SoftwareI2CExample/SoftwareI2CExample.ino) for the complete sketch.
 
 ## Module Info
 
@@ -241,11 +235,6 @@ build.extra_flags=-DLEPFLIR_ENABLE_DEBUG_OUTPUT
 ```
 
 In main sketch:
-```Arduino
-// TODO: Reinclude this example after modifications completed. -NR
-```
+See [`examples/ModuleInfo/ModuleInfo.ino`](examples/ModuleInfo/ModuleInfo.ino) for the complete sketch.
 
-In serial monitor:
-```
- // TODO: Reinclude this example output after modifications completed. -NR
-```
+The serial monitor will show the camera configuration, AGC/SYS/VID state, OEM part and software information, and radiometry state on supported radiometric models.

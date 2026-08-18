@@ -32,8 +32,6 @@
 
     void sys_runFFCNormalization();
 
-    // TODO: Check to make sure we have all the SYS module commands up to v3.5. -NR
-
     void sys_runPingCamera(); // return put into lastLepResult
 
     void sys_runFrameAveraging();
@@ -55,5 +53,13 @@
     void sys_getFFCShutterMode(LEP_SYS_FFC_SHUTTER_MODE *mode);
 
     LEP_SYS_FFC_STATUS sys_getFFCNormalizationStatus(); // def:LEP_SYS_FFC_STATUS_READY
+
+    void sys_setGainMode(LEP_SYS_GAIN_MODE mode); // def:LEP_SYS_GAIN_MODE_HIGH
+    LEP_SYS_GAIN_MODE sys_getGainMode();
+
+    LEP_SYS_FFC_STATES sys_getFFCState();
+
+    void sys_setGainModeObject(LEP_SYS_GAIN_MODE_OBJ *object);
+    void sys_getGainModeObject(LEP_SYS_GAIN_MODE_OBJ *object);
 
 #endif // /ifndef LeptonFLiR_SYS_H

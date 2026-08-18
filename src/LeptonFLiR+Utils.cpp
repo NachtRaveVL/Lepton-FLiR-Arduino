@@ -127,7 +127,7 @@ void LeptonFLiR::printModuleInfo() {
 
     Serial.println(""); Serial.print(F("SPI Speed: "));
     const int spiDivisor = getSPIClockDivisor();
-    const float spiSpeed = F_CPU / (const float)spiDivisor;
+    const float spiSpeed = F_CPU / (float)spiDivisor;
     Serial.print(roundf(spiSpeed / 1000.0f) / 1000.0f);
     Serial.print(F("MHz (SPI_CLOCK_DIV")); Serial.print(spiDivisor); Serial.print(F(")"));
     if (spiSpeed < LEPFLIR_SPI_MIN_SPEED - FLT_EPSILON)
@@ -232,7 +232,7 @@ void LeptonFLiR::printModuleInfo() {
     Serial.print(nextFrameSize);
     Serial.print(F("B, Total: "));
     Serial.print(classSize + frameBufferSize + imageOutputSize + telemetryOutputSize + lastFrameSize + nextFrameSize);
-    Serial.println(F("B");
+    Serial.println(F("B"));
 
     Serial.println(""); Serial.println(F("Power Register:"));
     uint16_t powerReg; readRegister(LEP_I2C_POWER_REG, &powerReg);
@@ -399,9 +399,36 @@ void LeptonFLiR::printModuleInfo() {
             Serial.println(""); break;
     }
 
-    // TODO: Add basic OEM module outputs. -NR
+    Serial.println(""); Serial.println(F("OEM FLIR Part Number:"));
+    oem_getFlirPartNumber(buffer, sizeof(buffer));
+    Serial.println(buffer);
 
-    // TODO: Add basic RAD module outputs. -NR
+    Serial.println(""); Serial.println(F("OEM Software Version:"));
+    LEP_OEM_SW_VERSION oemVersion = {};
+    oem_getSoftwareVersion(&oemVersion);
+    Serial.print(F("GPP "));
+    Serial.print(oemVersion.gpp_major); Serial.print(F("."));
+    Serial.print(oemVersion.gpp_minor); Serial.print(F("."));
+    Serial.println(oemVersion.gpp_build);
+    Serial.print(F("DSP "));
+    Serial.print(oemVersion.dsp_major); Serial.print(F("."));
+    Serial.print(oemVersion.dsp_minor); Serial.print(F("."));
+    Serial.println(oemVersion.dsp_build);
+
+    Serial.println(""); Serial.println(F("OEM Status:"));
+    Serial.println((int)oem_getStatus());
+
+    if (_cameraType == LeptonFLiR_CameraType_Lepton2_5 ||
+        _cameraType == LeptonFLiR_CameraType_Lepton3_5) {
+        Serial.println(""); Serial.println(F("RAD Radiometry Enabled:"));
+        Serial.println(rad_getRadiometryEnabled() ? F("<enabled>") : F("<disabled>"));
+
+        Serial.println(""); Serial.println(F("RAD TLinear Enabled:"));
+        Serial.println(rad_getTLinearEnabled() ? F("<enabled>") : F("<disabled>"));
+
+        Serial.println(""); Serial.println(F("RAD TLinear Resolution:"));
+        Serial.println((int)rad_getTLinearResolution());
+    }
 }
 
 static const char *textForI2CError(byte errorCode) {

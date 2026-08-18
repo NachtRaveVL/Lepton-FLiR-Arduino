@@ -22,7 +22,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 
-    Lepton-FLiR-Arduino - Version 0.9.92
+    Lepton-FLiR-Arduino - Version 2.0.0
 */
 
 #ifndef LeptonFLiR_H
@@ -75,9 +75,10 @@ extern void LEPFLIR_hardAssert(bool, String, const char *, const char *, int);
 #include "SoftI2CMaster.h"
 #undef USE_SOFT_I2C_MASTER_H_AS_PLAIN_INCLUDE
 #define LEPFLIR_USE_SOFTWARE_I2C
+#ifndef LEPFLIR_I2C_BUFFER_LENGTH
+#define LEPFLIR_I2C_BUFFER_LENGTH   32
+#endif
 #endif // /ifndef LEPFLIR_ENABLE_SOFTWARE_I2C
-
-// TODO: Include for TURBO SPI library
 
 class LeptonFLiR;
 #include "LeptonFLiRDefines.h"
@@ -125,6 +126,12 @@ public:
     // Image descriptors
     int getImageWidth();                                    // Image pixel width
     int getImageHeight();                                   // Image pixel height
+
+    // SPI capture mode. DMA is available when the platform SPI library exposes
+    // SPI_HAS_TRANSFER_ASYNC. Unsupported platforms keep using blocking SPI.
+    bool setSPIDMAEnabled(bool enabled = true);
+    bool getSPIDMAEnabled();
+    bool isSPIDMAAvailable();
 
     // This method attempts to read the next image frame, taking up considerable processor time.
     // Returns a boolean indicating if next frame was successfully retrieved or not.

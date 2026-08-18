@@ -13,3 +13,7 @@ pad
 # Generic:
 ###############
 *.bak
+
+# Host test builds
+/build-host/
+build/
