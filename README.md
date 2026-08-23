@@ -36,14 +36,14 @@ As of this writing, we don't have an exact listing of which specific microcontro
 | Arduino Nano | 16MHz | /2 | 8MHz | Not supported. |
 | Arduino Zero | 48MHz | /4 | 12MHz | _tbt_ (Likely not supported) |
 | Teensy LC | 48MHz | /4 | 12MHz | _tbt_ (Likely not supported) |
-| Arduino Nano 33 | 64MHz | /4 | 16MHz |  _tbt_ |
-| Teensy 3.2 | 72MHz | /4 | 18MHz | _tbt_ |
+| Arduino Nano 33 | 64MHz | /4 | 16MHz | _tbt_ |
+| Teensy 3.2 | 72MHz | /4 | 18MHz | _tbt_ (Likely supported) |
 | Arduino Due | 84MHz | /5 <sup>1</sup> | 16.8MHz | _tbt_ |
 | Teensy 3.5 | 120MHz | /8 | 15MHz | _tbt_ |
-| ESP32 | 160MHz | /8 | 20MHz | _tbt_ |
-| Teensy 3.6 | 180MHz | /16 | 11.25 MHz | _tbt_ |
-| ESP32/ESP32-S | 240MHz | /8 | 15MHz | _tbt_ (Possibly supported?) |
-| Teensy 4.0/4.1 | 600MHz | /32 | 18.75 | _tbt_ (Likely supported?) |
+| ESP32 | 160MHz | /8 | 20MHz | _tbt_ (Likely supported) |
+| Teensy 3.6 | 180MHz | /16 | 11.25 MHz | _tbt_ (Likely not supported) |
+| ESP32/ESP32-S | 240MHz | /8 | 15MHz | _tbt_ |
+| Teensy 4.0/4.1 | 600MHz | /32 | 18.75 | _tbt_ (Likely supported) |
 
 Note<sup>1</sup>: Arduino Due allows for non-power-of-2 clock divisors.
 
