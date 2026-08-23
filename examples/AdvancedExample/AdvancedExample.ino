@@ -1,11 +1,9 @@
 // Lepton-FLiR-Arduino Advanced Example
 // In this example, we will utilize various features of the library. We will be using
 // Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Teensy/etc.) - change
-// to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library,
-// available at https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast.
+// to Wire if Wire1 is unavailable.
 
 #include "LeptonFLiR.h"
-#include "digitalWriteFast.h"
 
 const byte flirCSPin = 22;
 LeptonFLiR flirController(Wire1, 400000, flirCSPin); // Library using chip select pin D22, and Wire1 @400kHz
@@ -30,24 +28,56 @@ void setup() {
 
 void loop() {
     if (flirController.tryReadNextFrame()) { // Establishes sync, then reads next frame into raw data buffer
-        // Find the hottest spot on the frame
-        int hotVal = 0, hotX = 0, hotY = 0;
+        // Frame settings describe the frame that was just captured, not the camera's live configuration
+        Serial.print("Frame #");
+        Serial.print(flirController.getFrameNumber());
+        Serial.print(" [");
+        Serial.print(flirController.getImageWidth());
+        Serial.print("x");
+        Serial.print(flirController.getImageHeight());
+        Serial.print(", ");
+        Serial.print(flirController.getImageBpp());
+        Serial.print(" bytes/pixel raw] center pixel: ");
 
-        for (int y = 0; y < flirController.getImageHeight(); ++y) {
-            for (int x = 0; x < flirController.getImageWidth(); ++x) {
-                int val = flirController.getImagePixelData(y, x).std.value;
+        // Individual pixels are accessed through getImagePixelData(), which handles VoSPI packet layout
+        const int centerY = flirController.getImageHeight() / 2;
+        const int centerX = flirController.getImageWidth() / 2;
+        LeptonFLiR_PixelData pixel = flirController.getImagePixelData(centerY, centerX);
 
-                if (val > hotVal) {
-                    hotVal = val;
-                    hotX = x; hotY = y;
-                }
-            }
+        if (flirController.getPseudoColorLUTEnabled()) {
+            Serial.print("RGB(");
+            Serial.print(pixel.pclut.red);
+            Serial.print(",");
+            Serial.print(pixel.pclut.green);
+            Serial.print(",");
+            Serial.print(pixel.pclut.blue);
+            Serial.print(")");
+        }
+        else if (flirController.getAGCEnabled())
+            Serial.print(pixel.agc.value);
+        else if (flirController.getTLinearEnabled()) {
+            Serial.print(pixel.tlinear.value);
+            Serial.print(" TLinear");
+        }
+        else
+            Serial.print(pixel.std.value);
+
+        // getImageOutputData() provides the complete processed image as a normal row-oriented buffer
+        byte *imageData = flirController.getImageOutputData();
+        if (imageData) {
+            Serial.print(", output: ");
+            Serial.print(flirController.getImageOutputTotalSize());
+            Serial.print(" bytes @ pitch ");
+            Serial.print(flirController.getImageOutputPitch());
         }
 
-        Serial.print("Hottest point: [");
-        Serial.print(hotX);
-        Serial.print(",");
-        Serial.print(hotY);
-        Serial.println("]");
+        // Telemetry can be accessed either through individual getters or as a processed structure
+        LeptonFLiR_TelemetryData *telemetry = flirController.getTelemetryOutputData();
+        if (telemetry) {
+            Serial.print(", telemetry frame: ");
+            Serial.print(telemetry->frameCounter);
+        }
+
+        Serial.println();
     }
 }

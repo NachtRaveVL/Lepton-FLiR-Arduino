@@ -35,35 +35,41 @@ void setup() {
 
     flirController.sys_setTelemetryEnabled(ENABLED); // Ensure telemetry is enabled
 
-    SD.rmdir("FLIR");                   // Starting fresh with new frame captures
+    SD.mkdir("FLIR");                   // Ensure frame capture directory exists
 }
 
-uint32_t lastFrameNumber = -1;          // Tracks for when a new frame is available
+uint32_t lastFrameNumber = 0;           // Tracks for when a new frame is available
+bool hasLastFrameNumber = false;
 
 void loop() {
     if (flirController.tryReadNextFrame()) { // Establishes sync, then reads next frame into raw data buffer
         uint32_t frameNumber = flirController.getTelemetryFrameCounter();
 
-        if (frameNumber > lastFrameNumber) { // Frame counter increments every 3rd frame due to export restrictions
+        if (!hasLastFrameNumber || frameNumber > lastFrameNumber) { // Frame counter increments every 3rd frame due to export restrictions
             lastFrameNumber = frameNumber;
+            hasLastFrameNumber = true;
 
             char fileName[] = "FLIR/IMG0000.BMP";
             uint16_t fileNumber = (uint16_t)(frameNumber / 3);
             LeptonFLiR::wordsToHexString((uint16_t *)&fileNumber, 1, &fileName[8], 4);
 
-            File bmpFile = SD.open(fileName, FILE_WRITE);
+            byte *imageData = flirController.getImageOutputData();
+            if (imageData) {
+                SD.remove(fileName);              // FILE_WRITE appends, so remove any previous copy first
+                File bmpFile = SD.open(fileName, FILE_WRITE);
 
-            if (bmpFile) {
-                writeBMPFile(bmpFile,
-                             flirController.getImageOutputData(),
-                             flirController.getImageWidth(),
-                             flirController.getImageHeight(),
-                             flirController.getImageOutputPitch());
+                if (bmpFile) {
+                    writeBMPFile(bmpFile,
+                                 imageData,
+                                 flirController.getImageWidth(),
+                                 flirController.getImageHeight(),
+                                 flirController.getImageOutputPitch());
 
-                bmpFile.close();
+                    bmpFile.close();
 
-                Serial.print(fileName);
-                Serial.println(" written...");
+                    Serial.print(fileName);
+                    Serial.println(" written...");
+                }
             }
         }
 

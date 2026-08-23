@@ -152,6 +152,27 @@ Boards whose SPI library exposes `SPI_HAS_TRANSFER_ASYNC` can use the alternate 
 
 See [`examples/DMACaptureExample/DMACaptureExample.ino`](examples/DMACaptureExample/DMACaptureExample.ino) for a minimal setup.
 
+### VSync Capture
+
+Breakout boards exposing Lepton GPIO3 can optionally use the camera's VSync frame-timing pulse so `tryReadNextFrame()` only starts a read when a new frame is ready. Supply an interrupt-capable host pin as the constructor's VSync pin and configure Lepton GPIO3 for VSync through the existing OEM command interface. Only one `LeptonFLiR` instance may own the VSync ISR at a time.
+
+```Arduino
+const byte flirCSPin = 10;
+const byte flirVSyncPin = 2;
+LeptonFLiR flirController(flirCSPin, flirVSyncPin);
+
+void setup() {
+    SPI.begin();
+    Wire.begin();
+    Wire.setClock(flirController.getI2CSpeed());
+
+    flirController.init(LeptonFLiR_CameraType_Lepton3_5);
+    flirController.oem_setGPIOMode(LEP_OEM_GPIO_MODE_VSYNC);
+}
+```
+
+Some Lepton firmware revisions document the GPIO mode setter but report it as unsupported. Check `getLastI2CError()` and `getLastLepResult()` immediately after the OEM call; on such firmware GPIO3 must already be configured for VSync. When a VSync pin is supplied but no VSync pulse arrives, `tryReadNextFrame()` returns `false` without beginning an SPI frame read.
+
 ### I2C Bus
 
 I2C (aka I²C, IIC, TwoWire, TWI) devices can be chained together on the same shared bus lines (no flipping of wires), which are typically labeled `SCL` and `SDA`. Only different kinds of I2C devices can be used on the same bus line together using factory default settings, otherwise manual addressing must be done. I2C runs at mid to high kHz speeds and is useful for advanced device control.
@@ -173,7 +194,41 @@ The various ways in which image data is stored, and thus accessed, is based on t
 * When AGC (automatic gain correction) mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
 * When pseudo-color LUT (aka palettized) mode is enabled, the image data will be 24bpp RGB888 (created from either the selected preset LUT or user-supplied LUT).
 
-Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transferring the image data out of the storage buffers requires special handling. Image data should be accessed through the supplied library functions so packet layout, telemetry, and Lepton v3+ segmented 160x120 frames are handled consistently.
+Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transferring the image data out of the storage buffers requires special handling. Image data should be accessed through the supplied library functions so packet layout, telemetry, and Lepton v3+ segmented 160x120 frames are handled consistently. The frame reader currently decodes RAW14 and RGB888 VoSPI output; other VID/OEM output formats remain available through their corresponding camera command APIs but are not decoded by `tryReadNextFrame()`.
+
+### Working with Captured Frames
+
+After `tryReadNextFrame()` succeeds, the frame accessors operate on the frame that was just captured:
+
+* Use `getImagePixelData(row, col)` to read an individual pixel without handling VoSPI packet headers or Lepton v3+ segmentation yourself. The active frame settings determine which union member is valid: `std.value`, `agc.value`, `tlinear.value`, or `pclut.red/green/blue`.
+* Use `getImageOutputData()` to obtain the complete processed image as a normal row-oriented buffer. `getImageOutputBpp()`, `getImageOutputPitch()`, and `getImageOutputTotalSize()` describe that buffer. An overload is also available for copying into a caller-owned buffer. `getImageBpp()` and `getImageOutputBpp()` historically return **bytes per pixel** (1, 2, or 3), despite the `Bpp` name.
+* Use the telemetry convenience getters for common fields or `getTelemetryOutputData()` for the complete processed telemetry structure.
+
+Methods such as `getAGCEnabled()`, `getTLinearEnabled()`, and `getTelemetryMode()` describe the **last captured frame**. Module-prefixed methods such as `agc_getAGCEnabled()`, `rad_getTLinearEnabled()`, and `sys_getTelemetryEnabled()` query the camera's **current configuration**. This distinction matters when settings are changed between frames.
+
+For radiometric Lepton 2.5/3.5 modules, TLinear pixels may use either 0.1 K or 0.01 K units. `rad_getTLinearResolution()` reports the configured resolution, while `kelvin100ToTemperature()` expects Kelvin x100. For example:
+
+```Arduino
+LeptonFLiR_PixelData pixel = flirController.getImagePixelData(row, col);
+uint16_t kelvin100 = pixel.tlinear.value;
+
+if (flirController.rad_getTLinearResolution() == LEP_RAD_RESOLUTION_0_1)
+    kelvin100 *= 10;
+
+float temperature = flirController.kelvin100ToTemperature(kelvin100);
+```
+
+### Checking Camera Command Results
+
+Module command methods preserve the most recent I2C transport error and Lepton command result. Check these immediately after a command when failure matters, before issuing another camera command that would replace the stored result:
+
+```Arduino
+flirController.rad_setTLinearEnabled(ENABLED);
+
+if (flirController.getLastI2CError() || flirController.getLastLepResult() != LEP_OK) {
+    // Camera command failed.
+}
+```
 
 ## Example Usage
 
@@ -185,9 +240,9 @@ See [`examples/SimpleExample/SimpleExample.ino`](examples/SimpleExample/SimpleEx
 
 ### Advanced Example
 
-In this example, we will utilize various features of the library.
+In this example, we will utilize various features of the library after capturing a frame: inspect its dimensions and mode, access an individual pixel, obtain the complete processed image buffer, and read processed telemetry.
 
-We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Teensy/etc.) - change to Wire if Wire1 is unavailable. We will also be using the digitalWriteFast library, available at <https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast>.
+We will be using Wire1, which is only available on boards with SDA1/SCL1 (e.g. Due/Teensy/etc.) - change to Wire if Wire1 is unavailable.
 
 See [`examples/AdvancedExample/AdvancedExample.ino`](examples/AdvancedExample/AdvancedExample.ino) for the complete sketch.
 

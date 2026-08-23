@@ -36,15 +36,12 @@ void LeptonFLiR::updateNextFrame() {
     if (!_nextFrame || !_nextFrameNeedsUpdate)
         return;
 
-    uint32_t value = 0;
-    receiveCommand(cmdCode(LEP_CID_VID_OUTPUT_FORMAT, LEP_I2C_COMMAND_TYPE_GET), &value);
+    const LEP_VID_VIDEO_OUTPUT_FORMAT format = vid_getOutputFormat();
     if (_lastI2CError || _lastLepResult) {
         _nextFrame->imageMode = LeptonFLiR_ImageMode_Undefined;
         _nextFrame->outputMode = LeptonFLiR_ImageOutputMode_Undefined;
         return;
     }
-
-    const LEP_VID_VIDEO_OUTPUT_FORMAT format = (LEP_VID_VIDEO_OUTPUT_FORMAT)value;
 
     switch(_cameraType) {
         case LeptonFLiR_CameraType_Lepton1:
@@ -77,30 +74,24 @@ void LeptonFLiR::updateNextFrame() {
 
     _nextFrame->pclutEnabled = format == LEP_VID_VIDEO_OUTPUT_FORMAT_RGB888;
 
-    value = 0;
-    receiveCommand(cmdCode(LEP_CID_AGC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &value);
+    _nextFrame->agcEnabled = agc_getAGCEnabled();
     if (_lastI2CError || _lastLepResult) return;
-    _nextFrame->agcEnabled = value != 0;
 
     _nextFrame->tlinearEnabled = false;
     if (_cameraType == LeptonFLiR_CameraType_Lepton2_5 || _cameraType == LeptonFLiR_CameraType_Lepton3_5) {
-        value = 0;
-        receiveCommand(cmdCode(LEP_CID_RAD_TLINEAR_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &value);
+        _nextFrame->tlinearEnabled = rad_getTLinearEnabled();
         if (_lastI2CError || _lastLepResult) return;
-        _nextFrame->tlinearEnabled = value != 0;
     }
 
     _nextFrame->telemetryMode = LeptonFLiR_TelemetryMode_Disabled;
     if (!_nextFrame->pclutEnabled) {
-        value = 0;
-        receiveCommand(cmdCode(LEP_CID_SYS_TELEMETRY_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &value);
+        const bool telemetryEnabled = sys_getTelemetryEnabled();
         if (_lastI2CError || _lastLepResult) return;
 
-        if (value) {
-            value = 0;
-            receiveCommand(cmdCode(LEP_CID_SYS_TELEMETRY_LOCATION, LEP_I2C_COMMAND_TYPE_GET), &value);
+        if (telemetryEnabled) {
+            const LEP_SYS_TELEMETRY_LOCATION telemetryLocation = sys_getTelemetryLocation();
             if (_lastI2CError || _lastLepResult) return;
-            _nextFrame->telemetryMode = value == LEP_TELEMETRY_LOCATION_HEADER ? LeptonFLiR_TelemetryMode_Header : LeptonFLiR_TelemetryMode_Footer;
+            _nextFrame->telemetryMode = telemetryLocation == LEP_TELEMETRY_LOCATION_HEADER ? LeptonFLiR_TelemetryMode_Header : LeptonFLiR_TelemetryMode_Footer;
         }
     }
 

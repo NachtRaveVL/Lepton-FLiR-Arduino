@@ -14,6 +14,8 @@ class SDClass {
 public:
     bool begin(byte) { return true; }
     bool rmdir(const char*) { return true; }
+    bool mkdir(const char*) { return true; }
+    bool remove(const char*) { return true; }
     File open(const char*, int) { return File(); }
 };
 
