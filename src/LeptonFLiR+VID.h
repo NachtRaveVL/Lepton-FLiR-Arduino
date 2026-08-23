@@ -33,7 +33,7 @@
     void vid_setUserColorLUT(LEP_VID_LUT_BUFFER *mode);
     void vid_getUserColorLUT(LEP_VID_LUT_BUFFER *mode);
 
-    void vid_setFocusRegion(LEP_VID_FOCUS_ROI *region); // min:1,1/end>beg+1, max:78,58/beg<end-1 def:{1,1,78,58} (pixels)
+    void vid_setFocusRegion(LEP_VID_FOCUS_ROI *region); // one-pixel inset required; bounds follow active camera resolution
     void vid_getFocusRegion(LEP_VID_FOCUS_ROI *region);
 
     void vid_setFocusThreshold(uint32_t threshold); // def:30

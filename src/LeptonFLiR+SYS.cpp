@@ -20,27 +20,34 @@ LEP_SYS_CAM_STATUS_STATES LeptonFLiR::sys_getCameraStatus() {
 }
 
 void LeptonFLiR::sys_getFlirSerialNumber(char *buffer, int maxLength) {
-    if (!buffer || maxLength < 16) return;
+    if (!buffer || maxLength < 17) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.println(F("LeptonFLiR::sys_getFlirSerialNumber"));
 #endif
 
-    uint16_t innerBuffer[4];
+    uint16_t innerBuffer[4] = {};
     receiveCommand(cmdCode(LEP_CID_SYS_FLIR_SERIAL_NUMBER, LEP_I2C_COMMAND_TYPE_GET), innerBuffer, 4);
-    LeptonFLiR::wordsToHexString(innerBuffer, 4, buffer, maxLength);
+    uint16_t orderedBuffer[4] = { innerBuffer[3], innerBuffer[2], innerBuffer[1], innerBuffer[0] };
+    LeptonFLiR::wordsToHexString(orderedBuffer, 4, buffer, maxLength);
 }
 
 void LeptonFLiR::sys_getCustomerSerialNumber(char *buffer, int maxLength) {
-    if (!buffer || maxLength < 64) return;
+    if (!buffer || maxLength < 33) return;
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
     Serial.println(F("LeptonFLiR::sys_getCustomerSerialNumber"));
 #endif
 
-    uint16_t innerBuffer[16];
+    uint16_t innerBuffer[16] = {};
     receiveCommand(cmdCode(LEP_CID_SYS_CUST_SERIAL_NUMBER, LEP_I2C_COMMAND_TYPE_GET), innerBuffer, 16);
-    LeptonFLiR::wordsToHexString(innerBuffer, 16, buffer, maxLength);
+
+    int out = 0;
+    for (int i = 0; i < 16; ++i) {
+        buffer[out++] = (char)highByte(innerBuffer[i]);
+        buffer[out++] = (char)lowByte(innerBuffer[i]);
+    }
+    buffer[out] = '\0';
 }
 
 uint32_t LeptonFLiR::sys_getCameraUptime() {

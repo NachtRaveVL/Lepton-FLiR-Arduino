@@ -1,7 +1,7 @@
 # Lepton-FLiR-Arduino
 Arduino Library for the Lepton FLiR Thermal Camera Module.
 
-**Lepton-FLiR-Arduino v2.0.1**
+**Lepton-FLiR-Arduino v2.1.0**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Portenta/Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.

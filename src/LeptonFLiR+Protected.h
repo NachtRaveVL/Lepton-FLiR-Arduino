@@ -58,7 +58,7 @@
 
     bool _isReadingNextFrame;                               // Tracks if next frame is being read
     byte _lastI2CError;                                     // Last module i2c error
-    byte _lastLepResult;                                    // Last module command result
+    int8_t _lastLepResult;                                  // Last module command result
 
     FrameSettings* getNextFrame();                          // Resolves for next frame, updating/advancing as needed
     void updateNextFrame();                                 // Updates next frame settings to resolved current

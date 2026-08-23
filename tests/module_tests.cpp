@@ -108,6 +108,42 @@ void testSYSCommands() {
     CHECK(camera.sys_getFFCState() == LEP_SYS_FFC_DONE);
     CHECK(lastRegisterValue(LEP_I2C_DATA_LENGTH_REG) == 2);
     CHECK(lastRegisterValue(LEP_I2C_COMMAND_REG) == 0x024C);
+
+    Wire.clear();
+    queueGet({0x0011, 0xEEFF, 0xCCDD, 0xAABB});
+    char flirSerial[17] = {};
+    camera.sys_getFlirSerialNumber(flirSerial);
+    CHECK(std::string(flirSerial) == "AABBCCDDEEFF0011");
+    CHECK(lastRegisterValue(LEP_I2C_DATA_LENGTH_REG) == 4);
+    CHECK(lastRegisterValue(LEP_I2C_COMMAND_REG) == 0x0208);
+
+    std::vector<uint16_t> customerWords(16, 0);
+    const char customerSerial[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+    static_assert(sizeof(customerSerial) == 33, "customer serial test value must be 32 characters");
+    for (size_t i = 0; i < sizeof(customerSerial) - 1; ++i) {
+        const size_t w = i / 2;
+        if ((i & 1) == 0)
+            customerWords[w] |= static_cast<uint16_t>(static_cast<uint8_t>(customerSerial[i])) << 8;
+        else
+            customerWords[w] |= static_cast<uint8_t>(customerSerial[i]);
+    }
+    Wire.clear();
+    queueGet(customerWords);
+    char customerBuffer[33] = {};
+    camera.sys_getCustomerSerialNumber(customerBuffer);
+    CHECK(std::string(customerBuffer) == customerSerial);
+    CHECK(lastRegisterValue(LEP_I2C_DATA_LENGTH_REG) == 16);
+    CHECK(lastRegisterValue(LEP_I2C_COMMAND_REG) == 0x0228);
+
+    Wire.clear();
+    Wire.queueWords({0, 0xFF00});
+    camera.sys_runPingCamera();
+    CHECK(camera.getLastLepResult() == LEP_ERROR);
+
+    Wire.clear();
+    Wire.queueWords({0, 0xFE00});
+    camera.sys_runPingCamera();
+    CHECK(camera.getLastLepResult() == LEP_NOT_READY);
 }
 
 void testVIDCommands() {

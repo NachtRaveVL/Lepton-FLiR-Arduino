@@ -26,10 +26,10 @@
     void agc_setAGCCalcEnabled(bool enabled); // def:disabled
     bool agc_getAGCCalcEnabled();
 
-    void agc_setHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    void agc_setHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region); // ROI bounds follow active camera resolution
     void agc_getHistogramRegion(LEP_AGC_HISTOGRAM_ROI *region);
 
-    void agc_getHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statistics); // min:{0,0,0,0} max:{0x3FFF,0x3FFF,0x3FFF,4800} (pixels)
+    void agc_getHistogramStatistics(LEP_AGC_HISTOGRAM_STATISTICS *statistics); // intensities are 14-bit; population depends on ROI/resolution
 
     void agc_setHistogramClipPercent(uint16_t percent); // def:0
     uint16_t agc_getHistogramClipPercent();
@@ -52,7 +52,7 @@
     void agc_setHEQMaxGain(uint16_t gain); // def:1
     uint16_t agc_getHEQMaxGain();
 
-    void agc_setHEQClipLimitHigh(uint16_t limit); // min:0 max:4800 def:4800 (pixels)
+    void agc_setHEQClipLimitHigh(uint16_t limit); // max/default depend on histogram population
     uint16_t agc_getHEQClipLimitHigh();
 
     void agc_setHEQClipLimitLow(uint16_t limit); // min:0 max:1024 def:512 (pixels)

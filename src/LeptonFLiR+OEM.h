@@ -15,7 +15,7 @@
 
     // OEM module commands
 
-    void oem_runPowerOn();
+    void oem_runPowerOn(); // After OEM power-down, host must first pulse SCL once to release SDA per FLIR wake sequence
     void oem_runPowerDown();
 
     void oem_getFlirPartNumber(char *buffer, int maxLength = 33);

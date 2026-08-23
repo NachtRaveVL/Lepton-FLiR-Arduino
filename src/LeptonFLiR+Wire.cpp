@@ -68,7 +68,7 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
         return false;
 
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK)) {
-        _lastLepResult = (byte)((status & LEP_I2C_STATUS_ERROR_CODE_BIT_MASK) >> LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT);
+        _lastLepResult = (int8_t)((status & LEP_I2C_STATUS_ERROR_CODE_BIT_MASK) >> LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT);
         return true;
     }
 
@@ -90,7 +90,7 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
     }
 
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK)) {
-        _lastLepResult = (byte)((status & LEP_I2C_STATUS_ERROR_CODE_BIT_MASK) >> LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT);
+        _lastLepResult = (int8_t)((status & LEP_I2C_STATUS_ERROR_CODE_BIT_MASK) >> LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT);
         return true;
     }
     else {

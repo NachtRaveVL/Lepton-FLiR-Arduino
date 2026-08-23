@@ -16,8 +16,8 @@
     void sys_getCameraStatus(LEP_SYS_CAM_STATUS *status);
     LEP_SYS_CAM_STATUS_STATES sys_getCameraStatus();
 
-    void sys_getFlirSerialNumber(char *buffer, int maxLength = 16); // maxLength must at least be 16, recommended 20
-    void sys_getCustomerSerialNumber(char *buffer, int maxLength = 64); // maxLength must at least be 64, recommended 80
+    void sys_getFlirSerialNumber(char *buffer, int maxLength = 17); // 64-bit serial formatted as hex; maxLength must at least be 17, recommended 20
+    void sys_getCustomerSerialNumber(char *buffer, int maxLength = 33); // 32-byte character string; maxLength must at least be 33
 
     uint32_t sys_getCameraUptime(); // (milliseconds)
 
@@ -41,10 +41,10 @@
 
     void sys_getSceneStatistics(LEP_SYS_SCENE_STATISTICS *statistics);
 
-    void sys_setSceneRegion(LEP_SYS_SCENE_ROI *region); // min:0,0/end>beg, max:79,59/beg<end def:{0,0,79,59} (pixels)
+    void sys_setSceneRegion(LEP_SYS_SCENE_ROI *region); // ROI bounds follow active camera resolution
     void sys_getSceneRegion(LEP_SYS_SCENE_ROI *region);
 
-    uint16_t sys_getThermalShutdownCount(); // min:0 max:65535 default:270 (pixels)
+    uint16_t sys_getThermalShutdownCount(); // min:0 max:65535
 
     void sys_setShutterPosition(LEP_SYS_SHUTTER_POSITION position); // def:LEP_SYS_SHUTTER_POSITION_UNKNOWN
     LEP_SYS_SHUTTER_POSITION sys_getShutterPosition();
