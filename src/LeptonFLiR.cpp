@@ -36,6 +36,13 @@ void LEPFLIR_hardAssert(bool cond, String msg, const char *file, const char *fun
 #endif // /ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
 
 
+LeptonFLiR *LeptonFLiR::_isrVSyncOwner = NULL;
+
+void LeptonFLiR::handleVSyncInterrupt() {
+    if (_isrVSyncOwner)
+        _isrVSyncOwner->_vsyncFrameReady = true;
+}
+
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
 
 LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32_t i2cSpeed)
@@ -51,7 +58,7 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin, TwoWire& i2cWire, uint32
       _telemetryOutput(NULL),
       _frameCounter(0),
       _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
-      _isReadingNextFrame(false),
+      _isReadingNextFrame(false), _vsyncFrameReady(false),
       _lastI2CError(0), _lastLepResult(0)
 { }
 
@@ -68,7 +75,7 @@ LeptonFLiR::LeptonFLiR(TwoWire& i2cWire, uint32_t i2cSpeed, byte spiCSPin, byte 
       _telemetryOutput(NULL),
       _frameCounter(0),
       _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
-      _isReadingNextFrame(false),
+      _isReadingNextFrame(false), _vsyncFrameReady(false),
       _lastI2CError(0), _lastLepResult(0)
 { }
 
@@ -85,7 +92,7 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
       _telemetryOutput(NULL),
       _frameCounter(0),
       _lastFrame(NULL), _nextFrame(NULL), _nextFrameNeedsUpdate(true),
-      _isReadingNextFrame(false),
+      _isReadingNextFrame(false), _vsyncFrameReady(false),
       _lastI2CError(0), _lastLepResult(0),
       _readBytes(0)
 { }
@@ -93,6 +100,10 @@ LeptonFLiR::LeptonFLiR(byte spiCSPin, byte isrVSyncPin)
 #endif // /ifndef LEPFLIR_USE_SOFTWARE_I2C
 
 LeptonFLiR::~LeptonFLiR() {
+    if (_isrVSyncPin != DISABLED && _isrVSyncOwner == this) {
+        detachInterrupt(digitalPinToInterrupt(_isrVSyncPin));
+        _isrVSyncOwner = NULL;
+    }
     _frameData = NULL;
     if (_frameData_orig) { free(_frameData_orig);  _frameData_orig = NULL; _frameDataSize_orig = 0; }
     _imageOutput = NULL;
@@ -146,9 +157,12 @@ void LeptonFLiR::init(LeptonFLiR_CameraType cameraType, LeptonFLiR_TemperatureMo
     digitalWrite(_spiCSPin, HIGH);
 
     if (_isrVSyncPin != DISABLED) {
-        // Keep the optional VSYNC signal available to sketches without installing a
-        // process-wide ISR. VoSPI packet IDs remain the authoritative frame sync.
         pinMode(_isrVSyncPin, INPUT);
+        _vsyncFrameReady = false;
+        if (_isrVSyncOwner && _isrVSyncOwner != this && _isrVSyncOwner->_isrVSyncPin != DISABLED)
+            detachInterrupt(digitalPinToInterrupt(_isrVSyncOwner->_isrVSyncPin));
+        _isrVSyncOwner = this;
+        attachInterrupt(digitalPinToInterrupt(_isrVSyncPin), handleVSyncInterrupt, RISING);
     }
 }
 
@@ -257,7 +271,6 @@ bool LeptonFLiR::getPseudoColorLUTEnabled() {
 bool LeptonFLiR::isImageDataAvailable() {
     return !_isReadingNextFrame && _lastFrame && _lastFrame->imageData;
 }
-
 LeptonFLiR_ImageMode LeptonFLiR::getImageMode() {
     return _lastFrame ? _lastFrame->imageMode : LeptonFLiR_ImageMode_Undefined;
 }
@@ -519,6 +532,10 @@ void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
 
 bool LeptonFLiR::tryReadNextFrame() {
     if (_isReadingNextFrame) return false;
+    if (_isrVSyncPin != DISABLED) {
+        if (!_vsyncFrameReady) return false;
+        _vsyncFrameReady = false;
+    }
 
     prepareNextFrame();
     FrameSettings *nextFrame = _nextFrame;
@@ -551,8 +568,10 @@ bool LeptonFLiR::tryReadNextFrame() {
     digitalWrite(_spiCSPin, HIGH);
 
     // Work from the current stream position first. A hard re-sync is only needed
-    // if packet sequencing is actually lost.
-    for (int attempt = 0; attempt < 2 && !success; ++attempt) {
+    // if packet sequencing is actually lost. When VSYNC is used, wait for the
+    // next frame-ready pulse instead of retrying against the same frame period.
+    const int maxAttempts = _isrVSyncPin != DISABLED ? 1 : 2;
+    for (int attempt = 0; attempt < maxAttempts && !success; ++attempt) {
         if (attempt)
             delay(186);
 

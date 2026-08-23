@@ -6,3 +6,6 @@ SerialMock Serial;
 SPIClass SPI;
 TwoWire Wire;
 TwoWire Wire1;
+int arduinoInterruptNumber = -1;
+int arduinoInterruptMode = 0;
+void (*arduinoInterruptHandler)() = nullptr;

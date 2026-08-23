@@ -90,6 +90,8 @@ public:
 
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
+    // When using VSync, configure the Lepton GPIO mode with oem_setGPIOMode(LEP_OEM_GPIO_MODE_VSYNC).
+    // Only one LeptonFLiR instance may own the VSync ISR at a time.
     // Boards with more than one i2c line (e.g. Due/Teensy/etc.) can supply a different
     // Wire instance, such as Wire1 (using SDA1/SCL1), Wire2 (using SDA2/SCL2), etc.
     // Supported i2c clock speeds are 100kHz, 400kHz, and 1000kHz.
@@ -103,6 +105,8 @@ public:
 
     // Library constructor. Typically called during class instantiation, before setup().
     // ISR VSync pin only available for Lepton FLiR breakout board v2+ (GPIO3=VSYNC).
+    // When using VSync, configure the Lepton GPIO mode with oem_setGPIOMode(LEP_OEM_GPIO_MODE_VSYNC).
+    // Only one LeptonFLiR instance may own the VSync ISR at a time.
     // Minimum supported i2c clock speed is 100kHz, which sets minimum processor speed at
     // 4MHz+ running in i2c standard mode. For up to 400kHz i2c clock speeds, minimum
     // processor speed is 16MHz+ running in i2c fast mode.
@@ -135,6 +139,7 @@ public:
 
     // This method attempts to read the next image frame, taking up considerable processor time.
     // Returns a boolean indicating if next frame was successfully retrieved or not.
+    // When a VSync pin is configured, this method returns false until the frame-timing ISR fires.
     // This method will fail in the event of a desync upon frame read, mainly caused by
     // too slow of reading speed.
     bool tryReadNextFrame();

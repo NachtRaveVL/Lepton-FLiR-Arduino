@@ -78,6 +78,9 @@ public:
 };
 
 extern SerialMock Serial;
+extern int arduinoInterruptNumber;
+extern int arduinoInterruptMode;
+extern void (*arduinoInterruptHandler)();
 
 inline byte highByte(uint16_t value) { return static_cast<byte>(value >> 8); }
 inline byte lowByte(uint16_t value) { return static_cast<byte>(value & 0xFF); }
@@ -90,7 +93,22 @@ inline void yield() {}
 inline void pinMode(byte, int) {}
 inline void digitalWrite(byte, int) {}
 inline int digitalPinToInterrupt(byte pin) { return pin; }
-inline void attachInterrupt(int, void (*)(), int) {}
+inline void attachInterrupt(int interruptNumber, void (*handler)(), int mode) {
+    arduinoInterruptNumber = interruptNumber;
+    arduinoInterruptHandler = handler;
+    arduinoInterruptMode = mode;
+}
+inline void detachInterrupt(int interruptNumber) {
+    if (arduinoInterruptNumber == interruptNumber) {
+        arduinoInterruptNumber = -1;
+        arduinoInterruptHandler = nullptr;
+        arduinoInterruptMode = 0;
+    }
+}
+inline void triggerInterrupt(int interruptNumber) {
+    if (arduinoInterruptNumber == interruptNumber && arduinoInterruptHandler)
+        arduinoInterruptHandler();
+}
 
 #ifndef PORTC
 #define PORTC 0

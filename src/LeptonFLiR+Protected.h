@@ -57,8 +57,12 @@
     bool _nextFrameNeedsUpdate;                             // Flag tracking if next frame settings needs refreshed
 
     bool _isReadingNextFrame;                               // Tracks if next frame is being read
+    volatile bool _vsyncFrameReady;                         // VSync ISR frame-ready flag
     byte _lastI2CError;                                     // Last module i2c error
     int8_t _lastLepResult;                                  // Last module command result
+
+    static LeptonFLiR *_isrVSyncOwner;                      // Instance receiving VSync ISR callbacks
+    static void handleVSyncInterrupt();                     // VSync ISR callback
 
     FrameSettings* getNextFrame();                          // Resolves for next frame, updating/advancing as needed
     void updateNextFrame();                                 // Updates next frame settings to resolved current

@@ -37,10 +37,14 @@ target_link_libraries(leptonflir_tests PRIVATE leptonflir_host)
 add_executable(leptonflir_module_tests tests/module_tests.cpp)
 target_link_libraries(leptonflir_module_tests PRIVATE leptonflir_host)
 
+add_executable(leptonflir_consistency_tests tests/consistency_tests.cpp)
+target_link_libraries(leptonflir_consistency_tests PRIVATE leptonflir_host)
+
 enable_testing()
 add_test(NAME leptonflir_tests COMMAND leptonflir_tests)
 add_test(NAME leptonflir_module_tests COMMAND leptonflir_module_tests)
 add_test(NAME leptonflir_dma_tests COMMAND leptonflir_dma_tests)
+add_test(NAME leptonflir_consistency_tests COMMAND leptonflir_consistency_tests)
 
 
 function(add_lepton_example_compile target source)
