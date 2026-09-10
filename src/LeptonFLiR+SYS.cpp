@@ -14,7 +14,7 @@ void LeptonFLiR::sys_getCameraStatus(LEP_SYS_CAM_STATUS *status) {
 }
 
 LEP_SYS_CAM_STATUS_STATES LeptonFLiR::sys_getCameraStatus() {
-    LEP_SYS_CAM_STATUS camStatus;
+    LEP_SYS_CAM_STATUS camStatus = {};
     sys_getCameraStatus(&camStatus);
     return (LEP_SYS_CAM_STATUS_STATES)camStatus.camStatus;
 }
@@ -44,8 +44,8 @@ void LeptonFLiR::sys_getCustomerSerialNumber(char *buffer, int maxLength) {
 
     int out = 0;
     for (int i = 0; i < 16; ++i) {
-        buffer[out++] = (char)highByte(innerBuffer[i]);
         buffer[out++] = (char)lowByte(innerBuffer[i]);
+        buffer[out++] = (char)highByte(innerBuffer[i]);
     }
     buffer[out] = '\0';
 }
@@ -55,7 +55,7 @@ uint32_t LeptonFLiR::sys_getCameraUptime() {
     Serial.println(F("LeptonFLiR::sys_getCameraUptime"));
 #endif
 
-    uint32_t uptime;
+    uint32_t uptime = {};
     receiveCommand(cmdCode(LEP_CID_SYS_CAM_UPTIME, LEP_I2C_COMMAND_TYPE_GET), &uptime);
     return uptime;
 }
@@ -65,7 +65,7 @@ float LeptonFLiR::sys_getAuxTemperature() {
     Serial.println(F("LeptonFLiR::sys_getAuxTemperature"));
 #endif
 
-    uint16_t kelvin100;
+    uint16_t kelvin100 = {};
     receiveCommand(cmdCode(LEP_CID_SYS_AUX_TEMPERATURE_KELVIN, LEP_I2C_COMMAND_TYPE_GET), &kelvin100);
     return kelvin100ToTemperature(kelvin100);
 }
@@ -75,7 +75,7 @@ float LeptonFLiR::sys_getFPATemperature() {
     Serial.println(F("LeptonFLiR::sys_getFPATemperature"));
 #endif
 
-    uint16_t kelvin100;
+    uint16_t kelvin100 = {};
     receiveCommand(cmdCode(LEP_CID_SYS_FPA_TEMPERATURE_KELVIN, LEP_I2C_COMMAND_TYPE_GET), &kelvin100);
     return kelvin100ToTemperature(kelvin100);
 }
@@ -155,7 +155,7 @@ LEP_SYS_FRAME_AVERAGE LeptonFLiR::sys_getNumFramesToAverage() {
     Serial.println(F("LeptonFLiR::sys_getNumFramesToAverage"));
 #endif
 
-    uint32_t average;
+    uint32_t average = {};
     receiveCommand(cmdCode(LEP_CID_SYS_NUM_FRAMES_TO_AVERAGE, LEP_I2C_COMMAND_TYPE_GET), &average);
     return (LEP_SYS_FRAME_AVERAGE)average;
 }
@@ -195,7 +195,7 @@ uint16_t LeptonFLiR::sys_getThermalShutdownCount() {
     Serial.println(F("LeptonFLiR::sys_getThermalShutdownCount"));
 #endif
 
-    uint16_t count;
+    uint16_t count = {};
     receiveCommand(cmdCode(LEP_CID_SYS_THERMAL_SHUTDOWN_COUNT, LEP_I2C_COMMAND_TYPE_GET), &count);
     return count;
 }
@@ -213,7 +213,7 @@ LEP_SYS_SHUTTER_POSITION LeptonFLiR::sys_getShutterPosition() {
     Serial.println(F("LeptonFLiR::sys_getShutterPosition"));
 #endif
 
-    uint32_t position;
+    uint32_t position = {};
     receiveCommand(cmdCode(LEP_CID_SYS_SHUTTER_POSITION, LEP_I2C_COMMAND_TYPE_GET), &position);
     return (LEP_SYS_SHUTTER_POSITION)position;
 }
@@ -243,7 +243,7 @@ LEP_SYS_FFC_STATUS LeptonFLiR::sys_getFFCNormalizationStatus() {
     Serial.println(F("LeptonFLiR::sys_getFFCNormalizationStatus"));
 #endif
 
-    uint32_t status;
+    uint32_t status = {};
     receiveCommand(cmdCode(LEP_CID_SYS_FFC_STATUS, LEP_I2C_COMMAND_TYPE_GET), &status);
     return (LEP_SYS_FFC_STATUS)status;
 }

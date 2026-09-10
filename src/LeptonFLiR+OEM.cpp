@@ -13,9 +13,10 @@ void oemWordsToString(const uint16_t *words, int wordCount, char *buffer, int ma
 
     int out = 0;
     for (int i = 0; i < wordCount && out < maxLength - 1; ++i) {
-        buffer[out++] = (char)highByte(words[i]);
+        // CCI byte arrays follow the SDK's low-byte-first packing within each word.
+        buffer[out++] = (char)lowByte(words[i]);
         if (out < maxLength - 1)
-            buffer[out++] = (char)lowByte(words[i]);
+            buffer[out++] = (char)highByte(words[i]);
     }
     buffer[out] = '\0';
 }
@@ -66,12 +67,12 @@ void LeptonFLiR::oem_getSoftwareVersion(LEP_OEM_SW_VERSION *version) {
 
     uint16_t words[4] = {};
     receiveCommand(cmdCode(LEP_CID_OEM_SOFTWARE_REVISION, LEP_I2C_COMMAND_TYPE_GET), words, 4);
-    version->gpp_major = highByte(words[0]);
-    version->gpp_minor = lowByte(words[0]);
-    version->gpp_build = highByte(words[1]);
-    version->dsp_major = lowByte(words[1]);
-    version->dsp_minor = highByte(words[2]);
-    version->dsp_build = lowByte(words[2]);
+    version->gpp_major = lowByte(words[0]);
+    version->gpp_minor = highByte(words[0]);
+    version->gpp_build = lowByte(words[1]);
+    version->dsp_major = highByte(words[1]);
+    version->dsp_minor = lowByte(words[2]);
+    version->dsp_build = highByte(words[2]);
     version->reserved = words[3];
 }
 

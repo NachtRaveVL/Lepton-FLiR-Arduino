@@ -9,6 +9,7 @@
 #include <new>
 #include <sstream>
 #include <string>
+#include <vector>
 
 using byte = uint8_t;
 using boolean = bool;
@@ -88,10 +89,16 @@ using std::max;
 using std::min;
 
 inline unsigned long millis() { static unsigned long value = 0; return value++; }
-inline void delay(unsigned long) {}
+inline std::vector<unsigned long> arduinoDelays;
+inline int arduinoPinLevels[256] = {};
+inline void (*arduinoDelayHook)(unsigned long) = nullptr;
+inline void delay(unsigned long ms) {
+    arduinoDelays.push_back(ms);
+    if (arduinoDelayHook) arduinoDelayHook(ms);
+}
 inline void yield() {}
 inline void pinMode(byte, int) {}
-inline void digitalWrite(byte, int) {}
+inline void digitalWrite(byte pin, int level) { arduinoPinLevels[pin] = level; }
 inline int digitalPinToInterrupt(byte pin) { return pin; }
 inline void attachInterrupt(int interruptNumber, void (*handler)(), int mode) {
     arduinoInterruptNumber = interruptNumber;

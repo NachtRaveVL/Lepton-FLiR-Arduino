@@ -54,7 +54,7 @@ void loop() {
             Serial.print(")");
         }
         else if (flirController.getAGCEnabled())
-            Serial.print(pixel.agc.value);
+            Serial.print(flirController.getImageOutputMode() == LeptonFLiR_ImageOutputMode_GS8 ? pixel.agc.value : pixel.std.value);
         else if (flirController.getTLinearEnabled()) {
             Serial.print(pixel.tlinear.value);
             Serial.print(" TLinear");

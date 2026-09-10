@@ -546,10 +546,14 @@ static inline void byteToHexString(const byte value, char *buffer) {
 }
 
 void LeptonFLiR::wordsToHexString(const uint16_t *dataWords, int dataLength, char *buffer, int maxLength) {
-    bool insertColons = maxLength >= (dataLength * 4) + (dataLength - 1);
+    if (!buffer || maxLength <= 0) return;
+    *buffer = '\0';
+    if (!dataWords || dataLength <= 0) return;
 
-    while (dataLength-- > 0 && maxLength > 3) {
-        if (maxLength > 3) {
+    bool insertColons = dataLength <= maxLength / 5;
+
+    while (dataLength-- > 0 && maxLength > 4) {
+        if (maxLength > 4) {
             byteToHexString(highByte(*dataWords), buffer);
             buffer += 2; maxLength -= 2;
             byteToHexString(lowByte(*dataWords), buffer);

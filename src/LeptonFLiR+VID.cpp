@@ -18,7 +18,7 @@ LEP_VID_POLARITY LeptonFLiR::vid_getPolarity() {
     Serial.println(F("LeptonFLiR::vid_getPolarity"));
 #endif
 
-    uint32_t polarity;
+    uint32_t polarity = {};
     receiveCommand(cmdCode(LEP_CID_VID_POLARITY_SELECT, LEP_I2C_COMMAND_TYPE_GET), &polarity);
     return (LEP_VID_POLARITY)polarity;
 }
@@ -36,7 +36,7 @@ LEP_VID_PCOLOR_LUT LeptonFLiR::vid_getPseudoColorLUT() {
     Serial.println(F("LeptonFLiR::vid_getPseudoColorLUT"));
 #endif
 
-    uint32_t mode;
+    uint32_t mode = {};
     receiveCommand(cmdCode(LEP_CID_VID_LUT_SELECT, LEP_I2C_COMMAND_TYPE_GET), &mode);
     return (LEP_VID_PCOLOR_LUT)mode;
 }
@@ -54,7 +54,7 @@ bool LeptonFLiR::vid_getFocusCalcEnabled() {
     Serial.println(F("LeptonFLiR::vid_getFocusCalcEnabled"));
 #endif
 
-    uint32_t enabled;
+    uint32_t enabled = {};
     receiveCommand(cmdCode(LEP_CID_VID_FOCUS_CALC_ENABLE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
     return enabled;
 }
@@ -72,7 +72,7 @@ bool LeptonFLiR::vid_getFreezeEnabled() {
     Serial.println(F("LeptonFLiR::vid_getFreezeEnabled"));
 #endif
 
-    uint32_t enabled;
+    uint32_t enabled = {};
     receiveCommand(cmdCode(LEP_CID_VID_FREEZE_ENABLE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
     return enabled;
 }
@@ -149,7 +149,7 @@ uint32_t LeptonFLiR::vid_getFocusThreshold() {
     Serial.println(F("LeptonFLiR::vid_getFocusThreshold"));
 #endif
 
-    uint32_t threshold;
+    uint32_t threshold = {};
     receiveCommand(cmdCode(LEP_CID_VID_FOCUS_THRESHOLD, LEP_I2C_COMMAND_TYPE_GET), &threshold);
     return threshold;
 }
@@ -159,7 +159,7 @@ uint32_t LeptonFLiR::vid_getFocusMetric() {
     Serial.println(F("LeptonFLiR::vid_getFocusMetric"));
 #endif
 
-    uint32_t metric;
+    uint32_t metric = {};
     receiveCommand(cmdCode(LEP_CID_VID_FOCUS_METRIC, LEP_I2C_COMMAND_TYPE_GET), &metric);
     return metric;
 }
@@ -177,7 +177,7 @@ bool LeptonFLiR::vid_getSceneBasedNUCEnabled() {
     Serial.println(F("LeptonFLiR::vid_getSceneBasedNUCEnabled"));
 #endif
 
-    uint32_t enabled;
+    uint32_t enabled = {};
     receiveCommand(cmdCode(LEP_CID_VID_SBNUC_ENABLE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
     return enabled;
 }
@@ -195,7 +195,7 @@ uint32_t LeptonFLiR::vid_getGamma() {
     Serial.println(F("LeptonFLiR::vid_getGamma"));
 #endif
 
-    uint32_t gamma;
+    uint32_t gamma = {};
     receiveCommand(cmdCode(LEP_CID_VID_GAMMA_SELECT, LEP_I2C_COMMAND_TYPE_GET), &gamma);
     return gamma;
 }

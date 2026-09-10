@@ -69,7 +69,7 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
 
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK)) {
         _lastLepResult = (int8_t)((status & LEP_I2C_STATUS_ERROR_CODE_BIT_MASK) >> LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT);
-        return true;
+        return _lastLepResult == LEP_OK;
     }
 
     unsigned long endTime = millis() + (unsigned long)timeout;
@@ -91,7 +91,7 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
 
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK)) {
         _lastLepResult = (int8_t)((status & LEP_I2C_STATUS_ERROR_CODE_BIT_MASK) >> LEP_I2C_STATUS_ERROR_CODE_BIT_SHIFT);
-        return true;
+        return _lastLepResult == LEP_OK;
     }
     else {
         _lastLepResult = LEP_TIMEOUT_ERROR;
@@ -325,7 +325,7 @@ int LeptonFLiR::readDataRegister(uint16_t *readWords, int maxLength) {
         if (bytesRead != byteLength) {
             while (bytesRead-- > 0)
                 i2cWire_read();
-            return (_lastI2CError = 4);
+            return (_lastI2CError = _lastI2CError ? _lastI2CError : 4);
         }
 
 #ifdef LEPFLIR_ENABLE_DEBUG_OUTPUT
@@ -382,7 +382,7 @@ int LeptonFLiR::readRegister(uint16_t regAddress, uint16_t *value) {
     if (bytesRead != 2) {
         while (bytesRead-- > 0)
             i2cWire_read();
-        return (_lastI2CError = 4);
+        return (_lastI2CError = _lastI2CError ? _lastI2CError : 4);
     }
 
     *value = i2cWire_read16();
@@ -400,7 +400,8 @@ void LeptonFLiR::i2cWire_beginTransmission(uint8_t addr) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     _i2cWire->beginTransmission(addr);
 #else
-    i2c_start(addr);
+    if (!i2c_start((uint8_t)(addr << 1)))
+        _lastI2CError = 2; // Address NACK
 #endif
 }
 
@@ -409,7 +410,7 @@ uint8_t LeptonFLiR::i2cWire_endTransmission(void) {
     return (_lastI2CError = _i2cWire->endTransmission());
 #else
     LEPFLIR_i2c_stop();
-    return (_lastI2CError = 0);
+    return _lastI2CError;
 #endif
 }
 
@@ -417,7 +418,14 @@ uint8_t LeptonFLiR::i2cWire_requestFrom(uint8_t addr, uint8_t len) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return _i2cWire->requestFrom(addr, (size_t)len);
 #else
-    i2c_start(addr | 0x01);
+    _readBytes = 0;
+    if (!len) return 0;
+    if (!i2c_start((uint8_t)((addr << 1) | 0x01))) {
+        _lastI2CError = 2; // Address NACK
+        LEPFLIR_i2c_stop();
+        return 0;
+    }
+    _lastI2CError = 0;
     return (_readBytes = len);
 #endif
 }
@@ -426,44 +434,35 @@ size_t LeptonFLiR::i2cWire_write(uint8_t data) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return _i2cWire->write(data);
 #else
-    return (size_t)LEPFLIR_i2c_write(data);
+    if (_lastI2CError) return 0;
+    if (!LEPFLIR_i2c_write(data)) {
+        _lastI2CError = 3; // Data NACK
+        return 0;
+    }
+    return 1;
 #endif
 }
 
 size_t LeptonFLiR::i2cWire_write16(uint16_t data) {
-#ifndef LEPFLIR_USE_SOFTWARE_I2C
-    return _i2cWire->write(highByte(data)) + _i2cWire->write(lowByte(data));
-#else
-    return (size_t)LEPFLIR_i2c_write(highByte(data)) + (size_t)LEPFLIR_i2c_write(lowByte(data));
-#endif
+    // Sequence the calls explicitly: operand evaluation order must not swap bus bytes.
+    const size_t highCount = i2cWire_write(highByte(data));
+    return highCount + i2cWire_write(lowByte(data));
 }
 
 uint8_t LeptonFLiR::i2cWire_read(void) {
 #ifndef LEPFLIR_USE_SOFTWARE_I2C
     return (uint8_t)(_i2cWire->read() & 0xFF);
 #else
-    if (_readBytes > 1) {
-        _readBytes -= 1;
-        return (uint8_t)(i2c_read(false) & 0xFF);
-    }
-    else {
-        _readBytes = 0;
-        return (uint8_t)(i2c_read(true) & 0xFF);
-    }
+    if (!_readBytes) return 0;
+    const bool last = --_readBytes == 0;
+    const uint8_t value = i2c_read(last);
+    if (last)
+        LEPFLIR_i2c_stop();
+    return value;
 #endif
 }
 
 uint16_t LeptonFLiR::i2cWire_read16(void) {
-#ifndef LEPFLIR_USE_SOFTWARE_I2C
-    return ((uint16_t)(_i2cWire->read() & 0xFF) << 8) | (uint16_t)(_i2cWire->read() & 0xFF);
-#else
-    if (_readBytes > 2) {
-        _readBytes -= 2;
-        return ((uint16_t)(i2c_read(false) & 0xFF) << 8) | (uint16_t)(i2c_read(false) & 0xFF);
-    }
-    else {
-        _readBytes = 0;
-        return ((uint16_t)(i2c_read(false) & 0xFF) << 8) | (uint16_t)(i2c_read(true) & 0xFF);
-    }
-#endif
+    const uint16_t high = i2cWire_read();
+    return (high << 8) | i2cWire_read();
 }

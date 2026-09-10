@@ -1,7 +1,7 @@
 # Lepton-FLiR-Arduino
 Arduino Library for the Lepton FLiR Thermal Camera Module.
 
-**Lepton-FLiR-Arduino v2.1.0**
+**Lepton-FLiR-Arduino v2.1.1**
 
 Library to control a Lepton FLiR (forward looking infrared) thermal camera module from an Arduino-like board (Portenta/Teensy 3+/ESP32+ minimum).  
 Licensed under the non-restrictive MIT license.
@@ -191,7 +191,7 @@ Which Lepton camera version is being used and which color mode(s) is(are) active
 The various ways in which image data is stored, and thus accessed, is based on the following:
 * When neither AGC (automatic gain correction), TLinear (aka radiometric output), nor pseudo-color LUT (aka palettized) modes are enabled, the image data will be in 16bpp grayscale mode with the 2 most-signifcant bits zero'ed out (effectively 14bpp) - this is considered the standard run mode.
 * When TLinear (aka radiometric output) mode is enabled, the image data will be in 16bpp grayscale mode (full 16bpp).
-* When AGC (automatic gain correction) mode is enabled, the image data will be in 16bpp grayscale mode with the 8 most-significant bits being zero'ed out (effectively 8bbp).
+* When AGC (automatic gain correction) mode is enabled, the default output is 8-bit grayscale carried in 16-bit VoSPI words. On Lepton 1.5-2.5, HEQ can instead output 14-bit grayscale when selected with `agc_setHEQScaleFactor(LEP_AGC_SCALE_TO_14_BITS)`. The library preserves this as `GS16` output; use `std.value` for its pixels. For `GS8` output, use `agc.value`.
 * When pseudo-color LUT (aka palettized) mode is enabled, the image data will be 24bpp RGB888 (created from either the selected preset LUT or user-supplied LUT).
 
 Due to the packet-nature of the VoSPI image data transfer and the desire to limit memory storage cost, transferring the image data out of the storage buffers requires special handling. Image data should be accessed through the supplied library functions so packet layout, telemetry, and Lepton v3+ segmented 160x120 frames are handled consistently. The frame reader currently decodes RAW14 and RGB888 VoSPI output; other VID/OEM output formats remain available through their corresponding camera command APIs but are not decoded by `tryReadNextFrame()`.
@@ -293,3 +293,30 @@ In main sketch:
 See [`examples/ModuleInfo/ModuleInfo.ino`](examples/ModuleInfo/ModuleInfo.ino) for the complete sketch.
 
 The serial monitor will show the camera configuration, AGC/SYS/VID state, OEM part and software information, and radiometry state on supported radiometric models.
+
+
+## Specification Fixes and Host Tests
+
+The specification regression tests cover Engineering Datasheet Rev 203 telemetry fields,
+Software IDD Rev 303 HEQ scale selection, rejected CCI commands, string termination,
+and VoSPI recovery. The software-I2C tests exercise address/data NACKs, byte order,
+and final-byte NACK/STOP handling through the actual library transport code.
+
+When VSYNC capture loses synchronization, the reader holds CS high and leaves SCK idle
+for 186 ms, then requires a fresh VSYNC pulse. Successful captures do not incur this delay.
+Telemetry strings now have room for all hexadecimal digits plus NUL (33 bytes for the
+serial number, 17 for software revision). The existing FFC enum values remain unchanged;
+`LeptonFLiR_TelemetryFFCState_Imminent` is appended. Rebuild code using the telemetry structure.
+Always check `getLastI2CError()` and `getLastLepResult()` after camera commands; a failed
+GET does not make its output valid.
+
+Run the six host test suites and compile the examples with:
+
+```sh
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+Host tests use simulated bus operations; they do not establish physical camera timing
+or board-specific DMA compatibility.

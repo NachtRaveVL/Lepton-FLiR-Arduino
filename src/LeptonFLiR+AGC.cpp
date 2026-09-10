@@ -30,6 +30,7 @@ void LeptonFLiR::agc_setAGCPolicy(LEP_AGC_POLICY policy) {
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_POLICY, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)policy);
+    _nextFrameNeedsUpdate = true;
 }
 
 LEP_AGC_POLICY LeptonFLiR::agc_getAGCPolicy() {
@@ -37,7 +38,7 @@ LEP_AGC_POLICY LeptonFLiR::agc_getAGCPolicy() {
     Serial.println(F("LeptonFLiR::agc_getAGCPolicy"));
 #endif
 
-    uint32_t policy;
+    uint32_t policy = {};
     receiveCommand(cmdCode(LEP_CID_AGC_POLICY, LEP_I2C_COMMAND_TYPE_GET), &policy);
     return (LEP_AGC_POLICY)policy;
 }
@@ -48,6 +49,7 @@ void LeptonFLiR::agc_setHEQScaleFactor(LEP_AGC_HEQ_SCALE_FACTOR factor) {
 #endif
 
     sendCommand(cmdCode(LEP_CID_AGC_HEQ_SCALE_FACTOR, LEP_I2C_COMMAND_TYPE_SET), (uint32_t)factor);
+    _nextFrameNeedsUpdate = true;
 }
 
 LEP_AGC_HEQ_SCALE_FACTOR LeptonFLiR::agc_getHEQScaleFactor() {
@@ -55,7 +57,7 @@ LEP_AGC_HEQ_SCALE_FACTOR LeptonFLiR::agc_getHEQScaleFactor() {
     Serial.println(F("LeptonFLiR::agc_getHEQScaleFactor"));
 #endif
 
-    uint32_t factor;
+    uint32_t factor = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_SCALE_FACTOR, LEP_I2C_COMMAND_TYPE_GET), &factor);
     return (LEP_AGC_HEQ_SCALE_FACTOR)factor;
 }
@@ -73,7 +75,7 @@ bool LeptonFLiR::agc_getAGCCalcEnabled() {
     Serial.println(F("LeptonFLiR::agc_getAGCCalcEnabled"));
 #endif
 
-    uint32_t enabled;
+    uint32_t enabled = {};
     receiveCommand(cmdCode(LEP_CID_AGC_CALC_ENABLE_STATE, LEP_I2C_COMMAND_TYPE_GET), &enabled);
     return enabled;
 }
@@ -121,7 +123,7 @@ uint16_t LeptonFLiR::agc_getHistogramClipPercent() {
     Serial.println(F("LeptonFLiR::agc_getHistogramClipPercent"));
 #endif
 
-    uint16_t percent;
+    uint16_t percent = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HISTOGRAM_CLIP_PERCENT, LEP_I2C_COMMAND_TYPE_GET), &percent);
     return percent;
 }
@@ -139,7 +141,7 @@ uint16_t LeptonFLiR::agc_getHistogramTailSize() {
     Serial.println(F("LeptonFLiR::agc_getHistogramTailSize"));
 #endif
 
-    uint16_t size;
+    uint16_t size = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HISTOGRAM_TAIL_SIZE, LEP_I2C_COMMAND_TYPE_GET), &size);
     return size;
 }
@@ -157,7 +159,7 @@ uint16_t LeptonFLiR::agc_getLinearMaxGain() {
     Serial.println(F("LeptonFLiR::agc_getLinearMaxGain"));
 #endif
 
-    uint16_t gain;
+    uint16_t gain = {};
     receiveCommand(cmdCode(LEP_CID_AGC_LINEAR_MAX_GAIN, LEP_I2C_COMMAND_TYPE_GET), &gain);
     return gain;
 }
@@ -175,7 +177,7 @@ uint16_t LeptonFLiR::agc_getLinearMidpoint() {
     Serial.println(F("LeptonFLiR::agc_getLinearMidpoint"));
 #endif
 
-    uint16_t midpoint;
+    uint16_t midpoint = {};
     receiveCommand(cmdCode(LEP_CID_AGC_LINEAR_MIDPOINT, LEP_I2C_COMMAND_TYPE_GET), &midpoint);
     return midpoint;
 }
@@ -193,7 +195,7 @@ uint16_t LeptonFLiR::agc_getLinearDampeningFactor() {
     Serial.println(F("LeptonFLiR::agc_getLinearDampeningFactor"));
 #endif
 
-    uint16_t factor;
+    uint16_t factor = {};
     receiveCommand(cmdCode(LEP_CID_AGC_LINEAR_DAMPENING_FACTOR, LEP_I2C_COMMAND_TYPE_GET), &factor);
     return factor;
 }
@@ -211,7 +213,7 @@ uint16_t LeptonFLiR::agc_getHEQDampeningFactor() {
     Serial.println(F("LeptonFLiR::agc_getHEQDampeningFactor"));
 #endif
 
-    uint16_t factor;
+    uint16_t factor = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_DAMPENING_FACTOR, LEP_I2C_COMMAND_TYPE_GET), &factor);
     return factor;
 }
@@ -229,7 +231,7 @@ uint16_t LeptonFLiR::agc_getHEQMaxGain() {
     Serial.println(F("LeptonFLiR::agc_getHEQMaxGain"));
 #endif
 
-    uint16_t gain;
+    uint16_t gain = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_MAX_GAIN, LEP_I2C_COMMAND_TYPE_GET), &gain);
     return gain;
 }
@@ -247,7 +249,7 @@ uint16_t LeptonFLiR::agc_getHEQClipLimitHigh() {
     Serial.println(F("LeptonFLiR::agc_getHEQClipLimitHigh"));
 #endif
 
-    uint16_t limit;
+    uint16_t limit = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_CLIP_LIMIT_HIGH, LEP_I2C_COMMAND_TYPE_GET), &limit);
     return limit;
 }
@@ -265,7 +267,7 @@ uint16_t LeptonFLiR::agc_getHEQClipLimitLow() {
     Serial.println(F("LeptonFLiR::agc_getHEQClipLimitLow"));
 #endif
 
-    uint16_t limit;
+    uint16_t limit = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_CLIP_LIMIT_LOW, LEP_I2C_COMMAND_TYPE_GET), &limit);
     return limit;
 }
@@ -283,7 +285,7 @@ uint16_t LeptonFLiR::agc_getHEQBinExtension() {
     Serial.println(F("LeptonFLiR::agc_getHEQBinExtension"));
 #endif
 
-    uint16_t extension;
+    uint16_t extension = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_BIN_EXTENSION, LEP_I2C_COMMAND_TYPE_GET), &extension);
     return extension;
 }
@@ -301,7 +303,7 @@ uint16_t LeptonFLiR::agc_getHEQMidpoint() {
     Serial.println(F("LeptonFLiR::agc_getHEQMidpoint"));
 #endif
 
-    uint16_t midpoint;
+    uint16_t midpoint = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_MIDPOINT, LEP_I2C_COMMAND_TYPE_GET), &midpoint);
     return midpoint;
 }
@@ -319,7 +321,7 @@ uint16_t LeptonFLiR::agc_getHEQEmptyCounts() {
     Serial.println(F("LeptonFLiR::agc_getHEQEmptyCounts"));
 #endif
 
-    uint16_t counts;
+    uint16_t counts = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_EMPTY_COUNTS, LEP_I2C_COMMAND_TYPE_GET), &counts);
     return counts;
 }
@@ -337,7 +339,7 @@ uint16_t LeptonFLiR::agc_getHEQNormalizationFactor() {
     Serial.println(F("LeptonFLiR::agc_getHEQNormalizationFactor"));
 #endif
 
-    uint16_t factor;
+    uint16_t factor = {};
     receiveCommand(cmdCode(LEP_CID_AGC_HEQ_NORMALIZATION_FACTOR, LEP_I2C_COMMAND_TYPE_GET), &factor);
     return factor;
 }

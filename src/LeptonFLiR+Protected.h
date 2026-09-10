@@ -19,6 +19,7 @@
         uint32_t frameNumber;                               // Frame number (internal)
         LeptonFLiR_TelemetryMode telemetryMode;             // Telemetry enabled/location flag
         bool agcEnabled;                                    // AGC enabled flag
+        bool agc14Bit;                                      // HEQ output uses 14 bits instead of 8
         bool tlinearEnabled;                                // TLinear radiometry enabled flag
         bool pclutEnabled;                                  // Pseudo-color LUT (aka color palette) enabled flag
         LeptonFLiR_ImageMode imageMode;                     // Image data storage mode

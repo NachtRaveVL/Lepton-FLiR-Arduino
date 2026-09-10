@@ -308,7 +308,7 @@ LeptonFLiR_PixelData LeptonFLiR::getImagePixelData(int row, int col) {
         case LeptonFLiR_ImageMode_80x60_16bpp_164Brf:
         case LeptonFLiR_ImageMode_160x120_16bpp_164Brf: {
             const uint16_t value = ((const uint16_t *)imageData)[sectionCol];
-            if (getAGCEnabled()) {
+            if (getAGCEnabled() && !_lastFrame->agc14Bit) {
                 pixel.agc._res = highByte(value);
                 pixel.agc.value = lowByte(value);
             }
@@ -437,18 +437,15 @@ bool LeptonFLiR::getTelemetryShouldRunFFCNormalization() {
     if (!isTelemetryDataAvailable()) return false;
     const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
 
-    uint_fast8_t ffcState = (telemetryData_A[4] & 0x0018) >> 3;
-    if (lowByte(telemetryData_A[0]) >= 9 && ffcState >= 1)
-        ffcState -= 1;
-
-    return (telemetryData_A[4] & 0x0004) && ffcState != (uint_fast8_t)LeptonFLiR_TelemetryFFCState_InProgress;
+    const uint_fast8_t ffcState = (telemetryData_A[4] & 0x0030) >> 4;
+    return (telemetryData_A[4] & 0x0008) && ffcState != 2;
 }
 
 bool LeptonFLiR::getTelemetryAGCEnabled() {
     if (!isTelemetryDataAvailable()) return false;
     const uint16_t *telemetryData_A = (const uint16_t *)getTelemetryData(0);
 
-    return telemetryData_A[4] & 0x0800;
+    return telemetryData_A[4] & 0x1000;
 }
 
 LeptonFLiR_TelemetryData* LeptonFLiR::getTelemetryOutputData() {
@@ -467,21 +464,23 @@ void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
     //const uint16_t *telemetryData_B = (const uint16_t *)getTelemetryData(1);
     //const uint16_t *telemetryData_C = (const uint16_t *)getTelemetryData(2);
 
-    telemetry->revisionMajor = lowByte(telemetryData_A[0]);
-    telemetry->revisionMinor = highByte(telemetryData_A[0]);
+    telemetry->revisionMajor = highByte(telemetryData_A[0]);
+    telemetry->revisionMinor = lowByte(telemetryData_A[0]);
 
     telemetry->cameraUptime = ((uint32_t)telemetryData_A[1] << 16) | (uint32_t)telemetryData_A[2];
 
-    telemetry->ffcDesired = telemetryData_A[4] & 0x0004;
-    uint_fast8_t ffcState = (telemetryData_A[4] & 0x0018) >> 3;
-    if (telemetry->revisionMajor >= 9 && ffcState >= 1)
-        ffcState -= 1;
-    telemetry->ffcState = (LeptonFLiR_TelemetryFFCState)ffcState;
-    telemetry->agcEnabled = telemetryData_A[4] & 0x0800;
+    telemetry->ffcDesired = telemetryData_A[4] & 0x0008;
+    // Engineering datasheet Rev 203 Table 3: 0=never, 1=imminent, 2=active, 3=done.
+    const LeptonFLiR_TelemetryFFCState ffcStates[] = {
+        LeptonFLiR_TelemetryFFCState_NeverCommanded, LeptonFLiR_TelemetryFFCState_Imminent,
+        LeptonFLiR_TelemetryFFCState_InProgress, LeptonFLiR_TelemetryFFCState_Complete
+    };
+    telemetry->ffcState = ffcStates[(telemetryData_A[4] & 0x0030) >> 4];
+    telemetry->agcEnabled = telemetryData_A[4] & 0x1000;
     telemetry->shutdownImminent = telemetryData_A[3] & 0x0010;
 
-    LeptonFLiR::wordsToHexString(&telemetryData_A[5], 8, telemetry->serialNumber, 24);
-    LeptonFLiR::wordsToHexString(&telemetryData_A[13], 4, telemetry->softwareRevision, 12);
+    LeptonFLiR::wordsToHexString(&telemetryData_A[5], 8, telemetry->serialNumber, sizeof(telemetry->serialNumber));
+    LeptonFLiR::wordsToHexString(&telemetryData_A[13], 4, telemetry->softwareRevision, sizeof(telemetry->softwareRevision));
 
     telemetry->frameCounter = ((uint32_t)telemetryData_A[20] << 16) | (uint32_t)telemetryData_A[21];
     telemetry->frameMean = telemetryData_A[22];
@@ -495,8 +494,8 @@ void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
 
     telemetry->agcRegion.startRow = telemetryData_A[34];
     telemetry->agcRegion.startCol = telemetryData_A[35];
-    telemetry->agcRegion.endCol = telemetryData_A[36];
-    telemetry->agcRegion.endRow = telemetryData_A[37];
+    telemetry->agcRegion.endRow = telemetryData_A[36];
+    telemetry->agcRegion.endCol = telemetryData_A[37];
 
     telemetry->agcClipHigh = telemetryData_A[38];
     telemetry->agcClipLow = telemetryData_A[39];
@@ -738,6 +737,13 @@ bool LeptonFLiR::tryReadNextFrame() {
                     nextFrame->telemetryData = _frameData + 4 + telemetryOffset;
             }
         }
+    }
+
+    if (!success && _isrVSyncPin != DISABLED) {
+        // A VSYNC pulse does not reset VoSPI after a sequencing failure.
+        // CS is already high; keep SCK idle for >185 ms before awaiting a fresh pulse.
+        delay(186);
+        _vsyncFrameReady = false;
     }
 
     SPI.endTransaction();

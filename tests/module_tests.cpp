@@ -123,9 +123,9 @@ void testSYSCommands() {
     for (size_t i = 0; i < sizeof(customerSerial) - 1; ++i) {
         const size_t w = i / 2;
         if ((i & 1) == 0)
-            customerWords[w] |= static_cast<uint16_t>(static_cast<uint8_t>(customerSerial[i])) << 8;
-        else
             customerWords[w] |= static_cast<uint8_t>(customerSerial[i]);
+        else
+            customerWords[w] |= static_cast<uint16_t>(static_cast<uint8_t>(customerSerial[i])) << 8;
     }
     Wire.clear();
     queueGet(customerWords);
@@ -195,9 +195,9 @@ void testOEMCommands() {
     for (size_t i = 0; i < sizeof(part) - 1; ++i) {
         const size_t w = i / 2;
         if ((i & 1) == 0)
-            partWords[w] |= static_cast<uint16_t>(static_cast<uint8_t>(part[i])) << 8;
-        else
             partWords[w] |= static_cast<uint8_t>(part[i]);
+        else
+            partWords[w] |= static_cast<uint16_t>(static_cast<uint8_t>(part[i])) << 8;
     }
     Wire.clear();
     queueGet(partWords);
@@ -208,7 +208,7 @@ void testOEMCommands() {
     CHECK(lastRegisterValue(LEP_I2C_COMMAND_REG) == 0x481C);
 
     Wire.clear();
-    queueGet({0x0102, 0x0304, 0x0506, 0xABCD});
+    queueGet({0x0201, 0x0403, 0x0605, 0xABCD});
     LEP_OEM_SW_VERSION version = {};
     camera.oem_getSoftwareVersion(&version);
     CHECK(version.gpp_major == 1 && version.gpp_minor == 2 && version.gpp_build == 3);

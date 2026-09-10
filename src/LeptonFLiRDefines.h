@@ -81,7 +81,8 @@ enum LeptonFLiR_TelemetryMode {
 enum LeptonFLiR_TelemetryFFCState {
     LeptonFLiR_TelemetryFFCState_NeverCommanded,// FFC never commanded
     LeptonFLiR_TelemetryFFCState_InProgress,    // FFC in progress
-    LeptonFLiR_TelemetryFFCState_Complete       // FFC completed
+    LeptonFLiR_TelemetryFFCState_Complete,     // FFC completed
+    LeptonFLiR_TelemetryFFCState_Imminent      // FFC imminent (appended to preserve existing enum values)
 };
 
 enum LeptonFLiR_TelemetryGainMode {
@@ -99,8 +100,8 @@ struct LeptonFLiR_TelemetryData {
     LeptonFLiR_TelemetryFFCState ffcState;      // FFC state
     bool agcEnabled;                            // AGC enabled flag
     bool shutdownImminent;                      // Shutdown imminent flag
-    char serialNumber[24];                      // Camera serial number
-    char softwareRevision[12];                  // Camera software revision
+    char serialNumber[33];                      // Camera serial number (32 hex digits plus NUL)
+    char softwareRevision[17];                  // Camera software revision (16 hex digits plus NUL)
     uint32_t frameCounter;                      // Frame counter, increments every 3rd frame (export restriction), useful for determining new unique frame
     uint16_t frameMean;                         // Frame mean value
     float fpaTemperature;                       // Sensor temperature, min:-273.15C max:382.20C (celsius), min:-459.67F max:719.96F (fahrenheit), min:0.00K max:655.35K (kelvin)

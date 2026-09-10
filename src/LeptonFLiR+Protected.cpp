@@ -9,6 +9,7 @@ LeptonFLiR::FrameSettings::FrameSettings(LeptonFLiR::FrameSettings* lastFrame, u
     : frameNumber(frameNum),
       telemetryMode(lastFrame ? lastFrame->telemetryMode : LeptonFLiR_TelemetryMode_Disabled),
       agcEnabled(lastFrame ? lastFrame->agcEnabled : false),
+      agc14Bit(lastFrame ? lastFrame->agc14Bit : false),
       tlinearEnabled(lastFrame ? lastFrame->tlinearEnabled : false),
       pclutEnabled(lastFrame ? lastFrame->pclutEnabled : false),
       imageMode(lastFrame ? lastFrame->imageMode : LeptonFLiR_ImageMode_Undefined),
@@ -26,7 +27,7 @@ LeptonFLiR::FrameSettings* LeptonFLiR::getNextFrame() {
     if (_nextFrameNeedsUpdate)
         updateNextFrame();
 
-    return _nextFrame;
+    return _nextFrameNeedsUpdate ? NULL : _nextFrame;
 }
 
 void LeptonFLiR::updateNextFrame() {
@@ -77,6 +78,19 @@ void LeptonFLiR::updateNextFrame() {
     _nextFrame->agcEnabled = agc_getAGCEnabled();
     if (_lastI2CError || _lastLepResult) return;
 
+    _nextFrame->agc14Bit = false;
+    // IDD Rev 303 section 4.4.9 supports HEQ scale selection on Lepton 1.5-2.5.
+    if (_nextFrame->agcEnabled && !_nextFrame->pclutEnabled &&
+        _cameraType >= LeptonFLiR_CameraType_Lepton1_5 && _cameraType <= LeptonFLiR_CameraType_Lepton2_5) {
+        const LEP_AGC_POLICY policy = agc_getAGCPolicy();
+        if (_lastI2CError || _lastLepResult) return;
+        if (policy == LEP_AGC_HEQ) {
+            const LEP_AGC_HEQ_SCALE_FACTOR scale = agc_getHEQScaleFactor();
+            if (_lastI2CError || _lastLepResult) return;
+            _nextFrame->agc14Bit = scale == LEP_AGC_SCALE_TO_14_BITS;
+        }
+    }
+
     _nextFrame->tlinearEnabled = false;
     if (_cameraType == LeptonFLiR_CameraType_Lepton2_5 || _cameraType == LeptonFLiR_CameraType_Lepton3_5) {
         _nextFrame->tlinearEnabled = rad_getTLinearEnabled();
@@ -97,7 +111,7 @@ void LeptonFLiR::updateNextFrame() {
 
     if (_nextFrame->pclutEnabled)
         _nextFrame->outputMode = LeptonFLiR_ImageOutputMode_RGB888;
-    else if (_nextFrame->agcEnabled)
+    else if (_nextFrame->agcEnabled && !_nextFrame->agc14Bit)
         _nextFrame->outputMode = LeptonFLiR_ImageOutputMode_GS8;
     else
         _nextFrame->outputMode = LeptonFLiR_ImageOutputMode_GS16;
