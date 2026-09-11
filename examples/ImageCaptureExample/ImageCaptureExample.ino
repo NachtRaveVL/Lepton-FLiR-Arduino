@@ -51,7 +51,9 @@ void loop() {
 
             char fileName[] = "FLIR/IMG0000.BMP";
             uint16_t fileNumber = (uint16_t)(frameNumber / 3);
-            LeptonFLiR::wordsToHexString((uint16_t *)&fileNumber, 1, &fileName[8], 4);
+            char fileNumberText[5];
+            LeptonFLiR::wordsToHexString(&fileNumber, 1, fileNumberText, sizeof(fileNumberText));
+            memcpy(&fileName[8], fileNumberText, 4); // Preserve the .BMP suffix and filename terminator
 
             byte *imageData = flirController.getImageOutputData();
             if (imageData) {

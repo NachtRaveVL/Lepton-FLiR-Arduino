@@ -210,7 +210,7 @@ For radiometric Lepton 2.5/3.5 modules, TLinear pixels may use either 0.1 K or 0
 
 ```Arduino
 LeptonFLiR_PixelData pixel = flirController.getImagePixelData(row, col);
-uint16_t kelvin100 = pixel.tlinear.value;
+uint32_t kelvin100 = pixel.tlinear.value; // Keep rescaled high temperatures above 655.35 K intact
 
 if (flirController.rad_getTLinearResolution() == LEP_RAD_RESOLUTION_0_1)
     kelvin100 *= 10;
@@ -301,6 +301,8 @@ The specification regression tests cover Engineering Datasheet Rev 203 telemetry
 Software IDD Rev 303 HEQ scale selection, rejected CCI commands, string termination,
 and VoSPI recovery. The software-I2C tests exercise address/data NACKs, byte order,
 and final-byte NACK/STOP handling through the actual library transport code.
+The follow-up regression tests exercise image capture filenames, settings refresh after
+reboot/default restore, full-range temperature thresholds, and command timer rollover.
 
 When VSYNC capture loses synchronization, the reader holds CS high and leaves SCK idle
 for 186 ms, then requires a fresh VSYNC pulse. Successful captures do not incur this delay.
@@ -310,7 +312,12 @@ serial number, 17 for software revision). The existing FFC enum values remain un
 Always check `getLastI2CError()` and `getLastLepResult()` after camera commands; a failed
 GET does not make its output valid.
 
-Run the six host test suites and compile the examples with:
+`kelvin100ToTemperature()` accepts a 32-bit value so high-temperature telemetry and
+rescaled 0.1 K TLinear pixels do not overflow a 16-bit intermediate. Reboot and user
+defaults restore invalidate the cached settings for the next captured frame; wait for
+the camera to be ready after reboot before resuming capture.
+
+Run the seven host test suites and compile the examples with:
 
 ```sh
 cmake -S . -B build

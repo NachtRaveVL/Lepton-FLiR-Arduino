@@ -347,17 +347,17 @@ const byte *LeptonFLiR::getTelemetryData(int row) {
     return row < telemetryLines ? _lastFrame->telemetryData + row * lineSize : NULL;
 }
 
-float LeptonFLiR::kelvin100ToCelsius(uint16_t kelvin100) {
+float LeptonFLiR::kelvin100ToCelsius(uint32_t kelvin100) {
     float kelvin = (kelvin100 / 100) + ((kelvin100 % 100) * 0.01f);
     return kelvin - 273.15f;
 }
 
-float LeptonFLiR::kelvin100ToFahrenheit(uint16_t kelvin100) {
+float LeptonFLiR::kelvin100ToFahrenheit(uint32_t kelvin100) {
     float kelvin = (kelvin100 / 100) + ((kelvin100 % 100) * 0.01f);
     return roundf((((kelvin * 9.0f) / 5.0f) - 459.67f) * 100.0f) / 100.0f;
 }
 
-float LeptonFLiR::kelvin100ToKelvin(uint16_t kelvin100) {
+float LeptonFLiR::kelvin100ToKelvin(uint32_t kelvin100) {
     return (kelvin100 / 100) + ((kelvin100 % 100) * 0.01f);
 }
 

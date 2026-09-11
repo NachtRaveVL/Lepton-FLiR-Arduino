@@ -94,9 +94,9 @@
 
     const byte *getTelemetryData(int row);                  // Raw telemetry data accessor (unowned ptr)
 
-    static float kelvin100ToCelsius(uint16_t kelvin100);
-    static float kelvin100ToFahrenheit(uint16_t kelvin100);
-    static float kelvin100ToKelvin(uint16_t kelvin100);
+    static float kelvin100ToCelsius(uint32_t kelvin100);
+    static float kelvin100ToFahrenheit(uint32_t kelvin100);
+    static float kelvin100ToKelvin(uint32_t kelvin100);
     static uint16_t celsiusToKelvin100(float celsius);
     static uint16_t fahrenheitToKelvin100(float fahrenheit);
     static uint16_t kelvinToKelvin100(float kelvin);

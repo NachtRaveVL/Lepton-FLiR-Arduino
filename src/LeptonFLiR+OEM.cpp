@@ -167,6 +167,7 @@ void LeptonFLiR::oem_runReboot() {
 #endif
 
     sendCommand(cmdCode(LEP_CID_OEM_CAMERA_REBOOT, LEP_I2C_COMMAND_TYPE_RUN));
+    _nextFrameNeedsUpdate = true;
 }
 
 void LeptonFLiR::oem_setFFCNormalizationTarget(uint16_t target) {
@@ -275,6 +276,7 @@ void LeptonFLiR::oem_runUserDefaultsRestore() {
 #endif
 
     sendCommand(cmdCode(LEP_CID_OEM_USER_PARAMS_RESTORE, LEP_I2C_COMMAND_TYPE_RUN));
+    _nextFrameNeedsUpdate = true;
 }
 
 void LeptonFLiR::oem_setShutterProfile(LEP_OEM_SHUTTER_PROFILE *profile) {

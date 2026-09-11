@@ -5,7 +5,7 @@
 
 #include "LeptonFLiR.h"
 
-float LeptonFLiR::kelvin100ToTemperature(uint16_t kelvin100) {
+float LeptonFLiR::kelvin100ToTemperature(uint32_t kelvin100) {
     switch (_tempMode) {
         case LeptonFLiR_TemperatureMode_Celsius:
             return LeptonFLiR::kelvin100ToCelsius(kelvin100);

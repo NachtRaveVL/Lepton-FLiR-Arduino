@@ -88,7 +88,8 @@ inline byte lowByte(uint16_t value) { return static_cast<byte>(value & 0xFF); }
 using std::max;
 using std::min;
 
-inline unsigned long millis() { static unsigned long value = 0; return value++; }
+inline unsigned long arduinoMillis = 0;
+inline unsigned long millis() { return arduinoMillis++; }
 inline std::vector<unsigned long> arduinoDelays;
 inline int arduinoPinLevels[256] = {};
 inline void (*arduinoDelayHook)(unsigned long) = nullptr;

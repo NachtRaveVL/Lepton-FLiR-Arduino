@@ -30,9 +30,9 @@ bool LeptonFLiR::waitCommandBegin(int timeout) {
     if (!(status & LEP_I2C_STATUS_BUSY_BIT_MASK))
         return true;
 
-    unsigned long endTime = millis() + (unsigned long)timeout;
+    unsigned long startTime = millis();
 
-    while ((status & LEP_I2C_STATUS_BUSY_BIT_MASK) && (timeout <= 0 || millis() < endTime)) {
+    while ((status & LEP_I2C_STATUS_BUSY_BIT_MASK) && (timeout <= 0 || millis() - startTime < (unsigned long)timeout)) {
 #ifdef LEPFLIR_USE_SCHEDULER
         Scheduler.yield();
 #else
@@ -72,9 +72,9 @@ bool LeptonFLiR::waitCommandFinish(int timeout) {
         return _lastLepResult == LEP_OK;
     }
 
-    unsigned long endTime = millis() + (unsigned long)timeout;
+    unsigned long startTime = millis();
 
-    while ((status & LEP_I2C_STATUS_BUSY_BIT_MASK) && (timeout <= 0 || millis() < endTime)) {
+    while ((status & LEP_I2C_STATUS_BUSY_BIT_MASK) && (timeout <= 0 || millis() - startTime < (unsigned long)timeout)) {
 #ifdef LEPFLIR_USE_SCHEDULER
         Scheduler.yield();
 #else

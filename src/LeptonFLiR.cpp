@@ -520,10 +520,11 @@ void LeptonFLiR::getTelemetryOutputData(LeptonFLiR_TelemetryData *telemetry) {
         telemetry->gainMode = (LeptonFLiR_TelemetryGainMode)telemetryData_C[5];
         telemetry->effGainMode = (LeptonFLiR_TelemetryGainMode)telemetryData_C[6];
         telemetry->gainModeSwitchDesired = telemetryData_C[7] != 0;
-        telemetry->radGainModeSwitchHtLTemp = kelvin100ToTemperature(celsiusToKelvin100((float)telemetryData_C[8]));
-        telemetry->radGainModeSwitchLtHTemp = kelvin100ToTemperature(celsiusToKelvin100((float)telemetryData_C[9]));
-        telemetry->tlinearGainModeSwitchHtLTemp = kelvin100ToTemperature(kelvinToKelvin100((float)telemetryData_C[10]));
-        telemetry->tlinearGainModeSwitchLtHTemp = kelvin100ToTemperature(kelvinToKelvin100((float)telemetryData_C[11]));
+        // Thresholds allow up to 600 C / 900 K; Kelvin x100 needs more than 16 bits.
+        telemetry->radGainModeSwitchHtLTemp = kelvin100ToTemperature((uint32_t)telemetryData_C[8] * 100 + 27315);
+        telemetry->radGainModeSwitchLtHTemp = kelvin100ToTemperature((uint32_t)telemetryData_C[9] * 100 + 27315);
+        telemetry->tlinearGainModeSwitchHtLTemp = kelvin100ToTemperature((uint32_t)telemetryData_C[10] * 100);
+        telemetry->tlinearGainModeSwitchLtHTemp = kelvin100ToTemperature((uint32_t)telemetryData_C[11] * 100);
     }
 }
 

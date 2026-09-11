@@ -15,7 +15,8 @@
 
     // Module represents temperatures as kelvin x 100 (in integer format). These methods
     // convert to and from the selected temperature mode.
-    float kelvin100ToTemperature(uint16_t kelvin100);
+    // A 32-bit input also accommodates 0.1 K TLinear pixels rescaled to Kelvin x100.
+    float kelvin100ToTemperature(uint32_t kelvin100);
     uint16_t temperatureToKelvin100(float temperature);
     const char *getTemperatureSymbol();
 
